@@ -254,7 +254,7 @@ flutter test integration_test/device_safety_test.dart -d emulator-5554
 
 Integration test chỉ chạy khi SOS thật đang tắt. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra countdown/danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả kiểm chứng gần nhất của mã app: 52 Flutter tests, 8 Kotlin tests và 1 integration dry-run đạt; không đại diện mọi điện thoại.
 
-﻿### Icon và animation morphicons trong Flutter
+### Icon và animation morphicons trong Flutter
 
 Toàn bộ icon do ứng dụng Flutter tự vẽ dùng dữ liệu vector Lucide và kế hoạch chuyển hình tạo bởi **morphicons 2.0.0**. Gói npm không có widget Flutter chính thức; dự án dùng lõi pure-JavaScript khi sinh mã, rồi vẽ native qua Flutter CustomPainter. Không có WebView, CDN hoặc JavaScript runtime trong APK. Icon của hộp thoại hệ thống, bàn phím và trình danh bạ do Android quản lý.
 
