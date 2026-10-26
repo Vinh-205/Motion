@@ -1,22 +1,118 @@
-<!doctype html><html lang="vi"><meta charset="utf-8"><title>Hướng dẫn cài đặt Cảm biến té ngã</title><style>body{font-family:Arial,sans-serif;color:#172329;background:#edf1f2;margin:0;line-height:1.55;font-size:15px}.page{max-width:850px;margin:24px auto;padding:48px 60px;background:white}h1{font-size:30px;line-height:1.2;color:black}h2{font-size:24px;color:black}h3{font-size:18px;margin-top:24px;color:black}p{margin:9px 0;overflow-wrap:anywhere}pre{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;border-left:3px solid #a7b7bc;padding:12px 18px;background:#f5f7f8;line-height:1.55}code{font-family:Consolas,monospace}.sub{color:#465b62;font-size:14px}@media print{body{background:white;font-size:10.5pt}.page{margin:0;padding:0;max-width:none;page-break-before:always}.page:first-child{page-break-before:auto}h2,h3{break-after:avoid}pre{break-inside:avoid;font-size:9pt}p{orphans:3;widows:3}@page{size:A4;margin:18mm}}</style><body><section class="page"><h1>Hướng dẫn cài đặt ứng dụng<br>Cảm biến té ngã</h1><h2>1 Giới thiệu và chuẩn bị</h2><p>Tài liệu hướng dẫn lấy mã nguồn bằng Git và cài đặt ứng dụng Cảm biến té ngã trên Windows để chạy Android Emulator. Người thực hiện cần có Internet trong lần tải SDK, thư viện và build đầu tiên.</p><p>Ứng dụng học tập đọc accelerometer và gyroscope, kiểm tra chuỗi chuyển động nghi ngờ và cảnh báo xác nhận. Mặc định SOS mô phỏng không gửi ra ngoài. Tùy chọn SOS qua SIM trên Android có thể tự gửi SMS sau khi thiết lập và cấp quyền; chưa gọi điện tự động. Xem hướng dẫn SOS_SMS.md đi kèm. Không phải thiết bị y tế.</p><h3>Môi trường đã kiểm chứng</h3><p>- Flutter 3.47.4 stable đi kèm Dart 3.13.3. pubspec.yaml yêu cầu Dart ^3.13.3; nên dùng cùng phiên bản Flutter để tái lập bản đã kiểm tra.</p><p>- sensors_plus 7.1.1; giữ pubspec.lock để dùng phiên bản dependency đã chốt.</p><p>- Android Gradle Plugin 9.1.0, Gradle Wrapper 9.3.1 và Kotlin 2.4.0 theo project. Không cần cài Gradle riêng.</p><p>- compileSdk 36, minSdk 24, NDK 28.2.13676358 theo Flutter SDK hiện tại. Điện thoại cần Android API 24 trở lên.</p><p>- Bản debug đã chạy trên Pixel 7 emulator API 37.2. Thiết bị thật chưa được kiểm chứng trong lần triển khai này.</p><h3>Cài công cụ</h3><p>1. Cài Git for Windows từ https://git-scm.com/install/windows và mở PowerShell mới. Kiểm tra bằng git --version.</p><p>2. Lấy Flutter SDK từ https://docs.flutter.dev/install/archive. Giải nén, ví dụ D:\DevTools\flutter; thêm D:\DevTools\flutter\bin vào PATH. Không đặt SDK trong Program Files. Mở lại terminal sau khi chỉnh PATH.</p><p>3. Cài Android Studio từ https://developer.android.com/studio. Cài plugin Flutter và Dart trong Settings → Plugins; plugin không thay thế Flutter SDK.</p><p>4. Trong SDK Manager, cài Android SDK Platform 36, SDK Build-Tools, Platform-Tools, Command-line Tools và Android Emulator. Nếu Gradle yêu cầu NDK, cài đúng 28.2.13676358 trong SDK Tools → Show Package Details.</p><p>5. Dùng JDK kèm Android Studio; không tự thay JDK chỉ vì project đặt bytecode target Java 17.</p><pre><code>git --version
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>Motion</title><style>body{max-width:960px;margin:40px auto;padding:0 24px;font:16px/1.6 system-ui}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><p><a href="../TAI_LIEU_HUONG_DAN_CAI_DAT.md">Markdown</a> | Ctrl+P: PDF</p><pre># T&#224;i liệu hướng dẫn c&#224;i đặt
+
+Ứng dụng **Motion — gi&#225;m s&#225;t t&#233; ng&#227; v&#224; SOS qua SIM**, phi&#234;n bản **1.0.1+3**.
+Repository: [Vinh-205/Motion](https://github.com/Vinh-205/Motion).
+
+## 1. Chuẩn bị tr&#234;n Windows
+
+- C&#224;i Git for Windows, Flutter SDK, Android Studio v&#224; VS Code.
+- Th&#234;m thư mục `flutter/bin` v&#224;o PATH; mở terminal mới sau khi chỉnh PATH.
+- Project y&#234;u cầu **Dart ^3.13.3**; m&#244;i trường đ&#227; d&#249;ng l&#224; **Flutter 3.47.4 / Dart 3.13.3**. Giữ `pubspec.lock` khi clone.
+- Trong Android Studio → SDK Manager, c&#224;i SDK Platform 36, Platform-Tools, Command-line Tools v&#224; Android Emulator. Nếu log y&#234;u cầu NDK, c&#224;i đ&#250;ng phi&#234;n bản (m&#244;i trường hiện tại d&#249;ng 28.2.13676358).
+- D&#249;ng JDK k&#232;m Android Studio; kh&#244;ng cần c&#224;i Gradle ri&#234;ng.
+- Trong VS Code, c&#224;i extension **Flutter** (k&#232;m Dart). Extension kh&#244;ng thay thế Flutter SDK.
+
+```powershell
+git --version
 flutter --version
 flutter doctor -v
-flutter doctor --android-licenses</code></pre><p>Đọc và chấp nhận license nếu đồng ý. Android toolchain cần được doctor nhận diện; cảnh báo Visual Studio C++ không chặn build Android. Nếu flutter chưa được nhận diện, kiểm tra PATH và mở terminal mới.</p></section><section class="page"><h2>2 Lấy mã nguồn và chạy ứng dụng</h2><h3>Lấy mã nguồn bằng Git</h3><p>Repository của nhóm: https://github.com/Vinh-205/LapTrinhDiDong. Mã nguồn Flutter nằm trên nhánh main, với pubspec.yaml ở gốc repository.</p><pre><code>$repoUrl = &#x27;https://github.com/Vinh-205/LapTrinhDiDong.git&#x27;
-git clone $repoUrl cam_bien_te_nga
-Set-Location cam_bien_te_nga
-Test-Path pubspec.yaml
-flutter pub get</code></pre><p>Test-Path phải trả True. Nếu repository chứa thêm một lớp thư mục, chuyển vào thư mục có pubspec.yaml trước khi chạy Flutter. Repository private cần được chủ nhóm cấp quyền đọc.</p><h3>Cấu hình riêng của máy</h3><p>Không sao chép android/local.properties từ máy khác vì file này chứa đường dẫn SDK riêng. Chạy lệnh Flutter tại thư mục gốc project để công cụ tạo/cập nhật cấu hình. Nếu chưa nhận Android SDK, thay đường dẫn ví dụ bằng đường dẫn trong SDK Manager:</p><pre><code>flutter config --android-sdk &#x27;D:\DevTools\Android\Sdk&#x27;
-flutter doctor -v</code></pre><p>Đường dẫn Flutter SDK trong Android Studio phải là thư mục SDK, không phải thư mục bin. Mở project bằng File → Open và chọn thư mục có pubspec.yaml, không chỉ mở thư mục android.</p><h3>Mở máy ảo và chạy</h3><p>1. Android Studio → Device Manager → Create Virtual Device, chọn Pixel 7 hoặc thiết bị tương đương.</p><p>2. Tải system image Android API 24 trở lên phù hợp máy tính; cấu hình đã thử là Pixel 7 API 37.2 x86_64. Nhấn nút Play để khởi động và chờ vào màn hình chính.</p><p>3. Chọn máy ảo trên thanh công cụ Android Studio và Run lib/main.dart; hoặc dùng PowerShell dưới đây.</p><pre><code>flutter devices
-flutter run -d emulator-5554</code></pre><p>Thay emulator-5554 bằng ID thực trong flutter devices. Không cần máy của người cài có đúng cùng ID.</p><h3>Chạy điện thoại hoặc tạo APK</h3><p>Điện thoại: bật Developer options → USB debugging, kết nối USB, chấp nhận thông báo cho phép debug và chọn thiết bị qua flutter devices. Dùng flutter run -d kèm ID điện thoại. Cảm biến dùng cùng code; máy thiếu gyroscope vẫn dùng được nút mô phỏng.</p><pre><code>flutter build apk --debug</code></pre><p>APK nằm tại build/app/outputs/flutter-apk/app-debug.apk. Đây là bản debug thử nghiệm, không phải bản phát hành cửa hàng. Bản build mặc định chứa ARM32, ARM64 và x86_64; tránh dùng APK chỉ build android-x64 cho điện thoại ARM.</p></section><section class="page"><h2>3 Kiểm tra cài đặt và xử lý lỗi</h2><h3>Xác nhận project hoạt động</h3><pre><code>flutter analyze
-flutter test</code></pre><p>Kết quả kiểm chứng trước khi viết tài liệu: analyze không có issue, 16 kiểm thử đạt, build APK debug thành công. Đây là kết quả trên máy phát triển, không thay thế chạy kiểm tra trên máy mới.</p><h3>Kịch bản demo</h3><p>1. Mở Theo dõi, bật giám sát, quan sát X/Y/Z của Accelerometer và Gyroscope. Cuộn xuống xem tổng gia tốc.</p><p>2. Nhấn MÔ PHỎNG TÉ NGÃ → cảnh báo đếm ngược → TÔI ỔN. Mở Lịch sử để thấy xác nhận an toàn.</p><p>3. Mô phỏng lần nữa → GỬI TRỢ GIÚP NGAY → thấy SOS mô phỏng và sự kiện mới trong lịch sử.</p><p>4. Cài đặt → chọn 15 giây → mô phỏng và chờ hết thời gian; SOS tự kích hoạt.</p><p>5. Liên hệ → nhập họ tên và số điện thoại → Lưu. SOS tiếp theo hiển thị liên hệ đã lưu nhưng không gửi gì ra ngoài.</p><p>6. Tắt giám sát và thử SOS thủ công. Bốn tab Theo dõi, Lịch sử, Liên hệ, Cài đặt phải chuyển đúng màn hình.</p><p>Mở Extended Controls → Virtual Sensors → Device Pose để đổi Pitch/Roll/Yaw và quan sát dữ liệu. Khi chỉ xoay rồi giữ yên, tổng gia tốc có thể vẫn gần 9,81 m/s² vì có trọng lực. Nút mô phỏng độc lập với cảm biến; không cần thả rơi điện thoại.</p><h3>Lỗi thường gặp</h3><p>- Không thấy thiết bị: kiểm tra Device Manager đã chạy máy ảo, chờ Android khởi động rồi chạy flutter devices. Điện thoại cần đồng ý USB debugging và driver phù hợp.</p><p>- Dart SDK không phù hợp: kiểm tra flutter --version và where.exe flutter; dùng SDK đáp ứng Dart ^3.13.3. Đừng hạ constraint để che lỗi.</p><p>- SDK hoặc license chưa đủ: mở SDK Manager cài thành phần thiếu, chạy flutter doctor -v và flutter doctor --android-licenses.</p><p>- Kotlin báo Could not close incremental caches hoặc different roots C và D: project đã đặt kotlin.incremental=false trong android/gradle.properties. Giữ cấu hình đó. Nếu còn lỗi, đọc phần What went wrong trước khi làm sạch build.</p><pre><code>Push-Location android
-.\gradlew.bat --stop
-Pop-Location
-flutter clean
+flutter doctor --android-licenses
+```
+
+Đọc v&#224; chấp nhận license nếu đồng &#253;. Sửa lỗi Android toolchain m&#224; doctor b&#225;o. Cảnh b&#225;o thiếu Visual Studio chỉ li&#234;n quan build Windows desktop.
+
+## 2. Tải source
+
+```powershell
+git clone https://github.com/Vinh-205/Motion.git
+cd Motion
 flutter pub get
-flutter build apk --debug</code></pre><p>Nếu chưa có gradlew.bat sau clone, chạy flutter build apk --debug từ gốc project để Flutter khởi tạo wrapper rồi mới dùng gradlew. Không xóa toàn bộ Android SDK hoặc Pub cache để xử lý lỗi cục bộ.</p><p>- Thiếu bộ nhớ lúc build: đóng emulator thừa. Project đang đặt heap Gradle tối đa 8 GB; máy ít RAM có thể giảm Xmx8G xuống Xmx4G và MaxMetaspaceSize=4G xuống 2G trong android/gradle.properties rồi dừng daemon trước khi build lại. Không cam kết cấu hình này phù hợp mọi máy.</p><h3>Giới hạn cần trình bày</h3><p>Mô phỏng chỉ giám sát khi app ở phía trước. SOS qua SIM dùng dịch vụ Android để giám sát khi khóa màn hình; force-stop, khởi động lại, lỗi SIM và tiết kiệm pin có thể làm gián đoạn. Liên hệ và lịch sử SMS thật lưu trên Android; mô phỏng chỉ lưu trong phiên. Xem SOS_SMS.md trước khi bật SMS thật. Thuật toán kiểm tra bất thường → va chạm → bằng chứng xoay → ít chuyển động; ngưỡng là thử nghiệm và có thể báo giả hoặc bỏ sót. Chi tiết thuật toán và ngưỡng nằm trong HUONG_DAN_DEMO.md.</p></section><section class="page"><h2>4 Chuẩn bị Git và bộ nộp bài</h2><h3>Đưa project lên repository của nhóm</h3><p>Repository đã có lịch sử trên nhánh main. Để cập nhật mã nguồn, clone vào thư mục mới thay vì git init tại project cũ rồi ép push.</p><pre><code>git clone https://github.com/Vinh-205/LapTrinhDiDong.git LapTrinhDiDong-nop-bai
-Set-Location LapTrinhDiDong-nop-bai</code></pre><p>Sao chép nội dung project từ thư mục có pubspec.yaml vào thư mục clone. Giữ nguyên thư mục .git của bản clone. Đưa lib, test, android, các thư mục nền tảng còn lại, pubspec.yaml, pubspec.lock, analysis_options.yaml, .metadata, .gitignore, README.md, HUONG_DAN_DEMO.md và docs vào repository. Đặt pubspec.yaml ngay tại gốc LapTrinhDiDong-nop-bai, không lồng thêm thư mục cam_bien_te_nga.</p><p>Không sao chép build, .dart_tool, .idea, android/local.properties, .gradle, khóa ký hoặc thông tin đăng nhập. Cập nhật README và tài liệu tương ứng khi thay đổi cách chạy ứng dụng.</p><pre><code>git status --short
-git add .
-git diff --cached --stat
-git diff --cached --name-only
-git commit -m &#x27;Add fall sensor demo and installation guide&#x27;
-git push origin main</code></pre><p>Rà soát danh sách đã stage trước commit. Nếu Git chưa có tên/email, đặt git config user.name và git config user.email bằng thông tin thật của bạn trong bản clone. Clone đã cấu hình origin nên không cần remote add. Nếu push bị từ chối do remote vừa thay đổi, đồng bộ lịch sử trước; không force push. Đăng nhập GitHub qua phương thức xác thực Git hỗ trợ khi được yêu cầu.</p><h3>Kiểm tra người khác cài được</h3><p>Sau khi push, clone vào một thư mục thử mới, chạy flutter pub get, flutter analyze, flutter test và flutter run. Dùng thử nghiệm này để phát hiện file cần thiết bị thiếu trên Git; chạy tốt ở thư mục gốc chưa chứng minh repository đầy đủ.</p><h3>Các thành phần nộp</h3><p>- Link repository Git mà giảng viên có quyền xem và tải mã nguồn.</p><p>- README.md trong repository với hướng dẫn nhanh và đường dẫn tài liệu.</p><p>- Tài liệu cài đặt này; mở bản HTML trong trình duyệt, Ctrl+P → Save as PDF nếu cần bản PDF.</p><p>- HUONG_DAN_DEMO.md để giải thích tính năng, ngưỡng và hạn chế.</p><p>Slide và phần trình diễn là các yêu cầu riêng trong đề; tài liệu cài đặt không thay thế slide. Link Git đã được điền. Thông tin nhóm, lớp và thành viên cần được bổ sung theo nhóm thực tế.</p><h3>Tài liệu chính thức</h3><p>Git for Windows: https://git-scm.com/install/windows</p><p>Flutter SDK archive: https://docs.flutter.dev/install/archive</p><p>Cài Flutter: https://docs.flutter.dev/install/manual</p><p>Thiết lập Android: https://docs.flutter.dev/platform-integration/android/setup</p><p>Android Studio: https://developer.android.com/studio</p><p>Cảm biến emulator: https://developer.android.com/studio/run/emulator-extended-controls</p></section></body></html>
+code .
+```
+
+Nếu kh&#244;ng d&#249;ng được `code .`, mở VS Code → File → Open Folder → chọn thư mục Motion. Thư mục đang mở phải chứa `pubspec.yaml`, kh&#244;ng chỉ thư mục android.
+
+Kh&#244;ng sao ch&#233;p `android/local.properties` từ m&#225;y kh&#225;c. Flutter tạo đường dẫn SDK ri&#234;ng cho m&#225;y hiện tại. Kh&#244;ng cần npm install để chạy app v&#236; dữ liệu icon đ&#227; được tạo sẵn.
+
+## 3. Chạy m&#225;y ảo trong VS Code
+
+1. Android Studio → Device Manager → tạo m&#225;y ảo, chọn image ph&#249; hợp CPU v&#224; nhấn Play. C&#243; thể chọn Pixel 7; chờ Android khởi động xong.
+2. VS Code → bấm t&#234;n thiết bị tr&#234;n thanh trạng th&#225;i dưới c&#249;ng → chọn m&#225;y ảo Android. Hoặc Ctrl+Shift+P → Flutter: Select Device.
+3. Mở `lib/main.dart`, nhấn F5. Build đầu cần Internet v&#224; c&#243; thể mất v&#224;i ph&#250;t.
+4. Sửa giao diện rồi lưu để hot reload; sau thay đổi native/plugin cần dừng phi&#234;n chạy v&#224; chạy lại.
+
+```powershell
+flutter devices
+flutter run -d emulator-5554
+```
+
+Thay emulator-5554 bằng ID thực tế. M&#225;y ảo d&#249;ng để kiểm tra giao diện; kh&#244;ng chứng minh SMS/cuộc gọi qua SIM thật. Nếu Failed to launch, mở m&#225;y ảo bằng Device Manager hoặc Flutter: Launch Emulator → cold boot, chờ khởi động rồi chọn lại thiết bị.
+
+## 4. Chạy điện thoại thật v&#224; thiết lập SOS
+
+1. D&#249;ng điện thoại Android c&#243; accelerometer v&#224; gyroscope. M&#244;i trường hiện tại c&#243; minSdk 24 (Android 7.0 trở l&#234;n).
+2. Bật Developer options → USB debugging, kết nối c&#225;p c&#243; truyền dữ liệu v&#224; đồng &#253; th&#244;ng b&#225;o cho ph&#233;p debug.
+3. Chạy `flutter devices`, rồi `flutter run -d &lt;device-id&gt;` với ID điện thoại; hoặc chọn điện thoại trong VS Code v&#224; nhấn F5.
+4. V&#224;o Li&#234;n hệ, th&#234;m người nhận đ&#227; đồng &#253; nhận SOS. Biểu tượng điện thoại d&#249;ng để chọn một li&#234;n hệ ưu ti&#234;n cho cuộc gọi.
+5. V&#224;o C&#224;i đặt → Thiết lập SOS qua SIM, cấu h&#236;nh SIM v&#224; cấp quyền app y&#234;u cầu. SIM cần hoạt động; SMS/cuộc gọi c&#243; thể t&#237;nh ph&#237;.
+6. Muốn gọi c&#249;ng đợt SMS: bật Tự gọi c&#249;ng l&#250;c gửi SOS, đọc x&#225;c nhận v&#224; cấp quyền gọi. Chọn SIM thoại mặc định trong Android nếu c&#243; nhiều SIM. Bật t&#249;y chọn n&#224;y chưa tự bắt đầu gi&#225;m s&#225;t.
+7. Kiểm tra vị tr&#237; v&#224; &#226;m lượng b&#225;o thức. D&#249;ng Nghe thử để thử &#226;m thanh m&#224; kh&#244;ng gửi SOS.
+8. Mở Bắt đầu gi&#225;m s&#225;t, xử l&#253; quyền c&#242;n thiếu rồi bắt đầu. Sau đ&#243; c&#243; thể về Home; dịch vụ duy tr&#236; th&#244;ng b&#225;o gi&#225;m s&#225;t nền.
+
+Khi nghi ngờ t&#233; ng&#227;, app đếm ngược để x&#225;c nhận. Nhấn T&#212;I ỔN nếu an to&#224;n. Hết thời gian m&#224; kh&#244;ng phản hồi, app y&#234;u cầu gửi SMS đến danh s&#225;ch đ&#227; chốt v&#224; gọi một li&#234;n hệ ưu ti&#234;n nếu đ&#227; bật; hai luồng kh&#244;ng chờ kết quả của nhau. &#194;m SOS tiếp tục, c&#243; cơ chế tạm dừng khi nhận thấy chế độ &#226;m thanh cuộc gọi. Trạng th&#225;i y&#234;u cầu gọi kh&#244;ng c&#243; nghĩa b&#234;n kia đ&#227; bắt m&#225;y.
+
+Chỉ thử SOS thật với người nhận đ&#227; đồng &#253;; kh&#244;ng thử gọi số khẩn cấp hoặc thả rơi điện thoại. Tự mở m&#224;n h&#236;nh phụ thuộc Android. Force-stop, khởi động lại v&#224; tiết kiệm pin theo h&#227;ng c&#243; thể l&#224;m gi&#225;n đoạn. Xem [SMS](docs/SOS_SMS.md) v&#224; [tự gọi](docs/AUTO_CALL.md).
+
+## 5. Kiểm tra v&#224; build APK debug
+
+Tại thư mục chứa pubspec.yaml:
+
+```powershell
+flutter analyze
+flutter test
+flutter build apk --debug
+```
+
+APK: `build/app/outputs/flutter-apk/app-debug.apk`. Ch&#233;p sang điện thoại, cho ph&#233;p c&#224;i ứng dụng từ nguồn tương ứng khi Android y&#234;u cầu rồi mở APK để c&#224;i. Đ&#226;y l&#224; bản debug thử nghiệm.
+
+Kiểm thử t&#237;ch hợp nằm trong integration_test; chỉ chạy theo kịch bản dry-run đ&#227; kiểm so&#225;t. Kiểm thử tự động kh&#244;ng thay thế x&#225;c minh SIM v&#224; gi&#225;m s&#225;t d&#224;i hạn tr&#234;n m&#225;y thật.
+
+## 6. Build release
+
+Bản clone mới kh&#244;ng c&#243; kh&#243;a k&#253; v&#224; mật khẩu. Chủ dự &#225;n cần kh&#244;i phục ri&#234;ng đ&#250;ng kh&#243;a đ&#227; d&#249;ng v&#224; cấu h&#236;nh `android/key.properties` trước khi build:
+
+```powershell
+flutter build apk --release
+flutter build appbundle --release
+```
+
+- APK: `build/app/outputs/flutter-apk/app-release.apk`.
+- AAB: `build/app/outputs/bundle/release/app-release.aab`.
+- Kh&#243;a hiện tại: `android/keystore/motion-release.jks`; cấu h&#236;nh: `android/key.properties`. Hai tệp n&#224;y kh&#244;ng nằm tr&#234;n GitHub.
+
+Chỉ chạy source bằng debug th&#236; kh&#244;ng cần kh&#243;a release. Kh&#244;ng tạo kh&#243;a mới để cập nhật bản release đ&#227; c&#224;i: Android y&#234;u cầu chữ k&#253; ph&#249; hợp. Debug v&#224; release kh&#225;c chữ k&#253; n&#234;n c&#243; thể kh&#244;ng c&#224;i đ&#232;. Gỡ app sẽ mất dữ liệu cục bộ; cần lưu cấu h&#236;nh trước khi tự thực hiện.
+
+Xem [mức sẵn s&#224;ng ph&#225;t h&#224;nh](docs/RELEASE_READINESS.md). Build th&#224;nh c&#244;ng chưa đồng nghĩa được cửa h&#224;ng duyệt.
+
+## 7. Lỗi thường gặp
+
+| Hiện tượng | C&#225;ch xử l&#253; |
+| --- | --- |
+| Kh&#244;ng nhận lệnh Flutter | Kiểm tra PATH v&#224; mở terminal mới |
+| Dart kh&#244;ng tương th&#237;ch | Kiểm tra flutter --version; d&#249;ng SDK đ&#225;p ứng pubspec.yaml |
+| Kh&#244;ng thấy thiết bị | Kiểm tra m&#225;y ảo/USB debugging, c&#225;p v&#224; driver; chạy flutter devices |
+| Thiếu SDK/NDK/license | Đọc log, c&#224;i đ&#250;ng th&#224;nh phần trong SDK Manager |
+| Kotlin lỗi cache kh&#225;c ổ C/D | Giữ kotlin.incremental=false trong android/gradle.properties |
+| Release lỗi kh&#243;a k&#253; | Kh&#244;i phục kh&#243;a v&#224; key.properties ri&#234;ng; hoặc build debug |
+| Kh&#244;ng gửi SMS/gọi | D&#249;ng m&#225;y thật, kiểm tra SIM/s&#243;ng/quyền, cấu h&#236;nh SOS v&#224; lịch sử |
+| Kh&#244;ng c&#224;i đ&#232; bản cũ | Kiểm tra chữ k&#253; v&#224; versionCode trước khi thay đổi dữ liệu |
+
+## 8. Cập nhật source
+
+```powershell
+git remote -v
+git pull --ff-only origin main
+flutter pub get
+```
+
+Origin phải trỏ đến `https://github.com/Vinh-205/Motion.git`. Chỉ pull khi thay đổi cục bộ đ&#227; được lưu/commit ph&#249; hợp. Giữ kh&#243;a k&#253;, mật khẩu, SDK ri&#234;ng, cache v&#224; build ngo&#224;i Git.</pre></html>
