@@ -6,6 +6,8 @@
 
 Đọc **[Tài liệu hướng dẫn cài đặt](TAI_LIEU_HUONG_DAN_CAI_DAT.md)** để tải source, chạy trong VS Code, cài trên điện thoại và build APK.
 
+Người tham gia test: **[Tải APK Android](https://github.com/Vinh-205/Motion/releases/download/v1.0.1-test.3/Motion-1.0.1-android.apk)** · **[QR tải app](TAI_LIEU_HUONG_DAN_CAI_DAT.md#tải-apk-để-tham-gia-test-không-cần-máy-tính)** · **[Hướng dẫn sử dụng](TAI_LIEU_HUONG_DAN_CAI_DAT.md#9-hướng-dẫn-sử-dụng-sau-khi-cài-đặt)**.
+
 ```powershell
 git clone https://github.com/Vinh-205/Motion.git
 cd Motion

@@ -1,118 +1,161 @@
-<!doctype html><html lang="vi"><meta charset="utf-8"><title>Motion</title><style>body{max-width:960px;margin:40px auto;padding:0 24px;font:16px/1.6 system-ui}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style><p><a href="../TAI_LIEU_HUONG_DAN_CAI_DAT.md">Markdown</a> | Ctrl+P: PDF</p><pre># T&#224;i liệu hướng dẫn c&#224;i đặt
-
-Ứng dụng **Motion — gi&#225;m s&#225;t t&#233; ng&#227; v&#224; SOS qua SIM**, phi&#234;n bản **1.0.1+3**.
-Repository: [Vinh-205/Motion](https://github.com/Vinh-205/Motion).
-
-## 1. Chuẩn bị tr&#234;n Windows
-
-- C&#224;i Git for Windows, Flutter SDK, Android Studio v&#224; VS Code.
-- Th&#234;m thư mục `flutter/bin` v&#224;o PATH; mở terminal mới sau khi chỉnh PATH.
-- Project y&#234;u cầu **Dart ^3.13.3**; m&#244;i trường đ&#227; d&#249;ng l&#224; **Flutter 3.47.4 / Dart 3.13.3**. Giữ `pubspec.lock` khi clone.
-- Trong Android Studio → SDK Manager, c&#224;i SDK Platform 36, Platform-Tools, Command-line Tools v&#224; Android Emulator. Nếu log y&#234;u cầu NDK, c&#224;i đ&#250;ng phi&#234;n bản (m&#244;i trường hiện tại d&#249;ng 28.2.13676358).
-- D&#249;ng JDK k&#232;m Android Studio; kh&#244;ng cần c&#224;i Gradle ri&#234;ng.
-- Trong VS Code, c&#224;i extension **Flutter** (k&#232;m Dart). Extension kh&#244;ng thay thế Flutter SDK.
-
-```powershell
-git --version
+<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Motion - Installation and user guide</title><style>body{max-width:960px;margin:32px auto;padding:0 20px;font:16px/1.6 system-ui;color:#172028}h1,h2,h3{line-height:1.3}pre{padding:16px;background:#f1f4f7;white-space:pre-wrap;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccd4dc;padding:8px;text-align:left}img{width:300px;max-width:100%;height:auto}a{color:#075bbb}@media print{body{margin:0;font-size:11pt}h2,h3{break-after:avoid}img{width:220px}}</style><body><h1 id="tai-lieu-huong-dan-cai-at">Tài liệu hướng dẫn cài đặt</h1>
+<p>Ứng dụng <strong>Motion — giám sát té ngã và SOS qua SIM</strong>, phiên bản <strong>1.0.1+3</strong>.
+Repository: <a href="https://github.com/Vinh-205/Motion">Vinh-205/Motion</a>.</p>
+<h2 id="tai-apk-e-tham-gia-test-khong-can-may-tinh">Tải APK để tham gia test (không cần máy tính)</h2>
+<p>Quét QR bằng điện thoại <strong>Android</strong> hoặc bấm <strong><a href="https://github.com/Vinh-205/Motion/releases/download/v1.0.1-test.3/Motion-1.0.1-android.apk">Tải Motion 1.0.1 — APK</a></strong>. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.</p>
+<p><a href="https://github.com/Vinh-205/Motion/releases/download/v1.0.1-test.3/Motion-1.0.1-android.apk"><img alt="QR tải APK Motion" src="images/motion-apk-qr.png" /></a></p>
+<ol>
+<li>Tải tệp <code>Motion-1.0.1-android.apk</code> (khoảng 54 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.</li>
+<li>Mở tệp đã tải → nếu Android yêu cầu, cho phép <strong>Cài ứng dụng không rõ nguồn gốc / Cho phép từ nguồn này</strong> cho trình duyệt hoặc ứng dụng quản lý tệp đang mở APK → nhấn <strong>Cài đặt</strong>. Có thể tắt lại quyền cài từ nguồn này sau khi cài xong.</li>
+<li>Mở Motion và làm theo <strong><a href="#9-hướng-dẫn-sử-dụng-sau-khi-cài-đặt">Hướng dẫn sử dụng bên dưới</a></strong>. Người test không cần cài Flutter, Android Studio hay bật USB debugging.</li>
+</ol>
+<p>Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột chữ ký, có thể bản cũ là debug; ghi lại liên hệ/cấu hình trước khi quyết định gỡ bản cũ vì gỡ app sẽ xóa dữ liệu cục bộ. Không bỏ qua cảnh báo bảo mật chưa hiểu rõ; gửi ảnh lỗi cho người phát triển để kiểm tra.</p>
+<p>Đây là bản phát hành thử dành cho nhóm dự kiến 50–100 người. Mỗi máy tự cấu hình liên hệ/SIM; không có tài khoản hay hệ thống thu thập phản hồi tự động. Không tự dùng số của người tổ chức làm người nhận SOS cho cả nhóm. Thống nhất trước với người nhận khi thử SMS hoặc cuộc gọi thật vì có thể phát sinh cước.</p>
+<p><a href="https://github.com/Vinh-205/Motion/releases/tag/v1.0.1-test.3">Trang bản test, thông tin tệp và ghi chú phát hành</a>. QR này cố định ở bản 1.0.1+3, không tự chuyển sang bản mới.</p>
+<h2 id="1-chuan-bi-tren-windows">1. Chuẩn bị trên Windows</h2>
+<ul>
+<li>Cài Git for Windows, Flutter SDK, Android Studio và VS Code.</li>
+<li>Thêm thư mục <code>flutter/bin</code> vào PATH; mở terminal mới sau khi chỉnh PATH.</li>
+<li>Project yêu cầu <strong>Dart ^3.13.3</strong>; môi trường đã dùng là <strong>Flutter 3.47.4 / Dart 3.13.3</strong>. Giữ <code>pubspec.lock</code> khi clone.</li>
+<li>Trong Android Studio → SDK Manager, cài SDK Platform 36, Platform-Tools, Command-line Tools và Android Emulator. Nếu log yêu cầu NDK, cài đúng phiên bản (môi trường hiện tại dùng 28.2.13676358).</li>
+<li>Dùng JDK kèm Android Studio; không cần cài Gradle riêng.</li>
+<li>Trong VS Code, cài extension <strong>Flutter</strong> (kèm Dart). Extension không thay thế Flutter SDK.</li>
+</ul>
+<pre><code class="language-powershell">git --version
 flutter --version
 flutter doctor -v
 flutter doctor --android-licenses
-```
-
-Đọc v&#224; chấp nhận license nếu đồng &#253;. Sửa lỗi Android toolchain m&#224; doctor b&#225;o. Cảnh b&#225;o thiếu Visual Studio chỉ li&#234;n quan build Windows desktop.
-
-## 2. Tải source
-
-```powershell
-git clone https://github.com/Vinh-205/Motion.git
+</code></pre>
+<p>Đọc và chấp nhận license nếu đồng ý. Sửa lỗi Android toolchain mà doctor báo. Cảnh báo thiếu Visual Studio chỉ liên quan build Windows desktop.</p>
+<h2 id="2-tai-source">2. Tải source</h2>
+<pre><code class="language-powershell">git clone https://github.com/Vinh-205/Motion.git
 cd Motion
 flutter pub get
 code .
-```
-
-Nếu kh&#244;ng d&#249;ng được `code .`, mở VS Code → File → Open Folder → chọn thư mục Motion. Thư mục đang mở phải chứa `pubspec.yaml`, kh&#244;ng chỉ thư mục android.
-
-Kh&#244;ng sao ch&#233;p `android/local.properties` từ m&#225;y kh&#225;c. Flutter tạo đường dẫn SDK ri&#234;ng cho m&#225;y hiện tại. Kh&#244;ng cần npm install để chạy app v&#236; dữ liệu icon đ&#227; được tạo sẵn.
-
-## 3. Chạy m&#225;y ảo trong VS Code
-
-1. Android Studio → Device Manager → tạo m&#225;y ảo, chọn image ph&#249; hợp CPU v&#224; nhấn Play. C&#243; thể chọn Pixel 7; chờ Android khởi động xong.
-2. VS Code → bấm t&#234;n thiết bị tr&#234;n thanh trạng th&#225;i dưới c&#249;ng → chọn m&#225;y ảo Android. Hoặc Ctrl+Shift+P → Flutter: Select Device.
-3. Mở `lib/main.dart`, nhấn F5. Build đầu cần Internet v&#224; c&#243; thể mất v&#224;i ph&#250;t.
-4. Sửa giao diện rồi lưu để hot reload; sau thay đổi native/plugin cần dừng phi&#234;n chạy v&#224; chạy lại.
-
-```powershell
-flutter devices
+</code></pre>
+<p>Nếu không dùng được <code>code .</code>, mở VS Code → File → Open Folder → chọn thư mục Motion. Thư mục đang mở phải chứa <code>pubspec.yaml</code>, không chỉ thư mục android.</p>
+<p>Không sao chép <code>android/local.properties</code> từ máy khác. Flutter tạo đường dẫn SDK riêng cho máy hiện tại. Không cần npm install để chạy app vì dữ liệu icon đã được tạo sẵn.</p>
+<h2 id="3-chay-may-ao-trong-vs-code">3. Chạy máy ảo trong VS Code</h2>
+<ol>
+<li>Android Studio → Device Manager → tạo máy ảo, chọn image phù hợp CPU và nhấn Play. Có thể chọn Pixel 7; chờ Android khởi động xong.</li>
+<li>VS Code → bấm tên thiết bị trên thanh trạng thái dưới cùng → chọn máy ảo Android. Hoặc Ctrl+Shift+P → Flutter: Select Device.</li>
+<li>Mở <code>lib/main.dart</code>, nhấn F5. Build đầu cần Internet và có thể mất vài phút.</li>
+<li>Sửa giao diện rồi lưu để hot reload; sau thay đổi native/plugin cần dừng phiên chạy và chạy lại.</li>
+</ol>
+<pre><code class="language-powershell">flutter devices
 flutter run -d emulator-5554
-```
-
-Thay emulator-5554 bằng ID thực tế. M&#225;y ảo d&#249;ng để kiểm tra giao diện; kh&#244;ng chứng minh SMS/cuộc gọi qua SIM thật. Nếu Failed to launch, mở m&#225;y ảo bằng Device Manager hoặc Flutter: Launch Emulator → cold boot, chờ khởi động rồi chọn lại thiết bị.
-
-## 4. Chạy điện thoại thật v&#224; thiết lập SOS
-
-1. D&#249;ng điện thoại Android c&#243; accelerometer v&#224; gyroscope. M&#244;i trường hiện tại c&#243; minSdk 24 (Android 7.0 trở l&#234;n).
-2. Bật Developer options → USB debugging, kết nối c&#225;p c&#243; truyền dữ liệu v&#224; đồng &#253; th&#244;ng b&#225;o cho ph&#233;p debug.
-3. Chạy `flutter devices`, rồi `flutter run -d &lt;device-id&gt;` với ID điện thoại; hoặc chọn điện thoại trong VS Code v&#224; nhấn F5.
-4. V&#224;o Li&#234;n hệ, th&#234;m người nhận đ&#227; đồng &#253; nhận SOS. Biểu tượng điện thoại d&#249;ng để chọn một li&#234;n hệ ưu ti&#234;n cho cuộc gọi.
-5. V&#224;o C&#224;i đặt → Thiết lập SOS qua SIM, cấu h&#236;nh SIM v&#224; cấp quyền app y&#234;u cầu. SIM cần hoạt động; SMS/cuộc gọi c&#243; thể t&#237;nh ph&#237;.
-6. Muốn gọi c&#249;ng đợt SMS: bật Tự gọi c&#249;ng l&#250;c gửi SOS, đọc x&#225;c nhận v&#224; cấp quyền gọi. Chọn SIM thoại mặc định trong Android nếu c&#243; nhiều SIM. Bật t&#249;y chọn n&#224;y chưa tự bắt đầu gi&#225;m s&#225;t.
-7. Kiểm tra vị tr&#237; v&#224; &#226;m lượng b&#225;o thức. D&#249;ng Nghe thử để thử &#226;m thanh m&#224; kh&#244;ng gửi SOS.
-8. Mở Bắt đầu gi&#225;m s&#225;t, xử l&#253; quyền c&#242;n thiếu rồi bắt đầu. Sau đ&#243; c&#243; thể về Home; dịch vụ duy tr&#236; th&#244;ng b&#225;o gi&#225;m s&#225;t nền.
-
-Khi nghi ngờ t&#233; ng&#227;, app đếm ngược để x&#225;c nhận. Nhấn T&#212;I ỔN nếu an to&#224;n. Hết thời gian m&#224; kh&#244;ng phản hồi, app y&#234;u cầu gửi SMS đến danh s&#225;ch đ&#227; chốt v&#224; gọi một li&#234;n hệ ưu ti&#234;n nếu đ&#227; bật; hai luồng kh&#244;ng chờ kết quả của nhau. &#194;m SOS tiếp tục, c&#243; cơ chế tạm dừng khi nhận thấy chế độ &#226;m thanh cuộc gọi. Trạng th&#225;i y&#234;u cầu gọi kh&#244;ng c&#243; nghĩa b&#234;n kia đ&#227; bắt m&#225;y.
-
-Chỉ thử SOS thật với người nhận đ&#227; đồng &#253;; kh&#244;ng thử gọi số khẩn cấp hoặc thả rơi điện thoại. Tự mở m&#224;n h&#236;nh phụ thuộc Android. Force-stop, khởi động lại v&#224; tiết kiệm pin theo h&#227;ng c&#243; thể l&#224;m gi&#225;n đoạn. Xem [SMS](docs/SOS_SMS.md) v&#224; [tự gọi](docs/AUTO_CALL.md).
-
-## 5. Kiểm tra v&#224; build APK debug
-
-Tại thư mục chứa pubspec.yaml:
-
-```powershell
-flutter analyze
+</code></pre>
+<p>Thay emulator-5554 bằng ID thực tế. Máy ảo dùng để kiểm tra giao diện; không chứng minh SMS/cuộc gọi qua SIM thật. Nếu Failed to launch, mở máy ảo bằng Device Manager hoặc Flutter: Launch Emulator → cold boot, chờ khởi động rồi chọn lại thiết bị.</p>
+<h2 id="4-chay-ien-thoai-that-va-thiet-lap-sos">4. Chạy điện thoại thật và thiết lập SOS</h2>
+<ol>
+<li>Dùng điện thoại Android có accelerometer và gyroscope. Môi trường hiện tại có minSdk 24 (Android 7.0 trở lên).</li>
+<li>Bật Developer options → USB debugging, kết nối cáp có truyền dữ liệu và đồng ý thông báo cho phép debug.</li>
+<li>Chạy <code>flutter devices</code>, rồi <code>flutter run -d &lt;device-id&gt;</code> với ID điện thoại; hoặc chọn điện thoại trong VS Code và nhấn F5.</li>
+<li>Vào Liên hệ, thêm người nhận đã đồng ý nhận SOS. Biểu tượng điện thoại dùng để chọn một liên hệ ưu tiên cho cuộc gọi.</li>
+<li>Vào Cài đặt → Thiết lập SOS qua SIM, cấu hình SIM và cấp quyền app yêu cầu. SIM cần hoạt động; SMS/cuộc gọi có thể tính phí.</li>
+<li>Muốn gọi cùng đợt SMS: bật Tự gọi cùng lúc gửi SOS, đọc xác nhận và cấp quyền gọi. Chọn SIM thoại mặc định trong Android nếu có nhiều SIM. Bật tùy chọn này chưa tự bắt đầu giám sát.</li>
+<li>Kiểm tra vị trí và âm lượng báo thức. Dùng Nghe thử để thử âm thanh mà không gửi SOS.</li>
+<li>Mở Bắt đầu giám sát, xử lý quyền còn thiếu rồi bắt đầu. Sau đó có thể về Home; dịch vụ duy trì thông báo giám sát nền.</li>
+</ol>
+<p>Khi nghi ngờ té ngã, app đếm ngược để xác nhận. Nhấn TÔI ỔN nếu an toàn. Hết thời gian mà không phản hồi, app yêu cầu gửi SMS đến danh sách đã chốt và gọi một liên hệ ưu tiên nếu đã bật; hai luồng không chờ kết quả của nhau. Âm SOS tiếp tục, có cơ chế tạm dừng khi nhận thấy chế độ âm thanh cuộc gọi. Trạng thái yêu cầu gọi không có nghĩa bên kia đã bắt máy.</p>
+<p>Chỉ thử SOS thật với người nhận đã đồng ý; không thử gọi số khẩn cấp hoặc thả rơi điện thoại. Tự mở màn hình phụ thuộc Android. Force-stop, khởi động lại và tiết kiệm pin theo hãng có thể làm gián đoạn. Xem <a href="SOS_SMS.md">SMS</a> và <a href="AUTO_CALL.md">tự gọi</a>.</p>
+<h2 id="5-kiem-tra-va-build-apk-debug">5. Kiểm tra và build APK debug</h2>
+<p>Tại thư mục chứa pubspec.yaml:</p>
+<pre><code class="language-powershell">flutter analyze
 flutter test
 flutter build apk --debug
-```
-
-APK: `build/app/outputs/flutter-apk/app-debug.apk`. Ch&#233;p sang điện thoại, cho ph&#233;p c&#224;i ứng dụng từ nguồn tương ứng khi Android y&#234;u cầu rồi mở APK để c&#224;i. Đ&#226;y l&#224; bản debug thử nghiệm.
-
-Kiểm thử t&#237;ch hợp nằm trong integration_test; chỉ chạy theo kịch bản dry-run đ&#227; kiểm so&#225;t. Kiểm thử tự động kh&#244;ng thay thế x&#225;c minh SIM v&#224; gi&#225;m s&#225;t d&#224;i hạn tr&#234;n m&#225;y thật.
-
-## 6. Build release
-
-Bản clone mới kh&#244;ng c&#243; kh&#243;a k&#253; v&#224; mật khẩu. Chủ dự &#225;n cần kh&#244;i phục ri&#234;ng đ&#250;ng kh&#243;a đ&#227; d&#249;ng v&#224; cấu h&#236;nh `android/key.properties` trước khi build:
-
-```powershell
-flutter build apk --release
+</code></pre>
+<p>APK: <code>build/app/outputs/flutter-apk/app-debug.apk</code>. Chép sang điện thoại, cho phép cài ứng dụng từ nguồn tương ứng khi Android yêu cầu rồi mở APK để cài. Đây là bản debug thử nghiệm.</p>
+<p>Kiểm thử tích hợp nằm trong integration_test; chỉ chạy theo kịch bản dry-run đã kiểm soát. Kiểm thử tự động không thay thế xác minh SIM và giám sát dài hạn trên máy thật.</p>
+<h2 id="6-build-release">6. Build release</h2>
+<p>Bản clone mới không có khóa ký và mật khẩu. Chủ dự án cần khôi phục riêng đúng khóa đã dùng và cấu hình <code>android/key.properties</code> trước khi build:</p>
+<pre><code class="language-powershell">flutter build apk --release
 flutter build appbundle --release
-```
-
-- APK: `build/app/outputs/flutter-apk/app-release.apk`.
-- AAB: `build/app/outputs/bundle/release/app-release.aab`.
-- Kh&#243;a hiện tại: `android/keystore/motion-release.jks`; cấu h&#236;nh: `android/key.properties`. Hai tệp n&#224;y kh&#244;ng nằm tr&#234;n GitHub.
-
-Chỉ chạy source bằng debug th&#236; kh&#244;ng cần kh&#243;a release. Kh&#244;ng tạo kh&#243;a mới để cập nhật bản release đ&#227; c&#224;i: Android y&#234;u cầu chữ k&#253; ph&#249; hợp. Debug v&#224; release kh&#225;c chữ k&#253; n&#234;n c&#243; thể kh&#244;ng c&#224;i đ&#232;. Gỡ app sẽ mất dữ liệu cục bộ; cần lưu cấu h&#236;nh trước khi tự thực hiện.
-
-Xem [mức sẵn s&#224;ng ph&#225;t h&#224;nh](docs/RELEASE_READINESS.md). Build th&#224;nh c&#244;ng chưa đồng nghĩa được cửa h&#224;ng duyệt.
-
-## 7. Lỗi thường gặp
-
-| Hiện tượng | C&#225;ch xử l&#253; |
-| --- | --- |
-| Kh&#244;ng nhận lệnh Flutter | Kiểm tra PATH v&#224; mở terminal mới |
-| Dart kh&#244;ng tương th&#237;ch | Kiểm tra flutter --version; d&#249;ng SDK đ&#225;p ứng pubspec.yaml |
-| Kh&#244;ng thấy thiết bị | Kiểm tra m&#225;y ảo/USB debugging, c&#225;p v&#224; driver; chạy flutter devices |
-| Thiếu SDK/NDK/license | Đọc log, c&#224;i đ&#250;ng th&#224;nh phần trong SDK Manager |
-| Kotlin lỗi cache kh&#225;c ổ C/D | Giữ kotlin.incremental=false trong android/gradle.properties |
-| Release lỗi kh&#243;a k&#253; | Kh&#244;i phục kh&#243;a v&#224; key.properties ri&#234;ng; hoặc build debug |
-| Kh&#244;ng gửi SMS/gọi | D&#249;ng m&#225;y thật, kiểm tra SIM/s&#243;ng/quyền, cấu h&#236;nh SOS v&#224; lịch sử |
-| Kh&#244;ng c&#224;i đ&#232; bản cũ | Kiểm tra chữ k&#253; v&#224; versionCode trước khi thay đổi dữ liệu |
-
-## 8. Cập nhật source
-
-```powershell
-git remote -v
+</code></pre>
+<ul>
+<li>APK: <code>build/app/outputs/flutter-apk/app-release.apk</code>.</li>
+<li>AAB: <code>build/app/outputs/bundle/release/app-release.aab</code>.</li>
+<li>Khóa hiện tại: <code>android/keystore/motion-release.jks</code>; cấu hình: <code>android/key.properties</code>. Hai tệp này không nằm trên GitHub.</li>
+</ul>
+<p>Chỉ chạy source bằng debug thì không cần khóa release. Không tạo khóa mới để cập nhật bản release đã cài: Android yêu cầu chữ ký phù hợp. Debug và release khác chữ ký nên có thể không cài đè. Gỡ app sẽ mất dữ liệu cục bộ; cần lưu cấu hình trước khi tự thực hiện.</p>
+<p>Xem <a href="RELEASE_READINESS.md">mức sẵn sàng phát hành</a>. Build thành công chưa đồng nghĩa được cửa hàng duyệt.</p>
+<h2 id="7-loi-thuong-gap">7. Lỗi thường gặp</h2>
+<table>
+<thead>
+<tr>
+<th>Hiện tượng</th>
+<th>Cách xử lý</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Không nhận lệnh Flutter</td>
+<td>Kiểm tra PATH và mở terminal mới</td>
+</tr>
+<tr>
+<td>Dart không tương thích</td>
+<td>Kiểm tra flutter --version; dùng SDK đáp ứng pubspec.yaml</td>
+</tr>
+<tr>
+<td>Không thấy thiết bị</td>
+<td>Kiểm tra máy ảo/USB debugging, cáp và driver; chạy flutter devices</td>
+</tr>
+<tr>
+<td>Thiếu SDK/NDK/license</td>
+<td>Đọc log, cài đúng thành phần trong SDK Manager</td>
+</tr>
+<tr>
+<td>Kotlin lỗi cache khác ổ C/D</td>
+<td>Giữ kotlin.incremental=false trong android/gradle.properties</td>
+</tr>
+<tr>
+<td>Release lỗi khóa ký</td>
+<td>Khôi phục khóa và key.properties riêng; hoặc build debug</td>
+</tr>
+<tr>
+<td>Không gửi SMS/gọi</td>
+<td>Dùng máy thật, kiểm tra SIM/sóng/quyền, cấu hình SOS và lịch sử</td>
+</tr>
+<tr>
+<td>Không cài đè bản cũ</td>
+<td>Kiểm tra chữ ký và versionCode trước khi thay đổi dữ liệu</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-cap-nhat-source">8. Cập nhật source</h2>
+<pre><code class="language-powershell">git remote -v
 git pull --ff-only origin main
 flutter pub get
-```
-
-Origin phải trỏ đến `https://github.com/Vinh-205/Motion.git`. Chỉ pull khi thay đổi cục bộ đ&#227; được lưu/commit ph&#249; hợp. Giữ kh&#243;a k&#253;, mật khẩu, SDK ri&#234;ng, cache v&#224; build ngo&#224;i Git.</pre></html>
+</code></pre>
+<p>Origin phải trỏ đến <code>https://github.com/Vinh-205/Motion.git</code>. Chỉ pull khi thay đổi cục bộ đã được lưu/commit phù hợp. Giữ khóa ký, mật khẩu, SDK riêng, cache và build ngoài Git.</p>
+<h2 id="9-huong-dan-su-dung-sau-khi-cai-at">9. Hướng dẫn sử dụng sau khi cài đặt</h2>
+<h3 id="buoc-1-lam-quen-giao-dien">Bước 1 — Làm quen giao diện</h3>
+<p>App có bốn mục <strong>Theo dõi</strong>, <strong>Lịch sử</strong>, <strong>Liên hệ</strong>, <strong>Cài đặt</strong>. Nút mặt trời/mặt trăng trên thanh đầu dùng để đổi giao diện sáng/tối. Lần đầu chưa thiết lập sẽ hiện <strong>Chưa bật SOS</strong>; chỉ mở app chưa có nghĩa đã bắt đầu giám sát.</p>
+<h3 id="buoc-2-them-lien-he-khan-cap">Bước 2 — Thêm liên hệ khẩn cấp</h3>
+<p>Vào <strong>Liên hệ</strong> → thêm tên và số điện thoại hoặc chọn liên hệ từ thiết bị → lưu. Có thể thêm nhiều người (tối đa 10). Kiểm tra số và thông báo trước cho từng người nhận. Khi SOS được kích hoạt, SMS sẽ được yêu cầu gửi đến các liên hệ đã chốt cho sự kiện đó.</p>
+<p>Chọn biểu tượng điện thoại cạnh một người để đặt <strong>liên hệ gọi ưu tiên</strong>. App chỉ yêu cầu gọi một người trong một sự kiện, không lần lượt gọi cả danh sách và không tự gọi lại. Các số 113/114/115 là nút mở trình gọi để người dùng chủ động thao tác, không nằm trong danh sách tự động.</p>
+<h3 id="buoc-3-thiet-lap-sos-am-thanh-va-thoi-gian-xac-nhan">Bước 3 — Thiết lập SOS, âm thanh và thời gian xác nhận</h3>
+<p>Vào <strong>Cài đặt → Thiết lập SOS qua SIM</strong>, điền thông tin được yêu cầu, chọn SIM và cấp quyền SMS/vị trí theo hướng dẫn trên app. Bật vị trí của điện thoại nếu muốn đính kèm tọa độ; độ chính xác phụ thuộc tín hiệu và quyền đã cấp.</p>
+<p>Nếu muốn gọi cùng đợt gửi tin, bật <strong>Tự gọi cùng lúc gửi SOS</strong>, đọc xác nhận và cấp quyền gọi. Đây là tùy chọn riêng. Kiểm tra SIM thoại mặc định trong Android. App yêu cầu loa ngoài nhưng cách xử lý còn phụ thuộc thiết bị. Người nhận cần bắt máy mới có thể trò chuyện.</p>
+<p>Chọn thời gian xác nhận phù hợp (ví dụ 30 giây), độ nhạy và âm thanh cảnh báo. Nhấn <strong>Nghe thử</strong> để kiểm tra loa/âm lượng; thao tác này không gửi SMS hoặc gọi. Độ nhạy cao có thể làm tăng cảnh báo giả; không điều chỉnh theo kỳ vọng chỉ cần lắc máy là có cảnh báo.</p>
+<h3 id="buoc-4-bat-au-va-dung-giam-sat">Bước 4 — Bắt đầu và dừng giám sát</h3>
+<p>Từ <strong>Theo dõi</strong>, mở <strong>Bắt đầu giám sát</strong>, kiểm tra các mục thiết lập và nhấn bắt đầu. Cho phép các quyền cần thiết; các quyền mở màn hình cảnh báo và cài đặt pin cần làm theo hướng dẫn riêng trên thiết bị.</p>
+<p>Sau khi app xác nhận dịch vụ đang chạy, có thể về Home hoặc khóa màn hình. Kiểm tra thông báo giám sát còn hiện. Không force-stop app. Sau khi khởi động lại máy, mở Motion và bắt đầu lại. Muốn kết thúc phiên, quay lại app và tắt giám sát; tránh chỉ đóng giao diện rồi cho rằng đã dừng.</p>
+<h3 id="buoc-5-xu-ly-khi-co-canh-bao">Bước 5 — Xử lý khi có cảnh báo</h3>
+<ul>
+<li>Nếu an toàn, nhấn <strong>TÔI ỔN</strong> trước khi hết đếm ngược để hủy SOS của cảnh báo đó.</li>
+<li>Nếu cần trợ giúp, dùng nút gửi trợ giúp ngay hoặc chờ hết thời gian. App yêu cầu gửi SMS có thông tin vị trí nếu lấy được; tùy chọn gọi ưu tiên được thực hiện trong cùng đợt.</li>
+<li>Âm SOS tiếp tục sau khi yêu cầu gửi tin, kể cả khi SMS lỗi. Có thể dừng âm theo điều khiển trên app/thông báo. Âm thanh có cơ chế tạm dừng khi nhận thấy chế độ cuộc gọi; âm lượng, DND và hệ điều hành vẫn ảnh hưởng kết quả.</li>
+<li>Muốn kết thúc cuộc gọi đã chuyển sang Android, dùng nút kết thúc trong giao diện điện thoại. Đóng cảnh báo Motion không tự cúp cuộc gọi đã thực hiện.</li>
+</ul>
+<h3 id="buoc-6-kiem-tra-lich-su">Bước 6 — Kiểm tra lịch sử</h3>
+<p>Vào <strong>Lịch sử</strong>, chọn sự kiện để xem thời gian, lý do kích hoạt, vị trí và trạng thái từng người nhận. <strong>Đã gửi</strong> không đồng nghĩa người nhận đã đọc; trạng thái cuộc gọi <strong>đã yêu cầu</strong> không xác nhận đã kết nối hoặc bắt máy. Nếu lỗi, kiểm tra quyền, SIM, sóng và tài khoản nhà mạng trước khi chủ động thử lại.</p>
+<h2 id="10-checklist-danh-cho-nhom-test-50100-nguoi">10. Checklist dành cho nhóm test 50–100 người</h2>
+<ol>
+<li>Kiểm tra mở app, đổi sáng/tối, bốn tab, thêm/sửa liên hệ và nghe thử âm thanh.</li>
+<li>Kiểm tra thiết lập quyền, bắt đầu giám sát, về Home, khóa/mở máy rồi quay lại app và dừng giám sát.</li>
+<li>Chỉ thử SOS thật sau khi đã thống nhất với người nhận. Không dùng số cơ quan khẩn cấp để thử. Không cố ngã hay thả rơi điện thoại để kích hoạt cảm biến. Bản release không có nút mô phỏng.</li>
+<li>Khi thử SOS thủ công, kiểm tra người nhận có SMS/vị trí và cuộc gọi tùy chọn hay không; kết thúc cuộc gọi và dừng âm sau phép thử. SOS thủ công không chứng minh độ chính xác phát hiện té ngã.</li>
+<li>Gửi phản hồi tại <strong><a href="https://github.com/Vinh-205/Motion/issues">GitHub Issues</a></strong> nếu có tài khoản, hoặc gửi trực tiếp người tổ chức qua kênh đã thống nhất. Ghi mẫu máy, phiên bản Android, phiên bản Motion, bước thao tác, kết quả mong đợi/thực tế và ảnh lỗi. Không công khai số điện thoại, vị trí GPS hay tin nhắn riêng tư; che chúng trước khi đăng ảnh.</li>
+</ol>
+<p>Người dùng đã xác nhận SMS/vị trí trên điện thoại đã thử. Cuộc gọi thật, chạy nền dài hạn và độ chính xác phát hiện cần được kiểm chứng thêm trên từng thiết bị; app không bảo đảm phát hiện mọi cú ngã và không thay thế việc gọi trợ giúp chủ động khi có thể.</p></body></html>
