@@ -1,0 +1,7 @@
+﻿{
+  "name": "motion-flutter-morphicons-generator",
+  "private": true,
+  "type": "module",
+  "scripts": { "generate": "node generate.mjs", "test": "node --test" },
+  "devDependencies": { "morphicons": "2.0.0", "lucide": "1.57.0" }
+}
