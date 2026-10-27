@@ -1,0 +1,54 @@
+---
+config:
+  htmlLabels: false
+  theme: base
+  themeVariables:
+    fontFamily: Segoe UI, Arial, sans-serif
+    fontSize: 16px
+    lineColor: '#64748b'
+    edgeLabelBackground: '#f1f5f9'
+  flowchart:
+    wrappingWidth: 300
+    curve: basis
+    nodeSpacing: 36
+    rankSpacing: 40
+---
+flowchart TB
+    START(["KÍCH HOẠT SOS"])
+    SNAP["CHUẨN BỊ SỰ KIỆN<br/>Dùng danh sách đã chốt · vị trí nếu có"]
+
+    subgraph SMS["SMS · TẤT CẢ NGƯỜI NHẬN"]
+        direction TB
+        S1["Kiểm tra quyền SMS<br/>và SIM SMS mặc định"]
+        S2["Chống gửi trùng<br/>Yêu cầu gửi đến từng người"]
+        S3["Theo dõi từng người<br/>Gửi / báo phát / lỗi / chưa rõ"]
+        S1 --> S2 --> S3
+    end
+
+    subgraph CALL["CUỘC GỌI · MỘT SỐ ƯU TIÊN"]
+        direction TB
+        C1["Kiểm tra quyền gọi<br/>và điều kiện thực hiện"]
+        C2["Yêu cầu gọi số ưu tiên<br/>Một lần · không tự gọi lại"]
+        C3["Theo dõi yêu cầu gọi<br/>Lưu kết quả và chi tiết riêng"]
+        C1 --> C2 --> C3
+    end
+
+    HISTORY["LỊCH SỬ SỰ KIỆN<br/>Kết quả SMS và cuộc gọi được lưu riêng"]
+    START --> SNAP
+    SNAP -->|"Luôn xử lý"| S1
+    SNAP -->|"Nếu đã bật tự gọi"| C1
+    S3 --> HISTORY
+    C3 --> HISTORY
+
+    classDef sos fill:#fce9e6,stroke:#c7685c,color:#762d24,stroke-width:1.5px;
+    classDef neutral fill:#f8fafc,stroke:#94a3b8,color:#334155,stroke-width:1.5px,rx:14,ry:14;
+    classDef sms fill:#e8f4f5,stroke:#3d8b90,color:#16494d,stroke-width:1.5px,rx:14,ry:14;
+    classDef voice fill:#edf5df,stroke:#6b8f3c,color:#243713,stroke-width:1.5px,rx:14,ry:14;
+    classDef record fill:#edf0fc,stroke:#7b86b8,color:#343e70,stroke-width:1.5px,rx:14,ry:14;
+    class START sos;
+    class SNAP neutral;
+    class S1,S2,S3 sms;
+    class C1,C2,C3 voice;
+    class HISTORY record;
+    style SMS fill:#f5fafb,stroke:#c5dfe1,color:#16494d,rx:18,ry:18
+    style CALL fill:#f6f9f1,stroke:#d1dfbf,color:#243713,rx:18,ry:18

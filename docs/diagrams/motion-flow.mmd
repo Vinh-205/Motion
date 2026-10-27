@@ -1,44 +1,31 @@
-flowchart TD
-    OPEN["Mở Motion trên Android"] --> SETUP["Lưu liên hệ khẩn cấp, tên và SIM SMS<br/>Cấp quyền SMS; tùy chọn vị trí, thông báo và gọi"]
-    SETUP --> CHECK{"Điện thoại thật, liên hệ hợp lệ,<br/>SIM SMS mặc định và quyền SMS?"}
-    CHECK -- "Chưa" --> FIX["Hiển thị phần còn thiếu<br/>Cấp quyền hoặc mở cài đặt thiết bị"]
-    FIX --> SETUP
-    CHECK -- "Có" --> ENABLE["Người dùng bật SOS qua SIM<br/>Khởi chạy SafetyService"]
-    ENABLE --> MANUAL["Nhấn SOS chủ động<br/>Không cần chờ cảm biến hay đếm ngược"]
-    ENABLE --> WATCH{"Người dùng bật<br/>giám sát tự động?"}
-    WATCH -- "Chưa bật" --> MANUAL
-    WATCH -- "Có" --> ACC{"Có accelerometer?"}
-    ACC -- "Không" --> ONLY["Thông báo chỉ hỗ trợ SOS thủ công"]
-    ONLY --> MANUAL
-    ACC -- "Có" --> GYRO{"Có gyroscope khả dụng?"}
-    GYRO -- "Có" --> FULL["Đọc gia tốc và xoay<br/>Nguồn gyro thường hoặc chưa hiệu chuẩn"]
-    GYRO -- "Không" --> LIMITED["Chế độ gia tốc có giới hạn<br/>Không giả lập dữ liệu xoay"]
-    FULL --> DETECT["Lấy mẫu yêu cầu 100 Hz, kiểm tra dữ liệu mới<br/>Tính nền dao động 2 giây và ngưỡng động"]
-    LIMITED --> DETECT
-    DETECT --> FALL{"Đủ chuỗi nghi ngờ ngã?<br/>Giảm gia tốc hoặc va chạm mạnh,<br/>va chạm, xoay nếu cần và yên 3 giây"}
-    FALL -- "Chưa đủ / tiếp tục đi lại" --> DETECT
-    FALL -- "Đủ" --> ALERT["Chốt danh sách nhận và số gọi ưu tiên<br/>Phát chuông, rung; đếm ngược 15–30 giây<br/>Thông báo hoặc toàn màn hình nếu Android cho phép"]
-    ALERT --> RESPONSE{"Phản hồi trước khi hết giờ?"}
-    RESPONSE -- "TÔI ỔN" --> SAFE["Hủy cảnh báo, dừng âm<br/>Lưu lịch sử xác nhận an toàn"]
-    SAFE --> DETECT
-    RESPONSE -- "Gửi ngay / không phản hồi" --> SOS["Kích hoạt SOS, lưu sự kiện<br/>Giữ âm báo và dùng vị trí gần nhất nếu có"]
-    MANUAL --> SNAPSHOT["Chốt danh sách và số ưu tiên<br/>cho SOS thủ công"]
-    SNAPSHOT --> SOS
+---
+config:
+  htmlLabels: false
+  theme: base
+  themeVariables:
+    fontFamily: Segoe UI, Arial, sans-serif
+    fontSize: 16px
+    lineColor: '#64748b'
+    edgeLabelBackground: '#f1f5f9'
+  flowchart:
+    wrappingWidth: 300
+    curve: basis
+    nodeSpacing: 32
+    rankSpacing: 44
+---
+flowchart LR
+    A["01 · THIẾT LẬP<br/>Liên hệ · SIM · quyền"]
+    B["02 · BẬT DỊCH VỤ<br/>SOS qua SIM"]
+    C["03 · KÍCH HOẠT<br/>Cảm biến / SOS chủ động"]
+    E["04 · HỖ TRỢ<br/>SMS · gọi tùy chọn · lịch sử"]
 
-    SOS --> SMS["SmsDispatch: từng người nhận có mã riêng<br/>Kiểm tra quyền và SIM, lưu claim chống gửi trùng<br/>Yêu cầu nhà mạng gửi SMS"]
-    SOS --> CALLON{"Đã bật tự gọi?"}
-    CALLON -- "Có" --> CALL["CallDispatch: kiểm tra quyền và điều kiện gọi<br/>Lưu claim, yêu cầu gọi một số ưu tiên<br/>Yêu cầu loa ngoài; không tự gọi lại"]
-    CALLON -- "Không" --> SKIP["Ghi nhận tự gọi đang tắt"]
-    SMS --> HISTORY["Cập nhật lịch sử từng người và kết quả tổng<br/>Gửi, báo phát, lỗi hoặc chưa xác nhận<br/>Kết quả gọi được lưu riêng"]
-    CALL --> HISTORY
-    SKIP --> HISTORY
-    SOS --> AUDIO["Âm SOS tiếp tục đến khi người dùng dừng<br/>Tạm dừng khi nhận thấy chế độ cuộc gọi"]
+    A --> B --> C --> E
 
-    classDef ui fill:#eef4e3,stroke:#577b29,color:#1d2b13;
-    classDef native fill:#e5f3f4,stroke:#2c7c82,color:#113a3d;
-    classDef alert fill:#fff0e4,stroke:#b76b23,color:#653a11;
-    classDef store fill:#eaf0fd,stroke:#577cc0,color:#233e6c;
-    class OPEN,SETUP,FIX,MANUAL ui;
-    class ENABLE,FULL,LIMITED,DETECT,SMS,CALL native;
-    class ALERT,SOS,AUDIO alert;
-    class SAFE,SNAPSHOT,HISTORY,SKIP store;
+    classDef setup fill:#edf5df,stroke:#6b8f3c,color:#243713,stroke-width:1.5px,rx:14,ry:14;
+    classDef monitor fill:#e8f4f5,stroke:#3d8b90,color:#16494d,stroke-width:1.5px,rx:14,ry:14;
+    classDef warning fill:#fff2dc,stroke:#c38b35,color:#6b4815,stroke-width:1.5px,rx:14,ry:14;
+    classDef sos fill:#fce9e6,stroke:#c7685c,color:#762d24,stroke-width:1.5px,rx:14,ry:14;
+    classDef record fill:#edf0fc,stroke:#7b86b8,color:#343e70,stroke-width:1.5px,rx:14,ry:14;
+    class A,B setup;
+    class C monitor;
+    class E sos;

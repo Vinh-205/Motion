@@ -4,7 +4,7 @@
 
 Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay trong README này. Người test chỉ cần điện thoại Android; không cần tải source hay cài công cụ lập trình.
 
-**Xem nhanh:** [ERD dữ liệu](#sơ-đồ-thực-thể-erd) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt).
+**Xem nhanh:** [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt).
 
 ## Tải APK để tham gia test (không cần máy tính)
 
@@ -82,81 +82,167 @@ Trước đây người dùng đã xác nhận SMS/vị trí trên một máy, n
 
 ## Tổng quan hệ thống
 
-Motion gồm giao diện Flutter, cầu nối MethodChannel và dịch vụ Android native. Khi SOS thật đã bật, **SafetyService** quản lý cảm biến, thời hạn xác nhận và yêu cầu gửi/gọi ngay cả khi giao diện Flutter không ở phía trước. Dữ liệu nằm trên từng điện thoại; không có tài khoản hay máy chủ xử lý SOS chung.
-
-### Sơ đồ thực thể ERD
-
-Đây là **ERD logic của dữ liệu hiện có**, không phải các bảng SQL. `SafetyStore` lưu cấu hình bằng SharedPreferences, còn danh sách liên hệ và sự kiện là JSON. Vị trí và kết quả cuộc gọi nằm trong sự kiện, không có bảng riêng.
-
-![Sơ đồ thực thể ERD của Motion](docs/images/motion-erd.png)
-
-| Nhóm dữ liệu | Vai trò |
-| --- | --- |
-| Cấu hình ứng dụng | Tên người dùng, bật SOS/giám sát, độ nhạy, thời gian chờ, âm báo và giao diện |
-| Liên hệ khẩn cấp | Tối đa 10 người; người đầu danh sách là số ưu tiên gọi |
-| Sự kiện / lịch sử | Tối đa 200 sự kiện, gồm lý do, kết quả, vị trí tùy chọn và trạng thái gọi |
-| Người nhận tại sự kiện | Bản sao tên/số và kết quả SMS của từng người tại lúc kích hoạt |
-
-**Bản sao người nhận không phải liên kết sống với danh bạ.** Sửa hoặc xóa liên hệ hiện tại không sửa người nhận trong lịch sử hay danh sách đã chốt của cảnh báo đang xử lý. Mỗi lần gửi/gọi có claim bền vững để tránh tự gửi/gọi trùng khi tiến trình khởi động lại.
-
-[Ảnh PNG đầy đủ](docs/images/motion-erd.png) · [Bản vector SVG](docs/images/motion-erd.svg) · [Source ERD Graphviz](docs/diagrams/motion-erd.dot).
+Motion hoạt động trên từng điện thoại Android: giao diện Flutter để thiết lập và thao tác, dịch vụ native để giám sát nền và xử lý SOS. Không có tài khoản hay máy chủ SOS chung; cấu hình và lịch sử lưu cục bộ bằng SharedPreferences/JSON.
 
 ### Luồng hoạt động của hệ thống
 
-Luồng dưới đây mô tả bản dùng thật: **SOS thủ công gửi ngay**, còn nhánh cảm biến phải hoàn thành chuỗi nghi ngờ và bước xác nhận. Hai nhánh dùng chung cơ chế SMS, gọi ưu tiên, âm báo và lịch sử.
+Bốn giai đoạn chính, từ thiết lập đến trợ giúp. Hai sơ đồ tiếp theo mô tả chi tiết nhánh cảm biến và nhánh gửi SOS.
 
 ```mermaid
-flowchart TD
-    OPEN["Mở Motion trên Android"] --> SETUP["Lưu liên hệ khẩn cấp, tên và SIM SMS<br/>Cấp quyền SMS; tùy chọn vị trí, thông báo và gọi"]
-    SETUP --> CHECK{"Điện thoại thật, liên hệ hợp lệ,<br/>SIM SMS mặc định và quyền SMS?"}
-    CHECK -- "Chưa" --> FIX["Hiển thị phần còn thiếu<br/>Cấp quyền hoặc mở cài đặt thiết bị"]
-    FIX --> SETUP
-    CHECK -- "Có" --> ENABLE["Người dùng bật SOS qua SIM<br/>Khởi chạy SafetyService"]
-    ENABLE --> MANUAL["Nhấn SOS chủ động<br/>Không cần chờ cảm biến hay đếm ngược"]
-    ENABLE --> WATCH{"Người dùng bật<br/>giám sát tự động?"}
-    WATCH -- "Chưa bật" --> MANUAL
-    WATCH -- "Có" --> ACC{"Có accelerometer?"}
-    ACC -- "Không" --> ONLY["Thông báo chỉ hỗ trợ SOS thủ công"]
-    ONLY --> MANUAL
-    ACC -- "Có" --> GYRO{"Có gyroscope khả dụng?"}
-    GYRO -- "Có" --> FULL["Đọc gia tốc và xoay<br/>Nguồn gyro thường hoặc chưa hiệu chuẩn"]
-    GYRO -- "Không" --> LIMITED["Chế độ gia tốc có giới hạn<br/>Không giả lập dữ liệu xoay"]
-    FULL --> DETECT["Lấy mẫu yêu cầu 100 Hz, kiểm tra dữ liệu mới<br/>Tính nền dao động 2 giây và ngưỡng động"]
-    LIMITED --> DETECT
-    DETECT --> FALL{"Đủ chuỗi nghi ngờ ngã?<br/>Giảm gia tốc hoặc va chạm mạnh,<br/>va chạm, xoay nếu cần và yên 3 giây"}
-    FALL -- "Chưa đủ / tiếp tục đi lại" --> DETECT
-    FALL -- "Đủ" --> ALERT["Chốt danh sách nhận và số gọi ưu tiên<br/>Phát chuông, rung; đếm ngược 15–30 giây<br/>Thông báo hoặc toàn màn hình nếu Android cho phép"]
-    ALERT --> RESPONSE{"Phản hồi trước khi hết giờ?"}
-    RESPONSE -- "TÔI ỔN" --> SAFE["Hủy cảnh báo, dừng âm<br/>Lưu lịch sử xác nhận an toàn"]
-    SAFE --> DETECT
-    RESPONSE -- "Gửi ngay / không phản hồi" --> SOS["Kích hoạt SOS, lưu sự kiện<br/>Giữ âm báo và dùng vị trí gần nhất nếu có"]
-    MANUAL --> SNAPSHOT["Chốt danh sách và số ưu tiên<br/>cho SOS thủ công"]
-    SNAPSHOT --> SOS
+---
+config:
+  htmlLabels: false
+  theme: base
+  themeVariables:
+    fontFamily: Segoe UI, Arial, sans-serif
+    fontSize: 16px
+    lineColor: '#64748b'
+    edgeLabelBackground: '#f1f5f9'
+  flowchart:
+    wrappingWidth: 300
+    curve: basis
+    nodeSpacing: 32
+    rankSpacing: 44
+---
+flowchart LR
+    A["01 · THIẾT LẬP<br/>Liên hệ · SIM · quyền"]
+    B["02 · BẬT DỊCH VỤ<br/>SOS qua SIM"]
+    C["03 · KÍCH HOẠT<br/>Cảm biến / SOS chủ động"]
+    E["04 · HỖ TRỢ<br/>SMS · gọi tùy chọn · lịch sử"]
 
-    SOS --> SMS["SmsDispatch: từng người nhận có mã riêng<br/>Kiểm tra quyền và SIM, lưu claim chống gửi trùng<br/>Yêu cầu nhà mạng gửi SMS"]
-    SOS --> CALLON{"Đã bật tự gọi?"}
-    CALLON -- "Có" --> CALL["CallDispatch: kiểm tra quyền và điều kiện gọi<br/>Lưu claim, yêu cầu gọi một số ưu tiên<br/>Yêu cầu loa ngoài; không tự gọi lại"]
-    CALLON -- "Không" --> SKIP["Ghi nhận tự gọi đang tắt"]
-    SMS --> HISTORY["Cập nhật lịch sử từng người và kết quả tổng<br/>Gửi, báo phát, lỗi hoặc chưa xác nhận<br/>Kết quả gọi được lưu riêng"]
-    CALL --> HISTORY
-    SKIP --> HISTORY
-    SOS --> AUDIO["Âm SOS tiếp tục đến khi người dùng dừng<br/>Tạm dừng khi nhận thấy chế độ cuộc gọi"]
+    A --> B --> C --> E
 
-    classDef ui fill:#eef4e3,stroke:#577b29,color:#1d2b13;
-    classDef native fill:#e5f3f4,stroke:#2c7c82,color:#113a3d;
-    classDef alert fill:#fff0e4,stroke:#b76b23,color:#653a11;
-    classDef store fill:#eaf0fd,stroke:#577cc0,color:#233e6c;
-    class OPEN,SETUP,FIX,MANUAL ui;
-    class ENABLE,FULL,LIMITED,DETECT,SMS,CALL native;
-    class ALERT,SOS,AUDIO alert;
-    class SAFE,SNAPSHOT,HISTORY,SKIP store;
+    classDef setup fill:#edf5df,stroke:#6b8f3c,color:#243713,stroke-width:1.5px,rx:14,ry:14;
+    classDef monitor fill:#e8f4f5,stroke:#3d8b90,color:#16494d,stroke-width:1.5px,rx:14,ry:14;
+    classDef warning fill:#fff2dc,stroke:#c38b35,color:#6b4815,stroke-width:1.5px,rx:14,ry:14;
+    classDef sos fill:#fce9e6,stroke:#c7685c,color:#762d24,stroke-width:1.5px,rx:14,ry:14;
+    classDef record fill:#edf0fc,stroke:#7b86b8,color:#343e70,stroke-width:1.5px,rx:14,ry:14;
+    class A,B setup;
+    class C monitor;
+    class E sos;
 ```
 
-SMS gửi cho cả danh sách đã chốt; cuộc gọi chỉ đến một số ưu tiên nếu đã bật. Hai luồng xử lý độc lập: lỗi gọi không chặn SMS và không chờ cuộc gọi kết thúc mới gửi tin. Không lấy được vị trí vẫn gửi nội dung cảnh báo. Âm thanh là âm trên máy chạy Motion, không phải tệp âm đính kèm SMS.
+**Điều kiện bắt đầu:** điện thoại thật, liên hệ hợp lệ, SIM SMS mặc định và quyền SMS. App hiển thị phần còn thiếu để người dùng thiết lập. Vị trí và tự gọi là các tùy chọn riêng; bật tự gọi không thay thế việc bật SOS qua SIM.
 
-Thông báo, mở toàn màn hình và giám sát nền phụ thuộc quyền/cơ chế Android. Dừng dịch vụ hoặc hệ thống chặn khởi chạy thì không coi là đang giám sát. Khi người dùng về Home, dịch vụ vẫn tiếp tục nếu còn được Android cho chạy; không tự bật lại giám sát sau khi khởi động điện thoại. Trạng thái gửi/gọi không chứng minh người thân đã đọc tin hoặc bắt máy.
+### Phát hiện chuyển động và xác nhận an toàn
 
-[Source Mermaid](docs/diagrams/motion-flow.mmd). Đối chiếu triển khai tại [SafetyService](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SafetyService.kt), [SafetyStore](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SafetyStore.kt), [SmsDispatch](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SmsDispatch.kt) và [CallDispatch](android/app/src/main/kotlin/com/example/cam_bien_te_nga/CallDispatch.kt).
+Nhánh này chỉ chạy khi đã bật giám sát tự động. Đi lại bình thường quay về bước theo dõi; chuỗi nghi ngờ mới mở cảnh báo để người dùng xác nhận.
+
+```mermaid
+---
+config:
+  htmlLabels: false
+  theme: base
+  themeVariables:
+    fontFamily: Segoe UI, Arial, sans-serif
+    fontSize: 16px
+    lineColor: '#64748b'
+    edgeLabelBackground: '#f1f5f9'
+  flowchart:
+    wrappingWidth: 300
+    curve: basis
+    nodeSpacing: 38
+    rankSpacing: 28
+    padding: 12
+---
+flowchart TB
+    READ["ĐỌC VÀ PHÂN TÍCH<br/>Gia tốc · xoay nếu có<br/>Đối chiếu nền dao động"]
+    SUSPECT{"Nghi ngờ ngã?"}
+    ALERT["CẢNH BÁO XÁC NHẬN<br/>Chuông · rung · chờ 15–30 giây"]
+    CHOICE{"TÔI ỔN?"}
+    SAFE["TÔI ỔN<br/>Hủy cảnh báo · lưu lịch sử"]
+    SOS(["CHUYỂN SANG SOS"])
+
+    READ --> SUSPECT
+    SUSPECT -- "Chưa đủ điều kiện" --> READ
+    SUSPECT -- "Có" --> ALERT --> CHOICE
+    CHOICE -- "Xác nhận trước hạn" --> SAFE
+    CHOICE -- "Gửi ngay / hết giờ" --> SOS
+
+    classDef monitor fill:#e8f4f5,stroke:#3d8b90,color:#16494d,stroke-width:1.5px,rx:14,ry:14;
+    classDef decision fill:#f8fafc,stroke:#94a3b8,color:#334155,stroke-width:1.5px;
+    classDef warning fill:#fff2dc,stroke:#c38b35,color:#6b4815,stroke-width:1.5px,rx:14,ry:14;
+    classDef safe fill:#edf5df,stroke:#6b8f3c,color:#243713,stroke-width:1.5px,rx:14,ry:14;
+    classDef sos fill:#fce9e6,stroke:#c7685c,color:#762d24,stroke-width:1.5px;
+    class READ monitor;
+    class SUSPECT,CHOICE decision;
+    class ALERT warning;
+    class SAFE safe;
+    class SOS sos;
+```
+
+- **TÔI ỔN:** hủy trước hạn, dừng âm, lưu xác nhận an toàn và tiếp tục giám sát sau khoảng nghỉ 8 giây.
+- **Gửi ngay hoặc hết giờ:** chuyển sang SOS với danh sách người nhận đã chốt khi cảnh báo bắt đầu.
+- **SOS chủ động:** đi thẳng đến luồng gửi bên dưới, bỏ qua cảm biến và đếm ngược.
+
+Máy không có con quay dùng chế độ gia tốc với giới hạn đã nêu trong phần kỹ thuật. Máy không có gia tốc chỉ hỗ trợ SOS thủ công. Thông báo hay mở toàn màn hình do quyền và cơ chế Android quyết định.
+
+### Gửi SOS: hai nhánh xử lý độc lập
+
+Mỗi sự kiện có một danh sách nhận đã chốt. SMS xử lý từng người; cuộc gọi chỉ yêu cầu đến một số ưu tiên nếu người dùng đã bật tính năng.
+
+```mermaid
+---
+config:
+  htmlLabels: false
+  theme: base
+  themeVariables:
+    fontFamily: Segoe UI, Arial, sans-serif
+    fontSize: 16px
+    lineColor: '#64748b'
+    edgeLabelBackground: '#f1f5f9'
+  flowchart:
+    wrappingWidth: 300
+    curve: basis
+    nodeSpacing: 36
+    rankSpacing: 40
+---
+flowchart TB
+    START(["KÍCH HOẠT SOS"])
+    SNAP["CHUẨN BỊ SỰ KIỆN<br/>Dùng danh sách đã chốt · vị trí nếu có"]
+
+    subgraph SMS["SMS · TẤT CẢ NGƯỜI NHẬN"]
+        direction TB
+        S1["Kiểm tra quyền SMS<br/>và SIM SMS mặc định"]
+        S2["Chống gửi trùng<br/>Yêu cầu gửi đến từng người"]
+        S3["Theo dõi từng người<br/>Gửi / báo phát / lỗi / chưa rõ"]
+        S1 --> S2 --> S3
+    end
+
+    subgraph CALL["CUỘC GỌI · MỘT SỐ ƯU TIÊN"]
+        direction TB
+        C1["Kiểm tra quyền gọi<br/>và điều kiện thực hiện"]
+        C2["Yêu cầu gọi số ưu tiên<br/>Một lần · không tự gọi lại"]
+        C3["Theo dõi yêu cầu gọi<br/>Lưu kết quả và chi tiết riêng"]
+        C1 --> C2 --> C3
+    end
+
+    HISTORY["LỊCH SỬ SỰ KIỆN<br/>Kết quả SMS và cuộc gọi được lưu riêng"]
+    START --> SNAP
+    SNAP -->|"Luôn xử lý"| S1
+    SNAP -->|"Nếu đã bật tự gọi"| C1
+    S3 --> HISTORY
+    C3 --> HISTORY
+
+    classDef sos fill:#fce9e6,stroke:#c7685c,color:#762d24,stroke-width:1.5px;
+    classDef neutral fill:#f8fafc,stroke:#94a3b8,color:#334155,stroke-width:1.5px,rx:14,ry:14;
+    classDef sms fill:#e8f4f5,stroke:#3d8b90,color:#16494d,stroke-width:1.5px,rx:14,ry:14;
+    classDef voice fill:#edf5df,stroke:#6b8f3c,color:#243713,stroke-width:1.5px,rx:14,ry:14;
+    classDef record fill:#edf0fc,stroke:#7b86b8,color:#343e70,stroke-width:1.5px,rx:14,ry:14;
+    class START sos;
+    class SNAP neutral;
+    class S1,S2,S3 sms;
+    class C1,C2,C3 voice;
+    class HISTORY record;
+    style SMS fill:#f5fafb,stroke:#c5dfe1,color:#16494d,rx:18,ry:18
+    style CALL fill:#f6f9f1,stroke:#d1dfbf,color:#243713,rx:18,ry:18
+```
+
+**Hai nhánh không chờ nhau:** lỗi gọi không chặn SMS, và không chờ kết thúc cuộc gọi mới gửi tin. Không lấy được vị trí vẫn gửi nội dung cảnh báo. Lịch sử cập nhật khi có kết quả; “đã gửi” không đồng nghĩa đã đọc, “đã yêu cầu gọi” không xác nhận đã bắt máy.
+
+Âm SOS phát trên máy chạy Motion đến khi người dùng dừng; tạm dừng khi nhận thấy chế độ cuộc gọi. Về Home không tắt dịch vụ đang chạy, nhưng force-stop, khởi động lại và giới hạn Android có thể làm gián đoạn. Sửa/xóa liên hệ không thay đổi bản sao trong lịch sử hoặc danh sách đã chốt của sự kiện đang xử lý.
+
+Source sơ đồ: [Tổng quan](docs/diagrams/motion-flow.mmd) · [Phát hiện và xác nhận](docs/diagrams/motion-detection.mmd) · [Gửi SOS](docs/diagrams/motion-sos.mmd).
 
 ## Cài môi trường phát triển và chạy source
 

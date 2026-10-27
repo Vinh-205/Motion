@@ -1,0 +1,40 @@
+---
+config:
+  htmlLabels: false
+  theme: base
+  themeVariables:
+    fontFamily: Segoe UI, Arial, sans-serif
+    fontSize: 16px
+    lineColor: '#64748b'
+    edgeLabelBackground: '#f1f5f9'
+  flowchart:
+    wrappingWidth: 300
+    curve: basis
+    nodeSpacing: 38
+    rankSpacing: 28
+    padding: 12
+---
+flowchart TB
+    READ["ĐỌC VÀ PHÂN TÍCH<br/>Gia tốc · xoay nếu có<br/>Đối chiếu nền dao động"]
+    SUSPECT{"Nghi ngờ ngã?"}
+    ALERT["CẢNH BÁO XÁC NHẬN<br/>Chuông · rung · chờ 15–30 giây"]
+    CHOICE{"TÔI ỔN?"}
+    SAFE["TÔI ỔN<br/>Hủy cảnh báo · lưu lịch sử"]
+    SOS(["CHUYỂN SANG SOS"])
+
+    READ --> SUSPECT
+    SUSPECT -- "Chưa đủ điều kiện" --> READ
+    SUSPECT -- "Có" --> ALERT --> CHOICE
+    CHOICE -- "Xác nhận trước hạn" --> SAFE
+    CHOICE -- "Gửi ngay / hết giờ" --> SOS
+
+    classDef monitor fill:#e8f4f5,stroke:#3d8b90,color:#16494d,stroke-width:1.5px,rx:14,ry:14;
+    classDef decision fill:#f8fafc,stroke:#94a3b8,color:#334155,stroke-width:1.5px;
+    classDef warning fill:#fff2dc,stroke:#c38b35,color:#6b4815,stroke-width:1.5px,rx:14,ry:14;
+    classDef safe fill:#edf5df,stroke:#6b8f3c,color:#243713,stroke-width:1.5px,rx:14,ry:14;
+    classDef sos fill:#fce9e6,stroke:#c7685c,color:#762d24,stroke-width:1.5px;
+    class READ monitor;
+    class SUSPECT,CHOICE decision;
+    class ALERT warning;
+    class SAFE safe;
+    class SOS sos;
