@@ -63,7 +63,7 @@ class EmergencyServices extends StatelessWidget {
                       color: context.colors.lime,
                     ),
                     const SizedBox(width: 8),
-                    Text('${item.$1} · ${item.$2}'),
+                    Flexible(child: Text('${item.$1} · ${item.$2}')),
                   ],
                 ),
               ),

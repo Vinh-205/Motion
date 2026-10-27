@@ -31,6 +31,7 @@ class MainActivity : FlutterActivity() {
     private var soundPickerResult: MethodChannel.Result? = null
     private var permissionResult: MethodChannel.Result? = null
     private var callPermissionResult: MethodChannel.Result? = null
+    private var smsPermissionResult: MethodChannel.Result? = null
     private val main = Handler(Looper.getMainLooper())
     private val previewSound by lazy { AlertSound(this) }
     private var localCountdownSound = false
@@ -69,8 +70,23 @@ class MainActivity : FlutterActivity() {
             try {
                 when (call.method) {
                     "state" -> result.success(state())
+                    "requestSmsPermission" -> {
+                        check(smsPermissionResult == null && permissionResult == null && callPermissionResult == null) { "Một yêu cầu quyền đang mở." }
+                        if (checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) result.success(state())
+                        else {
+                            prefs.edit().putBoolean("smsPermissionRequested", true).apply()
+                            smsPermissionResult = result
+                            requestPermissions(arrayOf(Manifest.permission.SEND_SMS), 7307)
+                        }
+                    }
                     "setAutoCall" -> setAutoCall(call, result)
                     "getAlertSound" -> result.success(AlertSound.settings(this))
+                    "resetAlertSound" -> {
+                        check(prefs.getLong("deadline", 0) == 0L && !prefs.getBoolean("sosActive", false) && !localCountdownSound) { "Hãy xử lý cảnh báo trước khi đổi âm thanh." }
+                        main.removeCallbacks(stopPreview); previewSound.stop()
+                        prefs.edit().remove("alertSoundUri").commit()
+                        result.success(AlertSound.settings(this))
+                    }
                     "pickAlertSound" -> pickAlertSound(result)
                     "previewAlertSound" -> {
                         val active = call.argument<Boolean>("active") == true
@@ -157,13 +173,22 @@ class MainActivity : FlutterActivity() {
         val notifications = getSystemService(NotificationManager::class.java)
         val sensorManager = getSystemService(android.hardware.SensorManager::class.java)
         return SafetyStore.snapshot(this) + mapOf(
+        "deviceModel" to "${Build.MANUFACTURER} ${Build.MODEL}",
+        "androidVersion" to "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
         "smsPermission" to (checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED),
         "locationPermission" to (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED),
         "notificationPermission" to (notifications.areNotificationsEnabled() && (Build.VERSION.SDK_INT < 26 || notifications.getNotificationChannel("motion_alert")?.importance != NotificationManager.IMPORTANCE_NONE)),
         "fullScreenAllowed" to (Build.VERSION.SDK_INT < 34 || notifications.canUseFullScreenIntent()),
         "batteryUnrestricted" to getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName),
         "simReady" to android.telephony.SubscriptionManager.isValidSubscriptionId(SmsDispatch.defaultSubscription()),
-        "hasRequiredSensors" to (sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) != null && sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_GYROSCOPE) != null),
+        "hasRequiredSensors" to (SensorCapabilities.accelerometer(sensorManager) != null),
+        "hasGyroscope" to (SensorCapabilities.gyroscope(sensorManager) != null),
+        "sensorMode" to if (SensorCapabilities.accelerometer(sensorManager) == null) "manual" else if (SensorCapabilities.gyroscope(sensorManager) == null) "accelerometer" else "full",
+        "sensorSampleHz" to (SafetyService.instance?.sensorSampleHz ?: 0.0),
+        "impactThreshold" to (SafetyService.instance?.detector?.impactThreshold ?: 23.0),
+        "nativeAcceleration" to SafetyService.instance?.accelerationValues,
+        "nativeRotation" to SafetyService.instance?.rotationValues,
+        "smsPermissionNeedsSettings" to (checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED && prefs.getBoolean("smsPermissionRequested", false) && !shouldShowRequestPermissionRationale(Manifest.permission.SEND_SMS)),
         "alarmVolume" to getSystemService(AudioManager::class.java).getStreamVolume(AudioManager.STREAM_ALARM),
     )
     }
@@ -176,19 +201,22 @@ class MainActivity : FlutterActivity() {
         editor.apply()
     }
     private fun enableReal(call: MethodCall, result: MethodChannel.Result) {
-        check(permissionResult == null) { "Một yêu cầu cấp quyền đang mở." }
+        check(permissionResult == null && smsPermissionResult == null && callPermissionResult == null) { "Một yêu cầu cấp quyền đang mở." }
         check(SafetyStore.contacts(this).isNotEmpty()) { "Hãy lưu ít nhất một liên hệ khẩn cấp hợp lệ trước." }
         check(Build.HARDWARE !in listOf("ranchu", "goldfish")) { "SOS qua SIM cần điện thoại Android thật có SIM. Máy ảo không gửi SMS." }
         check(android.telephony.SubscriptionManager.isValidSubscriptionId(SmsDispatch.defaultSubscription())) { "Hãy lắp SIM và chọn SIM SMS mặc định trong cài đặt điện thoại." }
-        val sensorManager = getSystemService(android.hardware.SensorManager::class.java)
-        check(sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) != null && sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_GYROSCOPE) != null) { "Thiết bị thiếu cảm biến cần thiết cho giám sát tự động." }
         saveConfiguration(call)
+        if (SensorCapabilities.accelerometer(getSystemService(android.hardware.SensorManager::class.java)) == null) prefs.edit().putBoolean("monitoring", false).apply()
         val required = mutableListOf<String>()
-        if (checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) required.add(Manifest.permission.SEND_SMS)
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            prefs.edit().putBoolean("smsPermissionRequested", true).apply()
+            required.add(Manifest.permission.SEND_SMS)
+        }
+        // Request essential SMS separately; optional location/notifications follow on retry.
+        if (required.isEmpty() && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             required.add(Manifest.permission.ACCESS_COARSE_LOCATION); required.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) required.add(Manifest.permission.POST_NOTIFICATIONS)
+        if (Manifest.permission.SEND_SMS !in required && Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) required.add(Manifest.permission.POST_NOTIFICATIONS)
         if (required.isEmpty()) startSafety(result, false)
         else {
             permissionResult = result
@@ -197,6 +225,12 @@ class MainActivity : FlutterActivity() {
     }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 7307) {
+            val result = smsPermissionResult ?: return
+            smsPermissionResult = null
+            result.success(state())
+            return
+        }
         if (requestCode == 7306) {
             val result = callPermissionResult ?: return
             callPermissionResult = null
@@ -209,9 +243,10 @@ class MainActivity : FlutterActivity() {
         val result = permissionResult ?: return
         permissionResult = null
         if (checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            result.error("sms_denied", "Chưa có quyền gửi SMS. SOS chưa được bật. Hãy cấp quyền để tiếp tục thiết lập.", null)
+            result.error("sms_denied", "Android chưa cấp quyền SMS. Cuộc gọi không thay thế SMS. Bấm CẤP QUYỀN SMS hoặc mở Cài đặt ứng dụng → Quyền → SMS. Nếu quyền bị khóa/không xuất hiện, trình cài đặt hoặc chính sách thiết bị có thể đang hạn chế SMS; app không thể tự vượt giới hạn này.", null)
             return
         }
+        if (Manifest.permission.SEND_SMS in permissions) { enableReal(MethodCall("enableRealSms", null), result); return }
         startSafety(result, false)
     }
     private fun startSafety(result: MethodChannel.Result, dryRun: Boolean) {
@@ -301,8 +336,7 @@ class MainActivity : FlutterActivity() {
                 result.error("invalid_sound", "Chưa chọn được âm thanh hợp lệ. Giữ nguyên âm hiện tại.", null); return
             }
             val editor = prefs.edit()
-            if (uri == RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)) editor.remove("alertSoundUri")
-            else editor.putString("alertSoundUri", uri.toString())
+            editor.putString("alertSoundUri", uri.toString())
             if (editor.commit()) result.success(AlertSound.settings(this))
             else result.error("sound_save_failed", "Không lưu được âm thanh. Vui lòng thử lại.", null)
             return
@@ -327,6 +361,7 @@ class MainActivity : FlutterActivity() {
         catch (error: Exception) { result.error("invalid_contact", error.message ?: "Không đọc được số liên hệ.", null) }
     }
     override fun onDestroy() {
+        smsPermissionResult?.error("activity_closed", "Màn hình cấp quyền SMS đã đóng.", null); smsPermissionResult = null
         callPermissionResult?.error("activity_closed", "Màn hình cấp quyền gọi đã đóng.", null); callPermissionResult = null
         main.removeCallbacks(stopPreview)
         previewSound.stop()

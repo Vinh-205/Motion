@@ -19,14 +19,17 @@ class SensorService extends ChangeNotifier {
   int accelerationSequence = 0;
   int _generation = 0;
   bool running = false;
+  bool hasGyroscope = true;
+  String? rotationWarning;
 
   bool fresh(DateTime now) =>
       error == null &&
       running &&
       accelerationAt != null &&
-      rotationAt != null &&
       now.difference(accelerationAt!).inMilliseconds < 2000 &&
-      now.difference(rotationAt!).inMilliseconds < 2000;
+      (!hasGyroscope ||
+          (rotationAt != null &&
+              now.difference(rotationAt!).inMilliseconds < 2000));
 
   void start() {
     if (running) return;
@@ -44,7 +47,7 @@ class SensorService extends ChangeNotifier {
     try {
       _acc =
           accelerometerEventStream(
-            samplingPeriod: const Duration(milliseconds: 50),
+            samplingPeriod: const Duration(milliseconds: 10),
           ).listen((e) {
             if (!running || generation != _generation) return;
             acceleration = Vector3(e.x, e.y, e.z);
@@ -52,14 +55,28 @@ class SensorService extends ChangeNotifier {
             accelerationSequence++;
             notifyListeners();
           }, onError: failed);
-      _gyro =
-          gyroscopeEventStream(samplingPeriod: const Duration(milliseconds: 50))
-              .listen((e) {
+      if (hasGyroscope) {
+        _gyro =
+            gyroscopeEventStream(
+              samplingPeriod: const Duration(milliseconds: 10),
+            ).listen(
+              (e) {
                 if (!running || generation != _generation) return;
                 rotation = Vector3(e.x, e.y, e.z);
                 rotationAt = DateTime.now();
                 notifyListeners();
-              }, onError: failed);
+              },
+              onError: (Object e) {
+                if (!running || generation != _generation) return;
+                hasGyroscope = false;
+                rotation = null;
+                rotationAt = null;
+                rotationWarning =
+                    'Không có dữ liệu con quay. Không hiển thị số xoay giả.';
+                notifyListeners();
+              },
+            );
+      }
     } catch (e) {
       failed(e);
     }

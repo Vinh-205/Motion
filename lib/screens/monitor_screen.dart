@@ -52,7 +52,11 @@ class MonitorScreen extends StatelessWidget {
     final deviation = magnitude == null
         ? 0.0
         : (magnitude - DetectionConfig.gravity).abs();
-    final movement = !ready
+    final signalAvailable =
+        c.foreground &&
+        c.sensors.accelerationAt != null &&
+        c.now().difference(c.sensors.accelerationAt!).inMilliseconds < 2000;
+    final movement = !signalAvailable
         ? 'Chưa có dữ liệu mới'
         : deviation < 1.3
         ? 'Yên tĩnh'
@@ -237,7 +241,7 @@ class MonitorScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(
-                    end: ready ? (deviation / 20).clamp(0.0, 1.0) : 0,
+                    end: signalAvailable ? (deviation / 20).clamp(0.0, 1.0) : 0,
                   ),
                   duration: MediaQuery.disableAnimationsOf(context)
                       ? Duration.zero
@@ -259,16 +263,28 @@ class MonitorScreen extends StatelessWidget {
           ),
         ),
         const SectionLabel('TÍN HIỆU CẢM BIẾN', trailing: 'XYZ'),
+        if (c.realSmsEnabled && c.monitoring)
+          NoteLine(
+            '${c.sensorMode == 'accelerometer' ? 'Chế độ gia tốc · không có gyroscope' : 'Gia tốc + con quay'} · ${c.sensorSampleHz.toStringAsFixed(0)} Hz thực tế (yêu cầu 100 Hz). ${c.detector.state.label}',
+          ),
         SensorCard(
           title: 'Accelerometer',
           unit: 'm/s²',
           value: c.sensors.acceleration,
         ),
+        if (c.realSmsEnabled && c.monitoring)
+          NoteLine(
+            'Ngưỡng va chạm hiện tại: ${c.impactThreshold.toStringAsFixed(1)} m/s² · điều chỉnh theo nền dao động 2 giây, vẫn cần đủ chuỗi và nằm yên 3 giây.',
+          ),
         SensorCard(
           title: 'Gyroscope',
           unit: 'rad/s',
           value: c.sensors.rotation,
         ),
+        if (!c.hasGyroscope || c.sensors.rotationWarning != null)
+          const NoteLine(
+            'Không có dữ liệu con quay khả dụng. Dấu — không phải 0 rad/s. Máy dùng chế độ gia tốc nếu được hỗ trợ.',
+          ),
         const SizedBox(height: 6),
         NoteLine(
           c.realSmsEnabled

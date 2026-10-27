@@ -66,11 +66,12 @@ object SmsDispatch {
                         sent.add(callback("sent")); delivered.add(callback("delivered"))
                     }
                     SafetyStore.updateSms(app, id, "sending", "Đang yêu cầu SIM gửi SMS đến liên hệ khẩn cấp. Chưa có xác nhận gửi.")
-                    manager.sendMultipartTextMessage(phone, null, parts, sent, delivered)
+                    if (parts.size == 1) manager.sendTextMessage(phone, null, parts[0], sent[0], delivered[0])
+                    else manager.sendMultipartTextMessage(phone, null, parts, sent, delivered)
                 } catch (_: SecurityException) {
                     SafetyStore.updateSms(app, id, "failed", "Quyền SMS đã bị thu hồi hoặc Android chặn gửi SMS.")
-                } catch (_: Exception) {
-                    SafetyStore.updateSms(app, id, "failed", "Không yêu cầu gửi được SMS. Kiểm tra SIM mặc định, sóng và quyền SMS.")
+                } catch (error: Exception) {
+                    SafetyStore.updateSms(app, id, "failed", "Không yêu cầu gửi được SMS (${error.javaClass.simpleName}). Kiểm tra SIM mặc định, sóng, tài khoản SMS và quyền SMS. Cuộc gọi đi không chứng minh SMS đã gửi.")
                 }
             }
         }
@@ -87,7 +88,7 @@ class SmsStatusReceiver : BroadcastReceiver() {
         val event = SafetyStore.dispatchState(context, id) ?: return
         val p = SafetyStore.prefs(context)
         if (resultCode != Activity.RESULT_OK) {
-            if (kind == "sent") SafetyStore.updateSms(context, id, "failed", "Một hoặc nhiều phần SMS gửi thất bại (mã $resultCode). Chưa xác nhận người thân nhận được đầy đủ.")
+            if (kind == "sent") SafetyStore.updateSms(context, id, "failed", SmsFailure.describe(resultCode, intent.getIntExtra("errorCode", -1)))
             return
         }
         p.edit().putBoolean("$kind.$id.$index", true).apply()

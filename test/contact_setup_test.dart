@@ -17,6 +17,80 @@ Future<void> reveal(WidgetTester tester, Finder target) async {
 }
 
 void main() {
+  testWidgets(
+    'Add contact reveals and focuses an empty editor without overwriting saved contacts',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final device = FakeDeviceSafetyBridge();
+      final c = AppController(device: device);
+      addTearDown(c.dispose);
+      await c.saveContact('Một', '0900000001');
+      await c.saveContact('Hai', '0900000002');
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: Scaffold(body: ContactScreen(controller: c)),
+        ),
+      );
+      await reveal(tester, find.byKey(const Key('addEmergencyContact')));
+      await tester.tap(find.byKey(const Key('addEmergencyContact')));
+      await tester.pumpAndSettle();
+      final name = tester.widget<TextFormField>(
+        find.byKey(const Key('contactName')),
+      );
+      final input = tester.widget<TextField>(
+        find.descendant(
+          of: find.byKey(const Key('contactName')),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(input.focusNode!.hasFocus, true);
+      expect(name.controller!.text, isEmpty);
+      await tester.enterText(find.byKey(const Key('contactName')), 'Ba');
+      await tester.enterText(
+        find.byKey(const Key('contactPhone')),
+        '0900000003',
+      );
+      await reveal(tester, find.byKey(const Key('saveContact')));
+      await tester.tap(find.byKey(const Key('saveContact')));
+      await tester.pumpAndSettle();
+      expect(c.contacts.map((c) => c.name), ['Một', 'Hai', 'Ba']);
+      expect(device.sendRequests, 0);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
+    'SMS permission can be requested without a gyro or starting SOS',
+    (tester) async {
+      final device = FakeDeviceSafetyBridge();
+      device.data.addAll({
+        'hasRequiredSensors': true,
+        'hasGyroscope': false,
+        'sensorMode': 'accelerometer',
+      });
+      final c = AppController(device: device);
+      addTearDown(c.dispose);
+      await c.refreshDevice();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: SmsSetupScreen(controller: c),
+        ),
+      );
+      await reveal(tester, find.byKey(const Key('grantSmsPermission')));
+      await tester.tap(find.byKey(const Key('grantSmsPermission')));
+      await tester.pumpAndSettle();
+      expect(c.smsPermission, true);
+      expect(c.hasGyroscope, false);
+      expect(device.calls, contains('requestSmsPermission'));
+      expect(device.calls, isNot(contains('enableRealSms')));
+      expect(device.sendRequests, 0);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets('Picking a contact fills the form but needs an explicit Save', (
     tester,
   ) async {

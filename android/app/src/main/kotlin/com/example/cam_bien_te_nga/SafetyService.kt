@@ -58,6 +58,17 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     private var rotationMagnitude = 0.0
     private var rotationAt = 0L
     private var accelerationAt = 0L
+    private var hasRotation = false
+    private var previousAcceleration: DoubleArray? = null
+    private var previousAccelerationTimestamp = 0L
+    var accelerationValues: List<Double>? = null
+        private set
+    var rotationValues: List<Double>? = null
+        private set
+    var sensorSampleHz = 0.0
+        private set
+    private var sampleWindowAt = 0L
+    private var sampleCount = 0
     private var monitoringStartedAt = 0L
     private var cooldownUntil = 0L
     private var demoUntil = 0L
@@ -160,26 +171,51 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
         accelerationAt = SystemClock.elapsedRealtime()
         monitoringStartedAt = accelerationAt
         rotationAt = 0
+        accelerationAt = 0
+        previousAcceleration = null
+        previousAccelerationTimestamp = 0L
+        accelerationValues = null; rotationValues = null
+        sensorSampleHz = 0.0; sampleCount = 0; sampleWindowAt = 0
         sensorError = ""
         if (p.getBoolean("monitoring", true)) {
-            val acc = sensors.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-            val gyro = sensors.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-            if (acc == null || gyro == null) sensorError = "Thiết bị thiếu accelerometer hoặc gyroscope; không thể giám sát tự động."
-            else if (!sensors.registerListener(this, acc, 50000) || !sensors.registerListener(this, gyro, 50000)) sensorError = "Không đăng ký được luồng cảm biến Android."
+            val acc = SensorCapabilities.accelerometer(sensors)
+            val gyro = SensorCapabilities.gyroscope(sensors)
+            hasRotation = gyro != null
+            detector.rotationAvailable = hasRotation
+            if (acc == null) sensorError = "Thiết bị không có cảm biến gia tốc. Chỉ dùng SOS thủ công."
+            else {
+                // 100 Hz requested, no batching. Actual rate depends on phone hardware.
+                val accRegistered = sensors.registerListener(this, acc, 10000, 0)
+                val gyroRegistered = gyro == null || sensors.registerListener(this, gyro, 10000, 0)
+                if (!accRegistered || !gyroRegistered) sensorError = "Không đăng ký được luồng cảm biến Android. Hãy bật lại giám sát."
+            }
         }
         updateNotification()
     }
     override fun onSensorChanged(event: SensorEvent) {
         if (!running) return
         val now = event.timestamp / 1000000L
-        val magnitude = sqrt(event.values.take(3).sumOf { it.toDouble() * it.toDouble() })
-        if (event.sensor.type == Sensor.TYPE_GYROSCOPE) { rotationMagnitude = magnitude; rotationAt = now; return }
+        if (event.sensor.type == Sensor.TYPE_GYROSCOPE || event.sensor.type == Sensor.TYPE_GYROSCOPE_UNCALIBRATED) {
+            val corrected = (0..2).map { i -> event.values[i].toDouble() - if (event.sensor.type == Sensor.TYPE_GYROSCOPE_UNCALIBRATED && event.values.size >= 6) event.values[i + 3].toDouble() else 0.0 }
+            rotationValues = corrected
+            rotationMagnitude = sqrt(corrected.sumOf { it * it }); rotationAt = now; return
+        }
         if (event.sensor.type != Sensor.TYPE_ACCELEROMETER) return
+        val values = event.values.take(3).map { it.toDouble() }
+        val magnitude = sqrt(values.sumOf { it * it })
+        val delta = previousAcceleration?.let { previous -> sqrt((0..2).sumOf { i -> (values[i] - previous[i]) * (values[i] - previous[i]) }) * (50.0 / (now - previousAccelerationTimestamp).coerceAtLeast(1)) } ?: 0.0
+        previousAcceleration = values.toDoubleArray()
+        previousAccelerationTimestamp = now
+        accelerationValues = values
         accelerationAt = SystemClock.elapsedRealtime()
-        if (rotationAt == 0L || now - rotationAt !in 0..250) { detector.reset(); return }
+        if (sampleWindowAt == 0L) sampleWindowAt = now
+        sampleCount++
+        if (now - sampleWindowAt >= 1000) { sensorSampleHz = sampleCount * 1000.0 / (now - sampleWindowAt); sampleCount = 0; sampleWindowAt = now }
+        // Delivery can interleave gyro/accelerometer timestamps slightly out of order.
+        if (hasRotation && (rotationAt == 0L || kotlin.math.abs(now - rotationAt) > 250)) { detector.reset(); return }
         sensorError = ""
         if (dryRun || SystemClock.elapsedRealtime() < demoUntil || SystemClock.elapsedRealtime() < cooldownUntil || p.getLong("deadline", 0) > 0 || p.getBoolean("sosActive", false)) return
-        if (detector.update(now, magnitude, rotationMagnitude, true)) beginAlert()
+        if (detector.update(now, magnitude, rotationMagnitude, true, delta)) beginAlert()
     }
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
     fun beginAlert() {
@@ -212,7 +248,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     fun remainingMilliseconds(): Long = if (p.getLong("deadline", 0) > 0) (monotonicDeadline - SystemClock.elapsedRealtime()).coerceAtLeast(0) else 0
     fun sensorsReady(): Boolean {
         val now = SystemClock.elapsedRealtime()
-        return running && p.getBoolean("monitoring", true) && rotationAt > 0 && now - accelerationAt in 0..1999 && now - rotationAt in 0..1999
+        return running && p.getBoolean("monitoring", true) && accelerationAt > 0 && now - accelerationAt in 0..1999 && (!hasRotation || (rotationAt > 0 && now - rotationAt in 0..1999))
     }
     fun confirmSafe() {
         if (p.getLong("deadline", 0) == 0L) return
@@ -265,7 +301,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     private fun captureEventMetadata() {
         val manual = p.getString("source", "sensor") == "manual"
         val metadata = mutableMapOf<String, Any?>(
-            "reason" to if (manual) "Người dùng chủ động nhấn SOS." else "Chuỗi bất thường → va chạm → xoay → ít chuyển động 3 giây.",
+            "reason" to if (manual) "Người dùng chủ động nhấn SOS." else if (hasRotation) "Chuỗi bất thường → va chạm → xoay → ít chuyển động 3 giây." else "Chế độ gia tốc: giảm gia tốc ít nhất 80 ms → va chạm → ít chuyển động 3 giây (không có gyroscope).",
             "recipientName" to p.getString("eventContactName", ""),
             "recipientPhone" to p.getString("eventPhone", ""),
             "countdownSeconds" to p.getInt("eventCountdown", 30),

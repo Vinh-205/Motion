@@ -99,6 +99,11 @@ class FakeDeviceSafetyBridge extends DeviceSafetyBridge {
   ]) async {
     calls.add(method);
     switch (method) {
+      case 'requestSmsPermission':
+        data['smsPermission'] = enableError == null;
+      case 'resetAlertSound':
+        soundTitle = 'Chuông SOS Motion · mặc định';
+        return {'title': soundTitle, 'custom': false};
       case 'setAutoCall':
         if (callEnableError != null) {
           throw PlatformException(

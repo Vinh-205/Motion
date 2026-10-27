@@ -166,6 +166,13 @@ class _StartMonitoringScreenState extends State<StartMonitoringScreen> {
                     tilePadding: EdgeInsets.zero,
                     children: [
                       const SectionLabel('KIỂM TRA TRƯỚC KHI RỜI APP'),
+                      if (c.deviceModel.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: NoteLine(
+                            '${c.deviceModel} · Android ${c.androidVersion}',
+                          ),
+                        ),
                       _Check(
                         label: 'Người liên hệ khẩn cấp',
                         detail: c.contactPhone.isEmpty
@@ -175,7 +182,11 @@ class _StartMonitoringScreenState extends State<StartMonitoringScreen> {
                       ),
                       _Check(
                         label: 'Cảm biến gia tốc và xoay',
-                        detail: c.backgroundMonitoring
+                        detail: c.sensorMode == 'accelerometer'
+                            ? 'Không có gyroscope. Giám sát giới hạn bằng gia tốc; kiểm tra tín hiệu trong Theo dõi.'
+                            : !c.hasRequiredSensors
+                            ? 'Không có cảm biến gia tốc. Chỉ dùng SOS thủ công.'
+                            : c.backgroundMonitoring
                             ? (c.nativeSensorReady
                                   ? 'Đang nhận dữ liệu trong dịch vụ nền.'
                                   : 'Đang chờ dữ liệu cảm biến mới.')
@@ -186,7 +197,9 @@ class _StartMonitoringScreenState extends State<StartMonitoringScreen> {
                       ),
                       _Check(
                         label: 'SMS qua SIM',
-                        detail: c.simReady
+                        detail: !c.smsPermission
+                            ? 'Chưa có quyền SMS. Mở thiết lập SOS để cấp quyền; cuộc gọi không thay thế tin nhắn.'
+                            : c.simReady
                             ? 'Có SIM SMS mặc định; cần sóng và dịch vụ SMS.'
                             : 'Chọn SIM SMS mặc định trên điện thoại thật.',
                         ready:

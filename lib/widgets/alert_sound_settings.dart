@@ -16,7 +16,7 @@ class AlertSoundSettings extends StatefulWidget {
 
 class _AlertSoundSettingsState extends State<AlertSoundSettings>
     with WidgetsBindingObserver {
-  String _title = 'Âm báo thức mặc định';
+  String _title = 'Chuông SOS Motion · mặc định';
   String? _error;
   bool _busy = false, _previewing = false;
   Timer? _timer;
@@ -136,6 +136,33 @@ class _AlertSoundSettingsState extends State<AlertSoundSettings>
               key: const Key('chooseAlertSound'),
               onPressed: _busy ? null : () => _act(pick: true),
               child: const Text('CHỌN ÂM THANH'),
+            ),
+            TextButton(
+              key: const Key('defaultAlertSound'),
+              onPressed: _busy
+                  ? null
+                  : () async {
+                      setState(() => _busy = true);
+                      try {
+                        await _stop();
+                        final result = await widget.device.command(
+                          'resetAlertSound',
+                        );
+                        if (mounted) {
+                          setState(() {
+                            _title =
+                                result['title'] as String? ??
+                                'Chuông SOS Motion · mặc định';
+                            _error = null;
+                          });
+                        }
+                      } on PlatformException catch (e) {
+                        if (mounted) setState(() => _error = e.message);
+                      } finally {
+                        if (mounted) setState(() => _busy = false);
+                      }
+                    },
+              child: const Text('DÙNG CHUÔNG SOS MOTION'),
             ),
             TextButton(
               key: const Key('previewAlertSound'),

@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.media.ToneGenerator
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -16,10 +17,10 @@ class AlertSound(private val context: Context) {
     companion object {
         private var playing: AlertSound? = null
         fun selectedUri(context: Context): Uri = SafetyStore.prefs(context).getString("alertSoundUri", null)
-            ?.let { Uri.parse(it) } ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            ?.let { Uri.parse(it) } ?: Uri.parse("android.resource://${context.packageName}/${R.raw.motion_sos}")
         fun settings(context: Context): Map<String, Any> {
             val custom = SafetyStore.prefs(context).getString("alertSoundUri", null)
-            val title = if (custom == null) "Âm báo thức mặc định" else try {
+            val title = if (custom == null) "Chuông SOS Motion · mặc định" else try {
                 RingtoneManager.getRingtone(context, Uri.parse(custom))?.getTitle(context) ?: "Âm đã chọn"
             } catch (_: Exception) { "Âm đã chọn · có thể không còn khả dụng" }
             return mapOf("title" to title, "custom" to (custom != null))
@@ -27,6 +28,7 @@ class AlertSound(private val context: Context) {
     }
     private var ringtone: Ringtone? = null
     private var tone: ToneGenerator? = null
+    private var player: MediaPlayer? = null
     private var vibrating = false
 
     fun start() {
@@ -34,6 +36,18 @@ class AlertSound(private val context: Context) {
         stop()
         playing = this
         try {
+            // Bundled audio works offline, including API 24 where Ringtone cannot loop.
+            if (SafetyStore.prefs(context).getString("alertSoundUri", null) == null) {
+                val bundled = MediaPlayer()
+                player = bundled
+                try { bundled.apply {
+                    setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+                    context.resources.openRawResourceFd(R.raw.motion_sos).use { fd -> setDataSource(fd.fileDescriptor, fd.startOffset, fd.length) }
+                    isLooping = true
+                    prepare(); start()
+                } } catch (_: Exception) { bundled.release(); player = null }
+            }
+            if (player == null) {
             val candidates = listOf(selectedUri(context), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)).distinct()
             for (uri in candidates) {
                 try {
@@ -52,6 +66,7 @@ class AlertSound(private val context: Context) {
                     startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD)
                 }
             }
+            }
         } catch (_: Exception) { /* Audio failure must not interrupt the countdown. */ }
         // Vibration remains independent of audio failures and device alarm volume.
         try {
@@ -64,6 +79,8 @@ class AlertSound(private val context: Context) {
     }
 
     fun stop() {
+        try { player?.release() } catch (_: Exception) { }
+        player = null
         try { ringtone?.stop() } catch (_: Exception) { }
         ringtone = null
         try { tone?.release() } catch (_: Exception) { }

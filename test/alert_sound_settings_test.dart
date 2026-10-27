@@ -6,6 +6,23 @@ import 'package:cam_bien_te_nga/widgets/app_design.dart';
 import 'support/fake_device_safety.dart';
 
 void main() {
+  testWidgets('Bundled SOS can be restored without sending or calling', (
+    tester,
+  ) async {
+    final device = FakeDeviceSafetyBridge()..soundTitle = 'Âm đã chọn';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AlertSoundSettings(device: device)),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('defaultAlertSound')));
+    await tester.pump();
+    expect(find.text('Chuông SOS Motion · mặc định'), findsOneWidget);
+    expect(device.calls, ['resetAlertSound']);
+    expect(device.sendRequests, 0);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets(
     'Picker cancel preserves selection; chosen title restores on reopening',
     (tester) async {

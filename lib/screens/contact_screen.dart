@@ -20,6 +20,30 @@ class _ContactScreenState extends State<ContactScreen> {
   late final TextEditingController _name, _phone;
   bool _dirty = false, _busy = false;
   String? _editingId;
+  final _scroll = ScrollController();
+  final _nameFocus = FocusNode();
+
+  Future<void> _showEditor() async {
+    // The editor used to clear off-screen with no feedback. Reveal it and focus input.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted || !_scroll.hasClients) return;
+    await _scroll.animateTo(
+      _scroll.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+    if (!mounted) return;
+    _nameFocus.requestFocus();
+    final fieldContext = _nameFocus.context;
+    if (fieldContext != null && fieldContext.mounted) {
+      await Scrollable.ensureVisible(
+        fieldContext,
+        duration: const Duration(milliseconds: 250),
+        alignment: 0.15,
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +69,8 @@ class _ContactScreenState extends State<ContactScreen> {
     widget.controller.removeListener(_restoreSavedContact);
     _name.dispose();
     _phone.dispose();
+    _nameFocus.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -111,6 +137,7 @@ class _ContactScreenState extends State<ContactScreen> {
   Widget build(BuildContext context) => Form(
     key: _form,
     child: ListView(
+      controller: _scroll,
       key: const PageStorageKey('contact'),
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
       children: [
@@ -222,12 +249,15 @@ class _ContactScreenState extends State<ContactScreen> {
                     icon: const MorphIcon(AppGlyph.sliders, size: 19),
                     onPressed: _busy
                         ? null
-                        : () => setState(() {
-                            _editingId = contact.id;
-                            _dirty = true;
-                            _name.text = contact.name;
-                            _phone.text = contact.phone;
-                          }),
+                        : () {
+                            setState(() {
+                              _editingId = contact.id;
+                              _dirty = true;
+                              _name.text = contact.name;
+                              _phone.text = contact.phone;
+                            });
+                            _showEditor();
+                          },
                   ),
                   IconButton(
                     tooltip: 'Xóa ${contact.name}',
@@ -287,12 +317,15 @@ class _ContactScreenState extends State<ContactScreen> {
           key: const Key('addEmergencyContact'),
           onPressed: _busy
               ? null
-              : () => setState(() {
-                  _editingId = null;
-                  _dirty = true;
-                  _name.clear();
-                  _phone.clear();
-                }),
+              : () {
+                  setState(() {
+                    _editingId = null;
+                    _dirty = true;
+                    _name.clear();
+                    _phone.clear();
+                  });
+                  _showEditor();
+                },
           child: const Text('THÊM LIÊN HỆ MỚI'),
         ),
         const SectionLabel('THÔNG TIN LIÊN HỆ'),
@@ -310,6 +343,7 @@ class _ContactScreenState extends State<ContactScreen> {
         const SizedBox(height: 20),
         TextFormField(
           key: const Key('contactName'),
+          focusNode: _nameFocus,
           controller: _name,
           onChanged: (_) => _dirty = true,
           textCapitalization: TextCapitalization.words,

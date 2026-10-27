@@ -60,6 +60,11 @@ class AppController extends ChangeNotifier {
       simReady = false,
       hasRequiredSensors = false;
   int alarmVolume = 0;
+  bool hasGyroscope = true, smsPermissionNeedsSettings = false;
+  String sensorMode = 'full';
+  String deviceModel = '', androidVersion = '';
+  double sensorSampleHz = 0;
+  double impactThreshold = 23;
   bool get backgroundMonitoring => realSmsEnabled && monitoring;
   bool get backgroundReady =>
       backgroundMonitoring &&
@@ -104,7 +109,7 @@ class AppController extends ChangeNotifier {
     _started = true;
     _elapsed.start();
     sensors.addListener(_onSensor);
-    if (monitoring && foreground) sensors.start();
+    if ((monitoring || !canSimulate) && foreground) sensors.start();
     unawaited(refreshDevice());
     _timer = Timer.periodic(const Duration(milliseconds: 200), (_) => tick());
   }
@@ -192,6 +197,14 @@ class AppController extends ChangeNotifier {
     realSmsEnabled =
         nativeConfigured && state['running'] == true && state['dryRun'] != true;
     smsPermission = state['smsPermission'] == true;
+    smsPermissionNeedsSettings = state['smsPermissionNeedsSettings'] == true;
+    hasGyroscope = state['hasGyroscope'] as bool? ?? true;
+    sensorMode = state['sensorMode'] as String? ?? 'full';
+    deviceModel = state['deviceModel'] as String? ?? '';
+    androidVersion = state['androidVersion'] as String? ?? '';
+    sensorSampleHz = (state['sensorSampleHz'] as num?)?.toDouble() ?? 0;
+    impactThreshold = (state['impactThreshold'] as num?)?.toDouble() ?? 23;
+    sensors.hasGyroscope = hasGyroscope;
     locationPermission = state['locationPermission'] == true;
     notificationPermission = state['notificationPermission'] == true;
     fullScreenAllowed = state['fullScreenAllowed'] == true;
@@ -201,6 +214,28 @@ class AppController extends ChangeNotifier {
     alarmVolume = (state['alarmVolume'] as num?)?.toInt() ?? 0;
     nativeSensorError = state['sensorError'] as String? ?? '';
     nativeSensorReady = state['sensorReady'] == true;
+    // Native service remains the detector owner. Show its real readings when available,
+    // including uncalibrated gyro hardware not exposed by the Flutter plugin.
+    if (realSmsEnabled && monitoring) {
+      Vector3? vector(dynamic value) => value is List && value.length == 3
+          ? Vector3(
+              (value[0] as num).toDouble(),
+              (value[1] as num).toDouble(),
+              (value[2] as num).toDouble(),
+            )
+          : null;
+      final acceleration = vector(state['nativeAcceleration']);
+      if (acceleration != null && nativeSensorReady) {
+        sensors.acceleration = acceleration;
+        sensors.accelerationAt = now();
+        sensors.rotation = vector(state['nativeRotation']);
+        if (sensors.rotation != null) {
+          sensors.rotationAt = now();
+          sensors.rotationWarning = null;
+        }
+        sensors.error = null;
+      }
+    }
     if (!_savingContact) {
       contactName = state['contactName'] as String? ?? contactName;
       contactPhone = state['contactPhone'] as String? ?? contactPhone;
@@ -297,6 +332,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> disableRealSms() => _nativeCommand('disableRealSms');
+  Future<void> requestSmsPermission() => _nativeCommand('requestSmsPermission');
   Future<String?> setAutoCall(bool enabled) async {
     await _nativeCommand('setAutoCall', {'enabled': enabled});
     return deviceError.isEmpty ? null : deviceError;
@@ -507,7 +543,7 @@ class AppController extends ChangeNotifier {
     }
     monitoring = value;
     detector.reset();
-    if (value && foreground) {
+    if ((value || !canSimulate) && foreground) {
       sensors.start();
     } else {
       sensors.stop();
@@ -528,7 +564,7 @@ class AppController extends ChangeNotifier {
       );
     }
     detector.reset();
-    if (value && monitoring) {
+    if (value && (monitoring || !canSimulate)) {
       sensors.start();
     } else {
       sensors.stop();

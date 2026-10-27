@@ -1,16 +1,16 @@
 # Motion
 
-Ứng dụng Flutter giám sát dấu hiệu té ngã, cảnh báo xác nhận và hỗ trợ SOS trên Android. **Phiên bản test: 1.0.1+3** · Nhóm dự kiến **50–100 người test**.
+Ứng dụng Flutter giám sát dấu hiệu té ngã, cảnh báo xác nhận và hỗ trợ SOS trên Android. **Phiên bản test: 1.0.2+4** · Nhóm dự kiến **50–100 người test**.
 
 Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay trong README này. Người test chỉ cần điện thoại Android; không cần tải source hay cài công cụ lập trình.
 
 ## Tải APK để tham gia test (không cần máy tính)
 
-Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.0.1 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.0.1-test.3/Motion-1.0.1-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
+Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.0.2 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.0.2-test.4/Motion-1.0.2-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
 
-[<img src="docs/images/motion-apk-qr.png" alt="QR tải APK Motion 1.0.1" width="300">](https://github.com/Vinh-205/Motion/releases/download/v1.0.1-test.3/Motion-1.0.1-android.apk)
+[<img src="docs/images/motion-apk-qr.png" alt="QR tải APK Motion 1.0.2" width="300">](https://github.com/Vinh-205/Motion/releases/download/v1.0.2-test.4/Motion-1.0.2-android.apk)
 
-1. Tải tệp `Motion-1.0.1-android.apk` (khoảng 54 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.
+1. Tải tệp `Motion-1.0.2-android.apk` (khoảng 54 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.
 2. Mở tệp đã tải → nếu Android yêu cầu, cho phép **Cài ứng dụng không rõ nguồn gốc / Cho phép từ nguồn này** cho trình duyệt hoặc ứng dụng quản lý tệp đang mở APK → nhấn **Cài đặt**. Có thể tắt lại quyền cài từ nguồn này sau khi cài xong.
 3. Mở Motion và làm theo **[Hướng dẫn sử dụng bên dưới](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt)**. Người test không cần cài Flutter, Android Studio hay bật USB debugging.
 
@@ -18,7 +18,18 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 
 Đây là bản phát hành thử dành cho nhóm dự kiến 50–100 người. Mỗi máy tự cấu hình liên hệ/SIM; không có tài khoản hay hệ thống thu thập phản hồi tự động. Không tự dùng số của người tổ chức làm người nhận SOS cho cả nhóm. Thống nhất trước với người nhận khi thử SMS hoặc cuộc gọi thật vì có thể phát sinh cước.
 
-[Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.0.1-test.3). QR này cố định ở bản 1.0.1+3, không tự chuyển sang bản mới.
+[Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.0.2-test.4). QR này cố định ở bản 1.0.2+4, không tự chuyển sang bản mới.
+
+## Bản sửa 1.0.2 — kiểm tra lại trên điện thoại
+
+- **Cảm biến:** yêu cầu 100 Hz thay cho 20 Hz; màn hình Theo dõi hiển thị Hz thực tế, bước đang kiểm tra và ngưỡng va chạm hiện tại. Vẫn xem số đo gia tốc khi chưa bật SOS; điều này không có nghĩa giám sát nền đã bật.
+- **Máy thiếu gyroscope:** thử nguồn gyroscope chưa hiệu chuẩn nếu có (trừ bias do cảm biến báo). Nếu không có, dùng chế độ gia tốc riêng và ghi rõ giới hạn; không chặn quyền SMS chỉ vì thiếu con quay. Không có accelerometer thì chỉ hỗ trợ SOS thủ công.
+- **SMS:** có nút CẤP QUYỀN SMS và MỞ CÀI ĐẶT QUYỀN SMS trong thiết lập SOS. Quyền SMS được xin riêng trước các quyền tùy chọn; cuộc gọi không chứng minh SMS đã gửi. Nếu quyền bị khóa/không có trong cài đặt, trình cài đặt hoặc chính sách Android có thể hạn chế. App không tự vượt được giới hạn này. Xem trạng thái/mã Android từng người trong Lịch sử.
+- **Âm báo:** chuông SOS Motion được đóng gói sẵn, phát ngoại tuyến và lặp lại. Nếu đang chọn âm riêng, bấm DÙNG CHUÔNG SOS MOTION trong Cài đặt rồi Nghe thử; không tự xóa lựa chọn âm đã lưu.
+- **Liên hệ:** bấm Thêm liên hệ mới sẽ cuộn tới ô nhập và mở bàn phím; sửa lỗi bố cục nút số khẩn cấp trên màn hình nhỏ.
+- **Thông tin máy:** phần thiết lập SOS/kiểm tra thiết bị hiển thị model và phiên bản Android để chụp lại khi báo lỗi.
+
+Ưu tiên thử lại quyền SMS với một người nhận đã đồng ý, trước khi thử cả danh sách. Nếu không nhận tin, gửi mẫu máy/Android và chi tiết lỗi SMS trong Lịch sử; chưa thể xác nhận đã khắc phục gửi thật chỉ bằng kiểm thử máy ảo. Không thử bằng cách thả rơi điện thoại hoặc cố ngã.
 
 ## Hướng dẫn sử dụng sau khi cài đặt
 
@@ -65,7 +76,7 @@ Vào **Lịch sử**, chọn sự kiện để xem thời gian, lý do kích ho�
 4. Khi thử SOS thủ công, kiểm tra người nhận có SMS/vị trí và cuộc gọi tùy chọn hay không; kết thúc cuộc gọi và dừng âm sau phép thử. SOS thủ công không chứng minh độ chính xác phát hiện té ngã.
 5. Gửi phản hồi tại **[GitHub Issues](https://github.com/Vinh-205/Motion/issues)** nếu có tài khoản, hoặc gửi trực tiếp người tổ chức qua kênh đã thống nhất. Ghi mẫu máy, phiên bản Android, phiên bản Motion, bước thao tác, kết quả mong đợi/thực tế và ảnh lỗi. Không công khai số điện thoại, vị trí GPS hay tin nhắn riêng tư; che chúng trước khi đăng ảnh.
 
-Người dùng đã xác nhận SMS/vị trí trên điện thoại đã thử. Cuộc gọi thật, chạy nền dài hạn và độ chính xác phát hiện cần được kiểm chứng thêm trên từng thiết bị; app không bảo đảm phát hiện mọi cú ngã và không thay thế việc gọi trợ giúp chủ động khi có thể.
+Trước đây người dùng đã xác nhận SMS/vị trí trên một máy, nhưng đợt test mới có máy không gửi được; cần kiểm tra quyền và kết quả từng người nhận. Cuộc gọi thật, chạy nền dài hạn và độ chính xác phát hiện cần được kiểm chứng thêm trên từng thiết bị; app không bảo đảm phát hiện mọi cú ngã và không thay thế việc gọi trợ giúp chủ động khi có thể.
 
 ## Cài môi trường phát triển và chạy source
 
@@ -188,7 +199,7 @@ Origin phải trỏ đến `https://github.com/Vinh-205/Motion.git`. Chỉ pull 
 - Tự gọi mặc định tắt, cần đồng ý và quyền CALL_PHONE riêng. Một SOS yêu cầu gọi một lần đến số ưu tiên; không tự gọi lại, không gọi tuần tự. Lỗi cuộc gọi không chặn SMS. SIM thoại mặc định có thể khác SIM SMS. App không đọc nhật ký, không ghi âm và không đọc thông báo bằng giọng nói trong cuộc gọi.
 - Chọn liên hệ bằng trình chọn Android, không xin quyền đọc toàn bộ danh bạ. Không xin quyền đọc SMS hoặc nhật ký cuộc gọi. Liên hệ, cấu hình và tối đa 200 sự kiện thật lưu trong vùng riêng ứng dụng trên Android; gỡ app làm mất dữ liệu cục bộ.
 - Thông báo có thao tác **TÔI ỔN**, **MỞ CẢNH BÁO**, **DỪNG ÂM SOS** theo trạng thái. Android quyết định mở toàn màn hình hay thông báo nổi; không vượt khóa bảo mật, không dùng overlay/Accessibility. Không mở được giao diện vẫn xử lý countdown/SMS nếu dịch vụ còn hoạt động.
-- Âm thanh dùng luồng báo thức, không tự tăng âm lượng hoặc bỏ qua DND. Chọn âm từ danh sách Android; hủy giữ nguyên âm trước. Nếu âm không còn đọc được, thử âm mặc định rồi âm dự phòng. **Nghe thử · 3 giây** không tạo SOS. Animation khởi động chỉ phát khi mở mới thông thường, bỏ qua khi có SOS/giảm chuyển động.
+- Chuông SOS Motion mặc định là âm do dự án tự tổng hợp, được đóng gói trong `android/app/src/main/res/raw/motion_sos.wav`; có thể tạo lại bằng `python tool/generate_sos_alarm.py`. Âm thanh dùng luồng báo thức, không tự tăng âm lượng hoặc bỏ qua DND. Chọn âm từ danh sách Android; hủy giữ nguyên âm trước. Nếu âm không còn đọc được, thử âm mặc định rồi âm dự phòng. **Nghe thử · 3 giây** không tạo SOS. Animation khởi động chỉ phát khi mở mới thông thường, bỏ qua khi có SOS/giảm chuyển động.
 
 ### Hiểu trạng thái
 
@@ -207,8 +218,8 @@ Origin phải trỏ đến `https://github.com/Vinh-205/Motion.git`. Chỉ pull 
 | --- | --- |
 | Giao diện, liên hệ, sáng/tối, lịch sử, âm thanh | Có chức năng và kiểm thử tự động |
 | Cảm biến, countdown, SMS nhiều người, gọi đúng số đã chốt | Có kiểm thử logic/native dry-run; không chạm API gửi/gọi thật trong dry-run |
-| SMS và vị trí thật | Người dùng xác nhận thành công trên điện thoại đã thử; chưa xác nhận trên nhiều máy/SIM |
-| Cuộc gọi thật | Đã triển khai và thử dry-run; cần kiểm chứng kết nối/loa/SIM trên điện thoại thật |
+| SMS và vị trí thật | Trước đây có máy gửi thành công; đợt test 27/10/2026 báo có máy không gửi. Bản 1.0.2 sửa luồng quyền và chẩn đoán lỗi; cần xác nhận lại trên máy bị lỗi |
+| Cuộc gọi thật | Người dùng báo đã có cuộc gọi đi; kết nối/loa/SIM vẫn cần kiểm chứng trên từng máy |
 | Phát hiện té ngã thực tế | Chưa đo tỷ lệ bỏ sót/báo giả trên tập dữ liệu thực tế |
 | Giám sát dài hạn/khóa máy | Cần thử theo thiết bị; force-stop, khởi động lại, thu hồi quyền, lỗi SIM/sóng và tiết kiệm pin có thể làm gián đoạn |
 | Phát hành cửa hàng | Chưa tải lên hoặc được Google Play/App Store duyệt; GitHub Releases là kênh phân phối bản test |
@@ -227,9 +238,9 @@ Thuật toán dùng tổng `sqrt(x*x + y*y + z*z)`, không dùng ngưỡng riên
 
 `normal → possibleFall → impactDetected → waitingForStillness → fallSuspected`.
 
-Cần bất thường → mẫu va chạm đến sau trong 1,5 giây → bằng chứng xoay trong 1,5 giây sau va chạm → ít chuyển động liên tục 3 giây; hoàn tất trong cửa sổ 8 giây. Một đỉnh rung đơn lẻ không đủ. Tích phân độ lớn gyroscope là bằng chứng xoay, không phải góc tư thế tuyệt đối.
+Cần bất thường → mẫu va chạm đến sau trong 1,5 giây → bằng chứng xoay trong 1,5 giây sau va chạm → ít chuyển động liên tục 3 giây; hoàn tất trong cửa sổ 8 giây. Với con quay, va chạm cần có pha gia tốc thấp < 5 m/s² ít nhất 40 ms trước đó, hoặc mạnh hơn ngưỡng động ít nhất 6 m/s². Không có con quay: bắt buộc pha gia tốc thấp ít nhất 80 ms, va chạm rồi yên 3 giây; kiểm tra thêm biến đổi vector gia tốc để không coi chuyển động đều là nằm yên. Nhánh gia tốc có thể bỏ sót ngã không có pha giảm gia tốc. Một đỉnh rung đơn lẻ không đủ. Tích phân độ lớn gyroscope là bằng chứng xoay, không phải góc tư thế tuyệt đối.
 
-Ngưỡng thử nghiệm trong `lib/models/detection_config.dart` và bộ phát hiện native:
+Ngưỡng sàn thử nghiệm trong `lib/models/detection_config.dart` và bộ phát hiện native:
 
 | Độ nhạy | Lệch gia tốc khỏi 9,81 m/s² | Va chạm | Tích phân độ lớn gyro |
 | --- | ---: | ---: | ---: |
@@ -237,9 +248,23 @@ Ngưỡng thử nghiệm trong `lib/models/detection_config.dart` và bộ phát
 | Trung bình | > 4 m/s² | ≥ 23 m/s² | ≥ 0,65 rad |
 | Cao | > 3 m/s² | ≥ 20 m/s² | ≥ 0,45 rad |
 
-Bất thường khác: magnitude < 5 m/s² hoặc gyro > 1,5 rad/s. Ít chuyển động: lệch gia tốc < 1,3 m/s² và gyro < 0,35 rad/s. Lấy mẫu yêu cầu khoảng 20 Hz; gap > 400 ms hoặc gyro cũ > 250 ms bị loại. Sau sự kiện có khoảng nghỉ 8 giây. Máy rơi thiếu xoay, được nhặt lên sớm hoặc đỉnh va chạm quá ngắn có thể không thỏa chuỗi; không kết luận cần hạ ngưỡng chỉ từ một lần thử.
+Bất thường khác: magnitude < 5 m/s² hoặc gyro > 1,5 rad/s. Ít chuyển động: lệch gia tốc < 1,3 m/s² và gyro < 0,35 rad/s. Lấy mẫu yêu cầu khoảng 100 Hz; gap > 400 ms hoặc gyro cũ > 250 ms bị loại. Sau sự kiện có khoảng nghỉ 8 giây. Máy có con quay rơi thiếu xoay, được nhặt lên sớm hoặc đỉnh va chạm quá ngắn có thể không thỏa chuỗi; không kết luận cần hạ ngưỡng chỉ từ một lần thử.
 
 Trên emulator có thể mở **Extended Controls → Virtual Sensors → Device Pose** để quan sát dữ liệu. Xoay rồi giữ yên vẫn có magnitude gần 9,81 m/s² vì trọng lực. Emulator không tái tạo đầy đủ một cú té. Mô phỏng chỉ dành cho test bật rõ `allowSimulation`, bị khóa trong release; không dùng để vận hành thật.
+
+### Phân biệt đi lại và nghi ngờ ngã
+
+Không phân loại bằng tốc độ con quay hoặc một trục riêng. Gia tốc tổng có đơn vị m/s²; con quay đo rad/s. Trong cửa sổ 2 giây trước mẫu hiện tại, tính trung bình μ và độ lệch chuẩn σ của độ lớn gia tốc; sau khi đủ dữ liệu (ít nhất 20 mẫu và 0,5 giây), ngưỡng va chạm là `max(ngưỡng sàn theo độ nhạy, μ + 3σ)`. Mẫu va chạm hiện tại không tham gia tính ngưỡng của chính nó. Đây là heuristic thử nghiệm, không phải ngưỡng lâm sàng đã được xác thực.
+
+| Tình huống | Cách xử lý |
+| --- | --- |
+| Đi bộ/chạy có dao động lặp lại | Cập nhật nền dao động, không coi rung đơn lẻ là ngã |
+| Va chạm lặp lại sau khoảng ổn định ban đầu 300 ms | Bỏ ứng viên ngã cũ và giữ nền dao động, không tích lũy nhiều bước chân thành một cú ngã |
+| Có chuỗi ngã nhưng vẫn tiếp tục cử động | Chưa đủ bước ít chuyển động, không tự khẳng định ngã |
+| Chuỗi đủ pha giảm gia tốc/va chạm/xoay nếu có, rồi yên 3 giây | Mở cảnh báo xác nhận; SMS chỉ sau thời gian chờ nếu không hủy |
+| Mất dữ liệu/gyro quá cũ trên máy có gyro | Bỏ chuỗi, báo tình trạng dữ liệu thay vì giả định đã giám sát |
+
+Bộ kiểm thử có dữ liệu tổng hợp 100 Hz: đi bộ 2 Hz, chạy 3 Hz, các đỉnh bước chân 28 m/s² lặp mỗi 400 ms rồi dừng, và một va chạm ngã mạnh hơn sau khi chạy. Kết quả chỉ chứng minh hành vi trên các chuỗi đó, chưa đo độ nhạy/độ đặc hiệu thực tế. Cần dữ liệu từ vị trí đeo/túi và từng máy để hiệu chỉnh tiếp.
 
 ### Kiểm thử native và tích hợp
 
@@ -252,7 +277,7 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 flutter test integration_test/device_safety_test.dart -d emulator-5554
 ```
 
-Integration test chỉ chạy khi SOS thật đang tắt. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra countdown/danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả kiểm chứng gần nhất của mã app: 52 Flutter tests, 8 Kotlin tests và 1 integration dry-run đạt; không đại diện mọi điện thoại.
+Integration test chỉ chạy khi SOS thật đang tắt. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra countdown/danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả kiểm chứng gần nhất của mã app: 69 Flutter tests, 14 Kotlin tests và 1 integration dry-run đạt; không đại diện mọi điện thoại.
 
 ### Icon và animation morphicons trong Flutter
 
@@ -319,6 +344,7 @@ Source/tài nguyên cần thiết nằm trên Git. Build, cache, SDK riêng, kh�
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) giữ riêng thông báo giấy phép bên thứ ba và được app sử dụng; đây không phải hướng dẫn sử dụng trùng lặp.
 
 - [Android SMS API](https://developer.android.com/reference/android/telephony/SmsManager)
+- [Quyền SEND_SMS và hạn chế của trình cài đặt](https://developer.android.com/reference/android/Manifest.permission#SEND_SMS)
 - [Android Telecom API](https://developer.android.com/reference/android/telecom/TelecomManager)
 - [Thông báo khẩn](https://developer.android.com/develop/ui/views/notifications/time-sensitive)
 - [Foreground service](https://developer.android.com/develop/background-work/services/fgs/service-types)

@@ -207,11 +207,54 @@ class _SmsSetupScreenState extends State<SmsSetupScreen> {
                       ),
                     ),
                     const SectionLabel('QUYỀN TRÊN THIẾT BỊ'),
+                    if (c.deviceModel.isNotEmpty)
+                      NoteLine(
+                        '${c.deviceModel} · Android ${c.androidVersion}',
+                      ),
                     _PermissionLine(
                       glyph: AppGlyph.message,
                       label: 'Gửi SMS qua SIM',
                       granted: c.smsPermission,
                     ),
+                    if (!c.smsPermission) ...[
+                      const NoteLine(
+                        'Chưa có quyền SMS: gọi điện được không có nghĩa tin nhắn đã gửi. Cấp quyền dưới đây trước khi bật SOS.',
+                      ),
+                      TextButton(
+                        key: const Key('grantSmsPermission'),
+                        onPressed: _busy
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _busy = true;
+                                  _error = null;
+                                });
+                                await c.requestSmsPermission();
+                                if (!mounted) return;
+                                setState(() {
+                                  _busy = false;
+                                  if (!c.smsPermission) _error = 'Chưa được cấp quyền SMS. Mở Cài đặt ứng dụng → Quyền → SMS. Nếu SMS bị khóa/không xuất hiện, trình cài đặt hoặc chính sách Android có thể đang hạn chế; app không thể tự cấp quyền.';
+                                });
+                              },
+                        child: const Text('CẤP QUYỀN SMS'),
+                      ),
+                      TextButton(
+                        key: const Key('smsAppSettings'),
+                        onPressed: _busy
+                            ? null
+                            : () async {
+                                setState(() => _error = null);
+                                await c.openAppSettings();
+                              },
+                        child: const Text('MỞ CÀI ĐẶT QUYỀN SMS'),
+                      ),
+                    ],
+                    if (c.sensorMode != 'full')
+                      NoteLine(
+                        c.sensorMode == 'accelerometer'
+                            ? 'Máy không có gyroscope. Dùng chế độ gia tốc: giảm gia tốc → va chạm → ít chuyển động. Độ bao phủ thấp hơn; dữ liệu xoay không được giả lập.'
+                            : 'Máy không có cảm biến gia tốc: vẫn có thể thiết lập SMS và SOS thủ công, không giám sát té ngã tự động.',
+                      ),
                     _PermissionLine(
                       glyph: AppGlyph.mapPin,
                       label: 'Vị trí (không bắt buộc)',
