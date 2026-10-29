@@ -110,7 +110,7 @@ class MainActivity : FlutterActivity() {
                     }
                     "openAppSettings" -> { openAppSettings(); result.success(state()) }
                     "leaveToHome" -> {
-                        check(SafetyService.instance?.running == true && prefs.getBoolean("enabled", false) && prefs.getBoolean("monitoring", true)) { "Hãy bật giám sát nền trước khi về Home." }
+                        check(SafetyService.instance?.running == true && prefs.getBoolean("enabled", false) && prefs.getBoolean("monitoring", true) && prefs.getBoolean("backgroundEnabled", true)) { "Hãy bật giám sát nền trước khi về Home." }
                         moveTaskToBack(true)
                         result.success(state())
                     }
@@ -159,6 +159,11 @@ class MainActivity : FlutterActivity() {
                         startSafety(result, true)
                     }
                     "triggerDryRunAlert" -> { requireDebug(); val service = requireService(); check(service.dryRun); service.beginDryRunAlert(call.argument<Boolean>("autoCallDryRun") == true); result.success(state()) }
+                    "leaveDryRunToHome" -> {
+                        requireDebug(); check(requireService().dryRun)
+                        moveTaskToBack(true)
+                        result.success(state())
+                    }
                     else -> result.notImplemented()
                 }
             } catch (error: IllegalStateException) { result.error("not_ready", error.message, null) }
@@ -197,6 +202,7 @@ class MainActivity : FlutterActivity() {
         call.argument<Number>("countdownSeconds")?.let { editor.putInt("countdownSeconds", it.toInt().coerceIn(15, 30)) }
         call.argument<String>("sensitivity")?.let { check(it in listOf("low", "medium", "high")); editor.putString("sensitivity", it) }
         call.argument<Boolean>("monitoring")?.let { editor.putBoolean("monitoring", it) }
+        call.argument<Boolean>("backgroundEnabled")?.let { editor.putBoolean("backgroundEnabled", it) }
         call.argument<String>("ownerName")?.let { editor.putString("ownerName", it.trim().take(80)) }
         editor.apply()
     }
@@ -372,7 +378,14 @@ class MainActivity : FlutterActivity() {
         super.onDestroy()
     }
 
+    override fun onStart() {
+        super.onStart()
+        SafetyService.appVisible = true
+        SafetyService.instance?.visibilityChanged(true)
+    }
     override fun onStop() {
+        SafetyService.appVisible = false
+        SafetyService.instance?.visibilityChanged(false)
         main.removeCallbacks(stopPreview)
         previewSound.stop()
         localCountdownSound = false

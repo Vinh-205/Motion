@@ -285,10 +285,35 @@ class MonitorScreen extends StatelessWidget {
           const NoteLine(
             'Không có dữ liệu con quay khả dụng. Dấu — không phải 0 rad/s. Máy dùng chế độ gia tốc nếu được hỗ trợ.',
           ),
+        if (c.realSmsEnabled && c.monitoring)
+          ExpansionTile(
+            key: const Key('detectionDiagnostics'),
+            title: const Text('Tình trạng phát hiện'),
+            trailing: const MorphIcon(AppGlyph.info, size: 20),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: NoteLine(
+                  c.detectionDetail.isEmpty
+                      ? 'Đang chờ dữ liệu.'
+                      : c.detectionDetail,
+                ),
+              ),
+              if (c.lastDetectionRejection.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: NoteLine(
+                    'Lần gần nhất chưa đạt: ${c.lastDetectionRejection}',
+                  ),
+                ),
+            ],
+          ),
         const SizedBox(height: 6),
         NoteLine(
           c.realSmsEnabled
-              ? 'SOS qua SIM đang bật. Dịch vụ Android tiếp tục giám sát khi khóa màn hình. Trạng thái giám sát không phải đánh giá sức khỏe.'
+              ? c.backgroundEnabled
+                    ? 'SOS qua SIM đang bật. Giám sát khi khóa màn hình nếu phát hiện tự động đang bật. Trạng thái không phải đánh giá sức khỏe.'
+                    : 'Giám sát nền đã tắt. Vẫn phát hiện khi app mở nếu công tắc Phát hiện té ngã đang bật; SOS đang xử lý không bị hủy.'
               : 'Chưa bật SOS qua SIM. Các chỉ số cảm biến hiện tại không có nghĩa là giám sát SOS đã hoạt động.',
         ),
       ],

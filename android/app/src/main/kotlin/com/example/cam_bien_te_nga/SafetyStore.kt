@@ -95,6 +95,11 @@ object SafetyStore {
         return mapOf(
             "running" to (SafetyService.instance?.running == true), "enabled" to p.getBoolean("enabled", false),
             "monitoring" to p.getBoolean("monitoring", true), "countdownSeconds" to p.getInt("countdownSeconds", 30),
+            "backgroundEnabled" to p.getBoolean("backgroundEnabled", true),
+            "sensorCollectionActive" to (SafetyService.instance?.let { it.running && it.shouldCollectSensors() } == true),
+            "appVisible" to SafetyService.appVisible,
+            "detectionDetail" to (SafetyService.instance?.detector?.diagnostic ?: "Chưa bắt đầu phát hiện tự động."),
+            "lastDetectionRejection" to (SafetyService.instance?.detector?.lastRejection ?: ""),
             "sensitivity" to p.getString("sensitivity", "medium"), "ownerName" to p.getString("ownerName", ""),
             "contactName" to p.getString("contactName", ""), "contactPhone" to p.getString("contactPhone", ""),
             "contacts" to contacts(context),

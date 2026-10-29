@@ -59,13 +59,13 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Bật giám sát',
+                    'Phát hiện té ngã',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     controller.realSmsEnabled
-                        ? 'Tiếp tục khi khóa màn hình'
+                        ? 'Bật / tắt phát hiện tự động'
                         : 'Thiết lập SOS qua SIM trước khi bật',
                     style: TextStyle(color: context.colors.muted, fontSize: 11),
                   ),
@@ -73,6 +73,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             Switch(
+              key: const Key('masterMonitoringSwitch'),
               value:
                   (controller.realSmsEnabled || controller.canSimulate) &&
                   controller.monitoring,
@@ -91,6 +92,38 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
           ],
+        ),
+      ),
+      const SizedBox(height: 12),
+      SurfacePanel(
+        child: Material(
+          type: MaterialType.transparency,
+          child: SwitchListTile.adaptive(
+            key: const Key('backgroundMonitoringSwitch'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Giám sát khi rời app'),
+            subtitle: Text(
+              !controller.monitoring
+                  ? 'Cần bật Phát hiện té ngã để thu chuyển động.'
+                  : 'Tắt: vẫn phát hiện và cảnh báo khi mở app. SOS đang xử lý không bị hủy.',
+            ),
+            value:
+                (controller.realSmsEnabled || controller.canSimulate) &&
+                controller.backgroundEnabled,
+            onChanged: (value) {
+              if (controller.realSmsEnabled || controller.canSimulate) {
+                controller.setBackgroundMonitoring(value);
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        StartMonitoringScreen(controller: controller),
+                  ),
+                );
+              }
+            },
+          ),
         ),
       ),
       const SectionLabel('ÂM THANH CẢNH BÁO'),
@@ -215,7 +248,7 @@ class SettingsScreen extends StatelessWidget {
       const SizedBox(height: 16),
       NoteLine(
         controller.realSmsEnabled
-            ? 'SOS qua SIM đang dùng dịch vụ giám sát nền. Liên hệ và lịch sử SMS được lưu trên thiết bị.'
+            ? 'SOS qua SIM đang bật. Giám sát khi rời app là tùy chọn riêng. Liên hệ và lịch sử được lưu trên thiết bị.'
             : 'Chưa bật giám sát SOS. Hãy thiết lập liên hệ, SIM và quyền gửi SMS trước khi sử dụng.',
       ),
       const SizedBox(height: 26),

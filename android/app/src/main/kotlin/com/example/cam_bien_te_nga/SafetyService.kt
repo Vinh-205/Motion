@@ -40,6 +40,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
             private set
         const val NOTIFICATION_ID = 7301
         const val ALERT_ID = 7302
+        var appVisible = false
     }
     val mainHandler = Handler(Looper.getMainLooper())
     val detector = NativeFallDetector()
@@ -54,6 +55,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     private lateinit var sensors: SensorManager
     private lateinit var locations: LocationManager
     private var wakeLock: PowerManager.WakeLock? = null
+    private var wakeLeaseAt = 0L
     private val alertSound by lazy { AlertSound(this) }
     private var rotationMagnitude = 0.0
     private var rotationAt = 0L
@@ -96,13 +98,13 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
             if (p.getString("smsStatus", "") == "sending" && timeoutSince > 0 && now - timeoutSince > 120000) {
                 SafetyStore.updateSms(this@SafetyService, p.getString("currentId", "")!!, "unknown", "Android chưa trả kết quả gửi SMS. Không tự gửi lại để tránh trùng tin.")
             }
-            if (p.getBoolean("monitoring", true) && !sensorsReady() && now - monitoringStartedAt > 2000) {
+            if (shouldCollectSensors() && !sensorsReady() && now - monitoringStartedAt > 2000) {
                 detector.reset()
                 sensorError = "Chưa nhận đủ dữ liệu cảm biến mới. Chưa thể phát hiện té ngã."
             }
             tickCount++
             if (tickCount % 5 == 0) updateNotification()
-            if (tickCount % 1500 == 0) wakeLock?.acquire(10 * 60 * 1000L)
+            if (tickCount % 5 == 0) syncWakeLock()
             mainHandler.postDelayed(this, 200)
         }
     }
@@ -118,6 +120,11 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     }
     override fun onBind(intent: Intent?): IBinder? = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == "stopBackground" && running) {
+            p.edit().putBoolean("backgroundEnabled", false).apply()
+            configure()
+            return START_STICKY
+        }
         if (intent?.action == "confirmSafe" && running) { confirmSafe(); return START_STICKY }
         if (intent?.action == "dismissSos" && running) { dismissSos(); return START_STICKY }
         if (intent?.action == "disable") { disable(); return START_NOT_STICKY }
@@ -177,7 +184,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
         accelerationValues = null; rotationValues = null
         sensorSampleHz = 0.0; sampleCount = 0; sampleWindowAt = 0
         sensorError = ""
-        if (p.getBoolean("monitoring", true)) {
+        if (shouldCollectSensors()) {
             val acc = SensorCapabilities.accelerometer(sensors)
             val gyro = SensorCapabilities.gyroscope(sensors)
             hasRotation = gyro != null
@@ -190,10 +197,25 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
                 if (!accRegistered || !gyroRegistered) sensorError = "Không đăng ký được luồng cảm biến Android. Hãy bật lại giám sát."
             }
         }
+        syncWakeLock()
         updateNotification()
     }
+    fun shouldCollectSensors(): Boolean = MonitoringPolicy.collectSensors(
+        p.getBoolean("monitoring", true), p.getBoolean("backgroundEnabled", true), appVisible)
+    fun visibilityChanged(visible: Boolean) {
+        appVisible = visible
+        if (running && !p.getBoolean("backgroundEnabled", true)) configure()
+    }
+    private fun syncWakeLock() {
+        val needed = shouldCollectSensors() || p.getLong("deadline", 0) > 0 || p.getBoolean("sosActive", false)
+        if (needed && (wakeLock?.isHeld != true || SystemClock.elapsedRealtime() - wakeLeaseAt >= 5 * 60 * 1000L)) {
+            wakeLock?.acquire(10 * 60 * 1000L)
+            wakeLeaseAt = SystemClock.elapsedRealtime()
+        }
+        else if (!needed && wakeLock?.isHeld == true) wakeLock?.release()
+    }
     override fun onSensorChanged(event: SensorEvent) {
-        if (!running) return
+        if (!running || !shouldCollectSensors()) return
         val now = event.timestamp / 1000000L
         if (event.sensor.type == Sensor.TYPE_GYROSCOPE || event.sensor.type == Sensor.TYPE_GYROSCOPE_UNCALIBRATED) {
             val corrected = (0..2).map { i -> event.values[i].toDouble() - if (event.sensor.type == Sensor.TYPE_GYROSCOPE_UNCALIBRATED && event.values.size >= 6) event.values[i + 3].toDouble() else 0.0 }
@@ -227,6 +249,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
             .putString("eventPhone", p.getString("contactPhone", "")).putString("eventContactName", p.getString("contactName", "")).putString("smsStatus", "")
             .putString("sosMessage", "").putInt("eventCountdown", seconds).putBoolean("eventDryRun", dryRun).apply()
         monotonicDeadline = SystemClock.elapsedRealtime() + seconds * 1000L
+        p.edit().putString("eventDetectionReason", if (dryRun) "Kiểm thử dry-run; không suy luận từ cảm biến." else detector.triggerReason).apply()
         captureRecipients()
         captureEventMetadata()
         startAlarm(); updateNotification()
@@ -248,7 +271,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     fun remainingMilliseconds(): Long = if (p.getLong("deadline", 0) > 0) (monotonicDeadline - SystemClock.elapsedRealtime()).coerceAtLeast(0) else 0
     fun sensorsReady(): Boolean {
         val now = SystemClock.elapsedRealtime()
-        return running && p.getBoolean("monitoring", true) && accelerationAt > 0 && now - accelerationAt in 0..1999 && (!hasRotation || (rotationAt > 0 && now - rotationAt in 0..1999))
+        return running && shouldCollectSensors() && accelerationAt > 0 && now - accelerationAt in 0..1999 && (!hasRotation || (rotationAt > 0 && now - rotationAt in 0..1999))
     }
     fun confirmSafe() {
         if (p.getLong("deadline", 0) == 0L) return
@@ -301,7 +324,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     private fun captureEventMetadata() {
         val manual = p.getString("source", "sensor") == "manual"
         val metadata = mutableMapOf<String, Any?>(
-            "reason" to if (manual) "Người dùng chủ động nhấn SOS." else if (hasRotation) "Chuỗi bất thường → va chạm → xoay → ít chuyển động 3 giây." else "Chế độ gia tốc: giảm gia tốc ít nhất 80 ms → va chạm → ít chuyển động 3 giây (không có gyroscope).",
+            "reason" to if (manual) "Người dùng chủ động nhấn SOS." else p.getString("eventDetectionReason", "Sự kiện cũ chưa lưu số đo kích hoạt."),
             "recipientName" to p.getString("eventContactName", ""),
             "recipientPhone" to p.getString("eventPhone", ""),
             "countdownSeconds" to p.getInt("eventCountdown", 30),
@@ -344,6 +367,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     override fun onProviderEnabled(provider: String) = Unit
     override fun onProviderDisabled(provider: String) = Unit
     private fun startAlarm() {
+        syncWakeLock()
         if (dryRun) return
         val mode = getSystemService(AudioManager::class.java).mode
         if (mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION) { callAudioPaused = true; return }
@@ -362,7 +386,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
         val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, if (alert) "motion_alert" else "motion_monitoring") else { @Suppress("DEPRECATION") Notification.Builder(this) }
         val seconds = ((monotonicDeadline - SystemClock.elapsedRealtime()).coerceAtLeast(0) + 999) / 1000
         builder.setSmallIcon(R.drawable.ic_motion_notification).setContentTitle(if (alert && counting) "MOTION · Bạn có ổn không?" else if (alert) "MOTION · SOS đã kích hoạt" else if (dryRun) "MOTION · KIỂM THỬ, không gửi SMS" else "MOTION · SOS qua SIM")
-            .setContentText(if (alert && counting) "Còn $seconds giây trước khi gửi SMS. Bấm TÔI ỔN để hủy." else if (alert) "Đang phát âm SOS. Mở app để xem kết quả gửi SMS đến các liên hệ." else if (sensorError.isNotEmpty()) sensorError else if (p.getBoolean("sosActive", false)) "Mở app để xem kết quả gửi SMS." else if (p.getBoolean("monitoring", true)) "Đang giám sát chuyển động, kể cả khi khóa màn hình." else "Giám sát đang tắt. SOS thủ công vẫn sẵn sàng.")
+            .setContentText(if (alert && counting) "Còn $seconds giây trước khi gửi SMS. Bấm TÔI ỔN để hủy." else if (alert) "Đang phát âm SOS. Mở app để xem kết quả gửi SMS đến các liên hệ." else if (sensorError.isNotEmpty()) sensorError else if (p.getBoolean("sosActive", false)) "Mở app để xem kết quả gửi SMS." else if (!p.getBoolean("monitoring", true)) "Phát hiện tự động đang tắt. SOS thủ công vẫn sẵn sàng." else if (!p.getBoolean("backgroundEnabled", true)) "Giám sát nền đã tắt. Chỉ phát hiện khi mở app." else "Đang giám sát chuyển động, kể cả khi khóa màn hình.")
             .setContentIntent(open).setOngoing(!alert).setOnlyAlertOnce(true).setVisibility(Notification.VISIBILITY_PUBLIC)
         if (alert) {
             val safe = PendingIntent.getService(this, if (counting) 1 else 4, Intent(this, SafetyService::class.java).setAction(if (counting) "confirmSafe" else "dismissSos"), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
@@ -375,8 +399,8 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
                 builder.setFullScreenIntent(open, true)
             }
         } else {
-            val stop = PendingIntent.getService(this, 3, Intent(this, SafetyService::class.java).setAction("disable"), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-            builder.addAction(Notification.Action.Builder(null, "DỪNG GIÁM SÁT", stop).build())
+            val stop = PendingIntent.getService(this, 3, Intent(this, SafetyService::class.java).setAction("stopBackground"), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            if (p.getBoolean("backgroundEnabled", true)) builder.addAction(Notification.Action.Builder(null, "TẮT GIÁM SÁT NỀN", stop).build())
         }
         return builder.build()
     }

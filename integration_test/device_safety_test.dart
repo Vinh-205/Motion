@@ -43,7 +43,11 @@ void main() {
         ]),
         true,
       );
-      await bridge.command('configure', {'countdownSeconds': 15});
+      await bridge.command('configure', {
+        'countdownSeconds': 15,
+        'monitoring': true,
+        'backgroundEnabled': true,
+      });
       final started = await bridge.command('startBackgroundDryRun');
       expect(started['running'], true);
       expect(started['dryRun'], true);
@@ -53,6 +57,48 @@ void main() {
       });
       expect(pending['pending'], true);
       final id = pending['currentId'];
+      // Turning off background collection does not stop foreground detection or
+      // cancel a countdown. Exercise the real Activity onStop callback by going Home.
+      final foregroundOnly = await bridge.command('configure', {
+        'backgroundEnabled': false,
+      });
+      expect(foregroundOnly['monitoring'], true);
+      expect(foregroundOnly['pending'], true);
+      expect(foregroundOnly['sensorCollectionActive'], true);
+      await bridge.command('leaveDryRunToHome');
+      Map<String, dynamic> hidden = {};
+      for (var attempt = 0; attempt < 30; attempt++) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        hidden = (await bridge.state())!;
+        if (hidden['appVisible'] == false) break;
+      }
+      expect(hidden['appVisible'], false);
+      expect(hidden['sensorCollectionActive'], false);
+      expect(hidden['nativeAcceleration'], isNull);
+      expect(hidden['pending'], true);
+      expect(hidden['currentId'], id);
+      final resumedBackground = await bridge.command('configure', {
+        'backgroundEnabled': true,
+      });
+      expect(resumedBackground['sensorCollectionActive'], true);
+      final pausedBackground = await bridge.command('configure', {
+        'backgroundEnabled': false,
+      });
+      expect(pausedBackground['sensorCollectionActive'], false);
+      expect(pausedBackground['pending'], true);
+      // Host runner opens the task like a user. Do not bypass Android background
+      // activity restrictions from inside the app just to make a test pass.
+      debugPrint('MOTION_DRY_RUN_READY_TO_RETURN');
+      Map<String, dynamic> visibleAgain = {};
+      for (var attempt = 0; attempt < 100; attempt++) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        visibleAgain = (await bridge.state())!;
+        if (visibleAgain['appVisible'] == true) break;
+      }
+      expect(visibleAgain['appVisible'], true);
+      expect(visibleAgain['backgroundEnabled'], false);
+      expect(visibleAgain['sensorCollectionActive'], true);
+      expect(visibleAgain['pending'], true);
       // Editing setup must not change a pending alert's recipient snapshot.
       expect(
         await bridge.saveContacts([
@@ -102,6 +148,7 @@ void main() {
         'countdownSeconds': before['countdownSeconds'],
         'monitoring': before['monitoring'],
         'sensitivity': before['sensitivity'],
+        'backgroundEnabled': before['backgroundEnabled'] ?? true,
       });
     }
   });

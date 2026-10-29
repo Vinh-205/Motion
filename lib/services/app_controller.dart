@@ -65,7 +65,10 @@ class AppController extends ChangeNotifier {
   String deviceModel = '', androidVersion = '';
   double sensorSampleHz = 0;
   double impactThreshold = 23;
-  bool get backgroundMonitoring => realSmsEnabled && monitoring;
+  bool backgroundEnabled = true;
+  String detectionDetail = '', lastDetectionRejection = '';
+  bool get backgroundMonitoring =>
+      realSmsEnabled && monitoring && backgroundEnabled;
   bool get backgroundReady =>
       backgroundMonitoring &&
       nativeSensorReady &&
@@ -190,6 +193,9 @@ class AppController extends ChangeNotifier {
   void _applyDevice(Map<String, dynamic> state) {
     final wasReal = realSmsEnabled;
     nativeConfigured = state['enabled'] == true;
+    backgroundEnabled = state['backgroundEnabled'] as bool? ?? true;
+    detectionDetail = state['detectionDetail'] as String? ?? '';
+    lastDetectionRejection = state['lastDetectionRejection'] as String? ?? '';
     autoCallEnabled = state['autoCallEnabled'] == true;
     callPermission = state['callPermission'] == true;
     callStatus = state['callStatus'] as String? ?? '';
@@ -347,7 +353,23 @@ class AppController extends ChangeNotifier {
 
   Future<void> startBackgroundMonitoring() async {
     if (!realSmsEnabled) return;
-    await _nativeCommand('configure', {..._configuration, 'monitoring': true});
+    await _nativeCommand('configure', {
+      ..._configuration,
+      'monitoring': true,
+      'backgroundEnabled': true,
+    });
+  }
+
+  Future<void> setBackgroundMonitoring(bool value) async {
+    if (realSmsEnabled) {
+      await _nativeCommand('configure', {
+        ..._configuration,
+        'backgroundEnabled': value,
+      });
+    } else {
+      backgroundEnabled = value;
+      notifyListeners();
+    }
   }
 
   Future<void> openFullScreenSettings() =>
@@ -359,6 +381,7 @@ class AppController extends ChangeNotifier {
 
   Map<String, dynamic> get _configuration => {
     'monitoring': monitoring,
+    'backgroundEnabled': backgroundEnabled,
     'countdownSeconds': countdownSeconds,
     'sensitivity': sensitivity.name,
   };

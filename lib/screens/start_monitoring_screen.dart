@@ -93,6 +93,10 @@ class _StartMonitoringScreenState extends State<StartMonitoringScreen> {
                         Text(
                           c.backgroundReady
                               ? 'GIÁM SÁT NỀN ĐANG SẴN SÀNG'
+                              : c.realSmsEnabled &&
+                                    c.monitoring &&
+                                    !c.backgroundEnabled
+                              ? 'CHỈ GIÁM SÁT KHI MỞ APP'
                               : c.backgroundMonitoring
                               ? 'ĐANG KIỂM TRA ĐIỀU KIỆN'
                               : 'CHƯA BẬT GIÁM SÁT NỀN',
@@ -104,7 +108,7 @@ class _StartMonitoringScreenState extends State<StartMonitoringScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Thông báo Motion cho biết dịch vụ còn hoạt động. Rời giao diện không tắt giám sát.',
+                          'Giám sát nền bật: tiếp tục khi rời app. Tắt giám sát nền: vẫn phát hiện khi mở app; không hủy SOS đang xử lý.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: context.colors.muted,
@@ -144,17 +148,17 @@ class _StartMonitoringScreenState extends State<StartMonitoringScreen> {
                         : AppGlyph.shieldCheck,
                     onPressed: _start,
                   ),
-                  if (c.realSmsEnabled)
+                  if (c.realSmsEnabled && c.backgroundEnabled && c.monitoring)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: ActionButton(
                         key: const Key('stopBackgroundMonitoring'),
-                        label: 'DỪNG GIÁM SÁT NỀN',
+                        label: 'TẮT GIÁM SÁT NỀN',
                         color: context.colors.orange,
                         outlined: true,
                         icon: AppGlyph.pause,
                         onPressed: () async {
-                          if (!_busy) await c.disableRealSms();
+                          if (!_busy) await c.setBackgroundMonitoring(false);
                         },
                       ),
                     ),
