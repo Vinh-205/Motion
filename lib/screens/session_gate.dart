@@ -88,7 +88,10 @@ class _SessionGateState extends State<SessionGate> with WidgetsBindingObserver {
         },
       );
     }
-    if (!api.restored || !api.signedIn) {
+    if (!api.restored) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (!api.signedIn) {
       return AccountScreen(api: api, controller: controller);
     }
     if (api.role != 'member' && !monitorOpen) {

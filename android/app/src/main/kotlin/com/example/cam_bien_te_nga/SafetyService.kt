@@ -393,6 +393,12 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
             builder.addAction(Notification.Action.Builder(null, if (counting) "TÔI ỔN" else "DỪNG ÂM SOS", safe).build()).setCategory(Notification.CATEGORY_ALARM)
                 .addAction(Notification.Action.Builder(null, "MỞ CẢNH BÁO", open).build())
                 .setPriority(Notification.PRIORITY_MAX)
+            if (!counting && EmergencyCardStore.available(this)) {
+                val card = PendingIntent.getActivity(this, 9, Intent(this, EmergencyCardActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                builder.addAction(Notification.Action.Builder(null, "THẺ KHẨN CẤP", card).build())
+                builder.setContentIntent(card)
+            }
             // Android chooses full screen on a locked device or heads-up while in use.
             // Debug dry runs never take over the screen or generate a real alarm.
             if (!dryRun && (Build.VERSION.SDK_INT < 34 || notifications.canUseFullScreenIntent())) {

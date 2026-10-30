@@ -1,6 +1,6 @@
 # Motion
 
-**Source hiện tại: 1.1.3+9** · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
+**Source hiện tại: 1.1.4+10** · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
 
 ### Bố cục và sử dụng bản mới
 
@@ -9,20 +9,51 @@
 - **Liên hệ:** thêm/sửa/xóa người nhận, chọn số gọi ưu tiên. Liên hệ đám mây chỉ vào danh sách SOS trên máy sau khi xác nhận.
 - **Cài đặt:** tài khoản và quyền truy cập, độ nhạy, thời gian xác nhận, chuông SOS và công tắc giám sát. Sáng/tối nằm trên cùng bên phải; logo trong app thống nhất với launcher. Thanh điều hướng dùng kính mờ, lớp màu trong và chuyển động chọn tab.
 - Nhãn **ĐÃ BẬT SOS** cập nhật khi SOS qua SIM đã được thiết lập và giám sát đang bật; đây là trạng thái cấu hình, không bảo đảm SIM đã gửi thành công. Tắt riêng giám sát nền vẫn giữ giám sát khi app đang mở.
-- **Admin:** quản lý tài khoản, vai trò và phân công. **Nhân viên:** chỉ hỗ trợ người được phân công. **Người dùng:** hồ sơ, liên hệ và lịch hẹn của mình. Dashboard có tìm kiếm; admin có bộ lọc vai trò.
-- **Vòng an toàn** là lịch hẹn xác nhận an toàn dùng chung với người hỗ trợ, không phải vòng tay phần cứng. Hiện chưa có push hay tự gửi SOS khi lịch quá hạn.
+- **Admin:** quản lý tài khoản, vai trò và phân công. **Nhân viên:** chỉ hỗ trợ người được phân công. **Người dùng:** hồ sơ và thẻ của người mang máy. Dashboard có tìm kiếm; admin có ô lọc vai trò gọn, không còn nút lịch hẹn/liên hệ trên thẻ tài khoản.
+- **Thẻ thông tin khẩn cấp:** tạo/sửa/xem/xóa tại Cài đặt. Thay thế Vòng an toàn; xem hướng dẫn và nơi lưu dữ liệu bên dưới.
 
 ### Frontend, backend và cách nhóm chạy
 
 | Thành phần | Source / triển khai | Vai trò |
 | --- | --- | --- |
 | Frontend | `lib/`, Flutter; Android native ở `android/` | Giao diện, đăng nhập, cảm biến, giám sát nền, chuông, SMS và gọi qua thiết bị |
-| Backend | `backend/`, Node.js/Fastify trên Render | Xác thực Email OTP / Google OAuth2, phân quyền, CRUD tài khoản, liên hệ và lịch hẹn |
+| Backend | `backend/`, Node.js/Fastify trên Render | Xác thực Email OTP / Google OAuth2, phân quyền, CRUD tài khoản; endpoint liên hệ/lịch hẹn cũ giữ tương thích |
 | Database | PostgreSQL trên Neon | Dữ liệu tài khoản và dữ liệu đám mây; không tự đồng bộ lịch sử cảm biến cục bộ |
 | Email | Resend, `motion-mail.vihx.online` | Email OTP và khôi phục mật khẩu |
 | API | [motion-api.vihx.online/docs](https://motion-api.vihx.online/docs) | Swagger, request/response và Schemas |
 
 Nhóm cài Flutter/Android SDK, clone repo, chạy `flutter pub get`, rồi `flutter run --dart-define=MOTION_API_URL=https://motion-api.vihx.online` (đối chiếu mục cấu hình bên dưới). Dùng tài khoản riêng; không đưa mật khẩu, khóa Resend, JWT hoặc chuỗi kết nối database vào app/Git. Hướng dẫn cài APK, build, deploy backend và sử dụng chi tiết vẫn nằm trong các mục phía dưới.
+
+### Thẻ thông tin khẩn cấp — sử dụng khi chạy nền / khóa màn hình
+
+1. Cài đặt → **THẺ THÔNG TIN KHẨN CẤP**. Điền tên, bệnh nền, dị ứng, thuốc đang dùng, nhóm máu tự khai, chiều cao (cm), cân nặng (kg), người liên hệ/số điện thoại. Chọn **LƯU THẺ**, rồi **XEM THẺ ĐÃ LƯU**. Nhóm máu và bệnh sử chưa được xác minh; người hỗ trợ cần kiểm tra lại.
+2. Nếu muốn cho người khác đọc khi máy khóa, bật **Cho xem khi khóa màn hình sau SOS**. Mặc định tắt. Mọi trường đã lưu trên thẻ đều được hiển thị nếu bật, không chỉ tên. Không điền thông tin không muốn công khai trong trường hợp này.
+3. Thiết lập SMS, liên hệ và tùy chọn tự gọi trong SOS qua SIM; cấp **SEND_SMS**, **CALL_PHONE** nếu dùng gọi, **thông báo** trên Android 13+, kiểm tra **cảnh báo toàn màn hình** trên Android 14+ và cài đặt pin của hãng. Các nút cài đặt có ở trang thẻ và trang Bắt đầu giám sát. Không cần quyền phủ lên ứng dụng khác hay quyền mở khóa điện thoại.
+4. Bật giám sát nền rồi về Home. SafetyService tiếp tục xử lý cảm biến, đếm ngược, chuông và yêu cầu SMS/cuộc gọi. Khi SOS kích hoạt, nút **THẺ THÔNG TIN KHẨN CẤP** có trong giao diện SOS; thông báo có **THẺ KHẨN CẤP** nếu đã đồng ý chia sẻ. Thẻ xuất hiện ngay cả khi SMS/gọi lỗi để người hỗ trợ vẫn đọc được, không chờ báo phát hay cuộc gọi kết thúc.
+5. Chạm thông báo/nút thẻ: mở Activity riêng chỉ đọc, không cần mạng. Khi khóa, chỉ cho đọc nếu đã đồng ý, có tên và SOS đang hoạt động; nếu chưa đủ điều kiện cần mở khóa. Thẻ không có lối chuyển đến tài khoản/quản trị, sửa dữ liệu hay tự gọi thêm. Nút đóng không tắt SOS.
+6. Muốn ngừng chia sẻ: tắt tùy chọn rồi lưu; muốn xóa: **XÓA THẺ** và xác nhận. Thẻ dành cho **một người mang điện thoại**, độc lập tài khoản; đăng xuất/đổi tài khoản không xóa thẻ. Khi chuyển máy cho người khác phải sửa/xóa thẻ. Gỡ app/xóa dữ liệu làm mất thẻ; hiện không sao lưu/đồng bộ thẻ lên cloud.
+
+Android quyết định có cho mở toàn màn hình hay chỉ hiện thông báo; cuộc gọi có thể đưa giao diện điện thoại lên trước. Không cam kết tự bật giao diện trong mọi trạng thái khóa, DND, tiết kiệm pin, force-stop hoặc sau khởi động lại. Sau reboot cần mở app và kiểm tra giám sát. SMS cần SIM/sóng/dịch vụ và quyền; gọi cần được bật riêng. Dịch vụ nền đã có foreground notification + wake lock; đây không phải bảo đảm hệ điều hành không bao giờ dừng app. [Quyền thông báo Android](https://developer.android.com/develop/ui/views/notifications/notification-permission), [API hiển thị Activity khi khóa](https://developer.android.com/reference/android/app/Activity#setShowWhenLocked(boolean)).
+
+### Dữ liệu lưu ở đâu? Minh chứng mã nguồn và cách kiểm tra
+
+| Dữ liệu | Nơi lưu và phạm vi | Minh chứng |
+| --- | --- | --- |
+| Email đăng nhập, tên hiển thị, vai trò, trạng thái và phân công | **PostgreSQL trên Neon**, bảng `users`, qua backend Render. Đăng nhập dùng email; không có username riêng | [Schema database](backend/src/database-schema.js), [kiểm tra quyền và API](backend/src/app.js) |
+| Mật khẩu | Cột `users.password` chứa **hash scrypt + salt ngẫu nhiên**, không chứa mật khẩu rõ; admin/API không trả mật khẩu. App chỉ dùng mật khẩu nhập để gửi HTTPS, không lưu mật khẩu trên máy | [hashPassword / verifyPassword](backend/src/security.js), [Node.js scrypt](https://nodejs.org/api/crypto.html#cryptoscryptpassword-salt-keylen-options-callback) |
+| OTP | Server lưu HMAC digest, thời hạn và số lần thử ở `challenges`; Resend gửi OTP qua email. Không trả mã trong Swagger response | [OTP digest và cấu hình](backend/src/security.js), [luồng xác thực](backend/src/app.js) |
+| Phiên đăng nhập | JWT và cache hồ sơ trong **FlutterSecureStorage** trên điện thoại; server lưu session ID/hạn ở `sessions`. Phiên mới tối đa 30 ngày. Khóa/đổi quyền/reset mật khẩu/đăng xuất vẫn thu hồi phiên theo API | [khôi phục / xóa phiên](lib/services/motion_api.dart), [kiểm thử cache và 401](test/emergency_card_test.dart), [test hạn phiên server](backend/test/api.test.js) |
+| Thẻ: tên, bệnh nền, dị ứng, thuốc, nhóm máu, chiều cao/cân nặng, liên hệ | **Chỉ trên điện thoại**, SharedPreferences riêng `motion_emergency_card.xml`, giá trị `data` mã hóa **AES-GCM**; khóa nằm trong Android Keystore, alias `motion.emergency.card.v1`. Không có bảng/endpoint thẻ y tế trên Neon. Không đồng bộ theo tài khoản | [EmergencyCardStore](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardStore.kt), [form đọc/lưu/xóa](lib/screens/emergency_card_screen.dart), [Android Keystore](https://developer.android.com/privacy-and-security/keystore) |
+| Danh sách SOS, cấu hình, lịch sử SMS/gọi/vị trí | SharedPreferences riêng `motion_safety.xml` trên thiết bị; app hiện không tự tải lịch sử này lên API. Không đồng nghĩa toàn bộ dữ liệu này đã mã hóa AES-GCM như thẻ | [SafetyStore](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SafetyStore.kt) |
+| Liên hệ/lịch hẹn đám mây cũ | Bảng `contacts`, `checkins` của Neon theo chủ sở hữu/phân quyền; giữ tương thích API, đã bỏ lịch hẹn và nút liên hệ khỏi dashboard mới. Không tự xóa bản ghi cũ | [Schema](backend/src/database-schema.js), [Swagger](https://motion-api.vihx.online/docs) |
+
+**Thẻ khóa màn hình cần giải mã khi thiết bị đã khóa**, nên khóa thẻ không yêu cầu xác thực sinh trắc mỗi lần dùng. Bảo vệ đọc khi khóa nằm ở lựa chọn đồng ý + trạng thái SOS + Activity không exported; không tuyên bố dữ liệu an toàn nếu hệ điều hành/root bị xâm nhập. Thẻ và phiên bị loại khỏi backup/transfer của app: [backup rules](android/app/src/main/res/xml/cloud_backup_rules.xml), [Android 12+ extraction rules](android/app/src/main/res/xml/cloud_data_extraction_rules.xml). Màn hình thẻ native dùng `FLAG_SECURE` để hạn chế ảnh chụp/preview.
+
+**Cách chủ dự án tự đối chiếu:** vào [Neon Console](https://console.neon.tech/) → project Motion → SQL Editor, chạy `SELECT id,email,name,role,active FROM users;` và `SELECT id,user_id,expires_at FROM sessions;`. Kiểm tra mật khẩu bằng `SELECT id, (password LIKE 'scrypt:%') AS hashed FROM users;` để xem cờ hash, không xuất hash/mật khẩu ra README. Dùng Swagger đăng nhập rồi gọi `/me` để đối chiếu tên/email/vai trò; không đăng ảnh token, OTP, database URL hoặc dữ liệu sức khỏe thật lên GitHub. API public không có nghĩa database public; chỉ chủ tài khoản Neon/Render và người có quyền ứng dụng tương ứng được xem dữ liệu.
+
+Minh chứng kiểm thử cơ chế thẻ: [Flutter CRUD/cache session](test/emergency_card_test.dart), [chốt đọc khi khóa](android/app/src/test/kotlin/com/example/cam_bien_te_nga/EmergencyCardPolicyTest.kt), [integration Android không gửi/gọi thật](integration_test/device_safety_test.dart). Chạy `python tool/test_background_sos.py --flutter <flutter.bat> --lock` trên máy ảo test chưa bật SOS thật, không có PIN cần nhập. Runner khóa trong countdown, kiểm tra màn hình thẻ native và mở khóa để khôi phục dữ liệu thử. Không dùng script này trên điện thoại đang giám sát thật.
+
+**Sửa vùng xám ở Theo dõi 1.1.4:** mục chẩn đoán có `Material` riêng và `PageStorageKey` riêng; không đọc nhầm số vị trí cuộn thành trạng thái bool của ExpansionTile. Đã thêm kiểm thử cuộn xuống/mở chẩn đoán.
 
 **Thay đổi cảm biến 1.1.3:** xử lý cả va chạm xuất hiện ở mẫu bất thường đầu tiên; ba mức có ngưỡng va chạm 26 / 22 / 18 m/s². Chuỗi bước chân/va chạm lặp được loại trước khi kiểm tra nằm yên; một sự kiện mới mạnh hơn vẫn được xét. Đây là thuật toán thử nghiệm trên dữ liệu tổng hợp, cần kiểm chứng lại trên điện thoại thật; rung mạnh không đồng nghĩa chắc chắn té ngã.
 
@@ -32,7 +63,7 @@ Nếu đã có hai đỉnh va chạm cách nhau ít nhất 200 ms trong 2 giây,
 
 Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay trong README này. Người test chỉ cần điện thoại Android; không cần tải source hay cài công cụ lập trình.
 
-**Xem nhanh:** [Đồ án cuối kỳ / backend](#đồ-án-cuối-kỳ--tài-khoản-backend-và-vòng-an-toàn) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt).
+**Xem nhanh:** [Đồ án cuối kỳ / backend](#đồ-án-cuối-kỳ--tài-khoản-backend-và-thẻ-khẩn-cấp) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt).
 
 ## Tải APK để tham gia test (không cần máy tính)
 
@@ -50,9 +81,9 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 
 [Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.0.3-test.5). QR này cố định ở bản 1.0.3+5, không tự chuyển sang bản mới.
 
-## Đồ án cuối kỳ — tài khoản, backend và Vòng an toàn
+## Đồ án cuối kỳ — tài khoản, backend và thẻ khẩn cấp
 
-**Trạng thái:** source **1.1.3+9** bổ sung đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
+**Trạng thái:** source **1.1.4+10** bổ sung đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
 
 Domain riêng đang dùng cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Phương án miễn phí: **Render chạy Node.js + Neon lưu PostgreSQL + Resend gửi Email OTP qua HTTPS**; Cloudflare quản lý DNS. Không cần thuê VPS khi dùng phương án này. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
 
@@ -63,11 +94,11 @@ Domain riêng đang dùng cho đồ án: **`motion-api.vihx.online`**. **`api.vi
 | Đăng nhập + OTP | Email là tên đăng nhập; mật khẩu đúng mới gửi Email OTP; nhập mã mới được cấp phiên | Thử mật khẩu sai, OTP sai/hết hạn/dùng lại |
 | Quên mật khẩu | Email OTP đặt lại mật khẩu, thu hồi mọi phiên cũ | Thử lại phiên cũ trên máy thứ hai |
 | Phân quyền | `admin`, `staff`, `member`; API kiểm tra vai trò hiện tại và chủ sở hữu | Kiểm tra cả API bằng Swagger, không chỉ ẩn nút Flutter |
-| CRUD | Tài khoản (admin), liên hệ đám mây, lịch hẹn xác nhận an toàn | Tạo/xem/sửa/xóa, dữ liệu sai/trùng và truy cập chéo |
-| Tính năng mở rộng | **Vòng an toàn**: hẹn xác nhận, trạng thái cần hỗ trợ/an toàn/đã hỗ trợ, nhân viên theo phân công | Người dùng tạo lịch; nhân viên thấy đúng người được giao |
+| CRUD | Tài khoản (admin), liên hệ SOS trên máy, thẻ khẩn cấp | Tạo/xem/sửa/xóa, kiểm tra dữ liệu sai/trùng và quyền truy cập |
+| Tính năng mở rộng | **Thẻ thông tin khẩn cấp ngoại tuyến**, có thể đọc khi khóa sau SOS nếu đồng ý | Không cho truy cập phần tài khoản/quản trị qua thẻ |
 | Backend + Swagger | Node.js 24, Fastify, PostgreSQL trên Neon (hoặc SQLite trên VPS có volume), REST API, OpenAPI 3 + Swagger UI | Deploy HTTPS trên domain công khai; nhóm dùng chung dữ liệu |
 
-Đây là đối chiếu chức năng, không cam kết điểm số. Vòng an toàn là phần mở rộng phù hợp Motion, không khẳng định chưa từng có ở mọi ứng dụng khác. Hiện lịch quá hạn được tính khi tải/làm mới trang; chưa có lịch chạy máy chủ, push notification hay tự SOS từ lịch hẹn.
+Đây là đối chiếu chức năng, không cam kết điểm số. Vòng an toàn đã được bỏ khỏi giao diện 1.1.4. Các endpoint/bảng lịch hẹn và liên hệ đám mây cũ được giữ để tương thích dữ liệu/API; không tự xóa dữ liệu của người dùng khi cập nhật.
 
 **Phạm vi xác thực:** đăng ký email + mật khẩu/Email OTP, hoặc **Google OAuth2 Authorization Code + OIDC**. Backend đổi authorization code với Google, xác minh chữ ký/audience/issuer/hạn ID token qua thư viện Google và kiểm tra nonce; sau đó cấp JWT phiên riêng của Motion. JWT phiên không tự nó là OAuth2. Apple và SMS OTP chưa triển khai. Google Maps link trong SMS chỉ là liên kết bản đồ; backend của đồ án là API Motion riêng.
 
@@ -88,6 +119,9 @@ flowchart TD
     RBAC --> Member["Người dùng · dữ liệu của mình"]
     Flutter --> Native["Android SafetyService · cảm biến / đếm ngược"]
     Native --> SIM["SIM · SMS / cuộc gọi SOS"]
+    Flutter --> Card["Thẻ người mang máy · AES-GCM / Android Keystore"]
+    Native -->|"Thông báo sau SOS / có đồng ý"| Read["Activity chỉ đọc thẻ khi khóa"]
+    Card --> Read
 ```
 
 API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên hoặc đăng xuất tài khoản không tắt dịch vụ giám sát/SOS trên thiết bị. Lịch sử vị trí/SMS cục bộ chưa tự tải lên backend. Liên hệ đám mây được lưu riêng theo tài khoản; chỉ khi **người dùng xác nhận “Thêm vào SOS trên máy”** mới thêm người nhận trên điện thoại, không tự thay danh sách đang dùng.
@@ -97,12 +131,13 @@ API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên ho�
 <img src="docs/images/motion-account-preview.png" alt="Màn hình tài khoản Motion 1.1.0 trên máy ảo; API chưa triển khai" width="260">
 
 1. **Mở app bình thường sẽ vào đăng nhập trước**, chưa cho vào màn hình chính. Chọn **Tạo tài khoản bằng email** → nhập tên, email, mật khẩu 10–128 ký tự → nhập OTP nhận qua email (hiệu lực 5 phút). Xác thực đăng ký xong vẫn cần đăng nhập, không tự vào app.
-2. Đăng nhập bằng **email + mật khẩu** → nhập một Email OTP mới. Người dùng vào giao diện giám sát; admin/nhân viên vào dashboard đúng vai trò, có nút **MỞ GIÁM SÁT TRÊN THIẾT BỊ**. Biểu tượng người dùng trên thanh đầu mở phần tài khoản/Vòng an toàn. Phiên đã lưu được API kiểm tra lại khi khởi động; nếu không có phiên hợp lệ, cần đăng nhập. Mã không được trả về trong API/Swagger hay ghi log.
-3. **Người dùng:** sửa tên, CRUD liên hệ đám mây, CRUD lịch hẹn; xác nhận **TÔI ỔN** hoặc **CẦN HỖ TRỢ**. Các nút này cập nhật lịch hẹn đám mây, không thay nút gửi SOS tại màn hình theo dõi.
-4. **Nhân viên:** xem người được admin phân công; xem/sửa liên hệ, lịch hẹn và ghi nhận hỗ trợ cho đúng người. Không quản trị tài khoản hay dữ liệu người không được giao.
+2. Đăng nhập bằng **email + mật khẩu** → Email OTP, hoặc Google khi đã cấu hình. Lần sau app khôi phục phiên đã lưu và vào giao diện theo vai trò; không yêu cầu OTP mỗi lần mở. Phiên mới có hạn tối đa **30 ngày**, không gia hạn vô thời hạn. Phiên 12 giờ cấp bởi bản cũ giữ hạn cũ cho đến khi đăng nhập lại. Cache hồ sơ cho phép vào giao diện khi API tạm mất mạng, nhưng mọi CRUD đám mây vẫn phải qua API kiểm tra quyền. Khi API trả 401, xóa phiên/cache và yêu cầu đăng nhập. Không lưu mật khẩu trên điện thoại.
+3. **Người dùng:** mở tài khoản tại Cài đặt; tạo/sửa/xóa thẻ người mang điện thoại tại **THẺ THÔNG TIN KHẨN CẤP**. Thẻ không gắn tài khoản đám mây và không tự đổi khi đăng nhập tài khoản khác.
+4. **Nhân viên:** danh sách người được phân công. **Admin:** tạo/sửa/xóa/khóa tài khoản, phân quyền và phân công; tìm kiếm và lọc vai trò bằng thanh lọc. Dashboard không còn lịch hẹn/liên hệ.
+
 5. **Admin:** tạo/xem/sửa/xóa tài khoản, đổi vai trò, khóa/mở khóa, phân công người dùng cho nhân viên đang hoạt động. Không cho xóa/khóa/hạ quyền admin cuối cùng.
 6. Tài khoản do admin tạo: chủ email dùng **Quên mật khẩu** để nhận OTP, tự đặt mật khẩu và xác thực email trước đăng nhập. Không chia sẻ mật khẩu admin cho nhóm.
-7. **Quên mật khẩu** cần truy cập email tài khoản. Đổi mật khẩu thu hồi toàn bộ phiên; đăng xuất thu hồi phiên hiện tại. Sau 12 giờ cần đăng nhập lại. Khóa hoặc đổi vai trò cũng thu hồi phiên.
+7. **Quên mật khẩu** cần truy cập email tài khoản. Đổi mật khẩu thu hồi toàn bộ phiên; đăng xuất thu hồi phiên hiện tại. Phiên mới hết hạn sau 30 ngày cần đăng nhập lại. Khóa hoặc đổi vai trò cũng thu hồi phiên.
 8. Người dùng có thể xóa tài khoản đám mây sau khi xác nhận mật khẩu. Dữ liệu đám mây liên quan bị xóa; liên hệ/SOS cục bộ trên điện thoại vẫn giữ nguyên. Muốn đổi người sử dụng điện thoại, kiểm tra lại cấu hình SOS cục bộ.
 
 **Ngoại lệ khẩn cấp:** cảnh báo SOS đang diễn ra luôn được ưu tiên, kể cả khi chưa đăng nhập hoặc vừa đăng xuất. Người dùng vẫn có thể nhấn TÔI ỔN/xử lý cảnh báo; kết thúc cảnh báo sẽ quay về đăng nhập nếu chưa có phiên. Đăng xuất cũng đóng các trang dữ liệu đám mây đang mở, không tắt dịch vụ SOS trên Android.
@@ -234,9 +269,9 @@ Không dùng localhost/`10.0.2.2` trong cấu hình Flutter. URL mặc định t
 
 - Đăng ký, xác thực email; login sai/đúng mật khẩu; OTP sai, hết hạn, dùng lại; quên mật khẩu và phiên cũ bị thu hồi.
 - Tạo/xem/sửa/xóa tài khoản bằng admin, khóa tài khoản, đổi vai trò, phân công/gỡ phân công nhân viên; không xóa admin cuối cùng.
-- CRUD liên hệ/lịch hẹn: trường trống, số sai/trùng, thời gian quá khứ, bản ghi đã bị xóa, hủy dialog và mất mạng. Kiểm tra thao tác bằng hai thiết bị/tài khoản khác nhau.
+- CRUD tài khoản/liên hệ/thẻ: trường trống, số sai/trùng, giá trị chiều cao/cân nặng sai, hủy xác nhận xóa và mất mạng. Thẻ ngoại tuyến không cần API.
 - Người dùng A không đọc/sửa/xóa dữ liệu B bằng cách đổi ID; nhân viên không xem người chưa được giao; gọi thẳng API cũng bị chặn. Tự gửi `role=admin` khi đăng ký/sửa hồ sơ bị từ chối.
-- Lịch hẹn quá hạn, trạng thái cần hỗ trợ/an toàn/đã hỗ trợ và ghi chú hiển thị khi làm mới. Không mô tả chức năng này là có push hay tự SOS.
+- Thẻ khẩn cấp: mặc định không chia sẻ trên màn hình khóa; chỉ đọc khi đã đồng ý và SOS đang hoạt động. Không lộ giao diện quản trị từ thẻ.
 - Mất mạng/đăng xuất không làm mất luồng SOS trên máy; dùng liên hệ test có đồng ý, không gọi thật 113/114/115 khi báo cáo.
 - Swagger công khai bằng HTTPS từ 4G và Wi-Fi; restart backend vẫn còn dữ liệu; cả nhóm cài/chạy Flutter cùng API. Chỉ cập nhật QR/APK cuối kỳ sau khi kiểm tra deployment và email thật.
 
@@ -451,6 +486,10 @@ flowchart TB
     START --> SNAP
     SNAP -->|"Luôn xử lý"| S1
     SNAP -->|"Nếu đã bật tự gọi"| C1
+    SNAP --> CARD["THẺ KHẨN CẤP TRÊN MÁY<br/>Nút trong app và thông báo SOS"]
+    CARD --> CONSENT{"Đã đồng ý xem khi khóa<br/>và SOS đang hoạt động?"}
+    CONSENT -->|"Có"| READONLY["Màn hình riêng chỉ đọc<br/>Không mở tài khoản · không cần mạng"]
+    CONSENT -->|"Không"| UNLOCK["Cần mở khóa để xem thẻ"]
     S3 --> HISTORY
     C3 --> HISTORY
 
@@ -464,6 +503,7 @@ flowchart TB
     class S1,S2,S3 sms;
     class C1,C2,C3 voice;
     class HISTORY record;
+    class CARD,READONLY,UNLOCK neutral;
     style SMS fill:#f5fafb,stroke:#c5dfe1,color:#16494d,rx:18,ry:18
     style CALL fill:#f6f9f1,stroke:#d1dfbf,color:#243713,rx:18,ry:18
 ```
@@ -675,7 +715,7 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 python tool/test_background_sos.py --device emulator-5554
 ```
 
-Integration test chỉ chạy khi SOS thật đang tắt. Runner Python mở lại Activity bằng adb sau khi kiểm tra chuyến đi về Home; app không vượt hạn chế mở Activity nền của Android. Nếu Flutter chưa có trên PATH, truyền `--flutter` kèm đường dẫn đầy đủ tới flutter.bat. Phép thử xác nhận tắt/bật thu cảm biến trong nền không hủy countdown. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả kiểm chứng gần nhất: 96 Flutter tests và 21 Kotlin tests đạt trên source 1.1.3; integration dry-run đã đạt ở bản trước, chưa chạy lại trong đợt này; không đại diện mọi điện thoại.
+Integration test chỉ chạy khi SOS thật đang tắt. Runner Python mở lại Activity bằng adb sau khi kiểm tra chuyến đi về Home; app không vượt hạn chế mở Activity nền của Android. Nếu Flutter chưa có trên PATH, truyền `--flutter` kèm đường dẫn đầy đủ tới flutter.bat. Phép thử xác nhận tắt/bật thu cảm biến trong nền không hủy countdown. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả kiểm chứng gần nhất: 101 Flutter tests, 22 Kotlin tests, 27 backend tests và 23 PostgreSQL-compatible tests đạt trên source 1.1.4; integration emulator khóa màn hình đã đạt (không SMS/cuộc gọi thật); không đại diện mọi điện thoại.
 
 ### Icon và animation morphicons trong Flutter
 

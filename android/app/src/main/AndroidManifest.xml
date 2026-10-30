@@ -25,6 +25,9 @@
             android:stopWithTask="false"
             android:foregroundServiceType="health|location" />
         <receiver android:name=".SmsStatusReceiver" android:exported="false" />
+        <activity android:name=".EmergencyCardActivity" android:exported="false"
+            android:showWhenLocked="true" android:turnScreenOn="true"
+            android:excludeFromRecents="true" android:theme="@android:style/Theme.Material.Light.NoActionBar" />
         <activity
             android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
             android:exported="true"

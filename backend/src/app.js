@@ -71,7 +71,7 @@ export async function buildApp(config, overrides = {}) {
   await app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
   await app.register(jwt, {
     secret: config.jwtSecret,
-    sign: { expiresIn: "12h", iss: "motion-api", aud: "motion-app" },
+    sign: { expiresIn: "30d", iss: "motion-api", aud: "motion-app" },
     verify: { allowedIss: "motion-api", allowedAud: "motion-app" },
   });
   await app.register(swagger, {
@@ -263,11 +263,11 @@ export async function buildApp(config, overrides = {}) {
       "INSERT INTO sessions(id,user_id,expires_at) VALUES(?,?,?)",
       sid,
       user.id,
-      Date.now() + 43_200_000,
+      Date.now() + 2_592_000_000,
     );
     return {
       accessToken: await app.jwt.sign({ sub: user.id, sid }),
-      expiresIn: 43_200,
+      expiresIn: 2_592_000,
       user: publicUser(user),
     };
   }

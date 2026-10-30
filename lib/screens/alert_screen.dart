@@ -1,3 +1,4 @@
+import '../services/device_safety_bridge.dart';
 import '../widgets/morph_icon.dart';
 
 import 'package:flutter/material.dart';
@@ -27,6 +28,28 @@ class AlertScreen extends StatelessWidget {
                 key: ValueKey(sos ? 'sosResult' : 'fallConfirmation'),
                 padding: const EdgeInsets.all(24),
                 children: [
+                  if (sos && !c.sosIsSimulation)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: FilledButton(
+                        onPressed: () async {
+                          try {
+                            await DeviceSafetyBridge.channel.invokeMethod<void>(
+                              'openEmergencyCard',
+                            );
+                          } catch (_) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Không mở được thẻ.'),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: const Text('THẺ THÔNG TIN KHẨN CẤP'),
+                      ),
+                    ),
                   Row(
                     children: [
                       MorphIcon(

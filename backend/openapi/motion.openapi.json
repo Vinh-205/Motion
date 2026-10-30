@@ -213,7 +213,7 @@
           },
           "expiresIn": {
             "type": "integer",
-            "example": 43200
+            "example": 2592000
           },
           "user": {
             "$ref": "#/components/schemas/User"

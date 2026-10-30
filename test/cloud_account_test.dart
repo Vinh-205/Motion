@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:cam_bien_te_nga/services/device_safety_bridge.dart';
+
 import 'package:cam_bien_te_nga/screens/account_screen.dart';
 import 'package:cam_bien_te_nga/screens/cloud_dashboard_screen.dart';
 import 'package:cam_bien_te_nga/services/motion_api.dart';
@@ -29,6 +31,18 @@ http.Response jsonResponse(Object data, [int status = 200]) => http.Response(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+  setUp(
+    () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          DeviceSafetyBridge.channel,
+          (call) async =>
+              call.method == 'getEmergencyCard' ? <String, dynamic>{} : null,
+        ),
+  );
+  tearDown(
+    () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(DeviceSafetyBridge.channel, null),
+  );
 
   test('API refuses localhost and cleartext endpoints', () {
     for (final url in [
@@ -140,11 +154,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Người dùng'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('MỞ VÒNG AN TOÀN'),
+        find.text('THẺ THÔNG TIN KHẨN CẤP'),
         150,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('MỞ VÒNG AN TOÀN'), findsOneWidget);
+      expect(find.text('THẺ THÔNG TIN KHẨN CẤP'), findsOneWidget);
       expect(find.text('TẠO TÀI KHOẢN'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -200,18 +214,15 @@ void main() {
         expect(find.text(roleLabel(role)), findsWidgets);
         expect(tester.takeException(), isNull);
         await tester.scrollUntilVisible(
-          find.text('MỞ VÒNG AN TOÀN'),
+          find.text('THẺ THÔNG TIN KHẨN CẤP'),
           150,
           scrollable: find.byType(Scrollable).first,
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.text('MỞ VÒNG AN TOÀN'));
+        await tester.tap(find.text('THẺ THÔNG TIN KHẨN CẤP'));
         await tester.pumpAndSettle();
-        expect(find.text('Tạo lịch hẹn'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-        await tester.tap(find.text('Tạo lịch hẹn'));
-        await tester.pumpAndSettle();
-        expect(find.text('Nội dung hẹn'), findsOneWidget);
+        expect(find.text('Thẻ thông tin khẩn cấp'), findsOneWidget);
+        expect(find.text('Vòng an toàn'), findsNothing);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
       },

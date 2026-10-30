@@ -12,6 +12,11 @@ void main() {
   ) async {
     final bridge = DeviceSafetyBridge();
     final before = (await bridge.state())!;
+    final originalCard =
+        await DeviceSafetyBridge.channel.invokeMapMethod<String, dynamic>(
+          'getEmergencyCard',
+        ) ??
+        {};
     expect(
       before['enabled'],
       false,
@@ -36,6 +41,14 @@ void main() {
       ),
     );
     try {
+      await DeviceSafetyBridge.channel.invokeMethod<void>('saveEmergencyCard', {
+        'name': 'Motion Test Wearer',
+        'allergies': 'Synthetic test data',
+        'showWhenLocked': true,
+      });
+      final savedCard = await DeviceSafetyBridge.channel
+          .invokeMapMethod<String, dynamic>('getEmergencyCard');
+      expect(savedCard?['name'], 'Motion Test Wearer');
       expect(
         await bridge.saveContacts([
           {'id': 'dry-a', 'name': 'Kiểm thử A', 'phone': '0900000001'},
@@ -130,6 +143,10 @@ void main() {
       expect(recipients.length, 2);
       expect(recipients.map((r) => r['phone']), ['0900000001', '0900000002']);
       expect(recipients.every((r) => r['smsStatus'] == 'dryRun'), true);
+      debugPrint('MOTION_CARD_LOCKED_READ_READY');
+      // The host taps the SOS notification as a user, then unlocks before cleanup.
+      // Never start an Activity from a hidden Flutter engine to bypass Android BAL.
+      await Future<void>.delayed(const Duration(seconds: 18));
       await bridge.command('triggerDryRunAlert');
       final repeated = (await bridge.state())!;
       expect(
@@ -138,6 +155,16 @@ void main() {
       );
       debugPrint('MOTION_NATIVE_DRY_RUN_COMPLETED_WITHOUT_SMS');
     } finally {
+      if (originalCard.isEmpty) {
+        await DeviceSafetyBridge.channel.invokeMethod<void>(
+          'deleteEmergencyCard',
+        );
+      } else {
+        await DeviceSafetyBridge.channel.invokeMethod<void>(
+          'saveEmergencyCard',
+          originalCard,
+        );
+      }
       await bridge.command('disableRealSms');
       await bridge.saveContacts(
         ((before['contacts'] as List?) ?? [])

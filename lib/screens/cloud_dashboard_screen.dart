@@ -1,3 +1,5 @@
+import 'emergency_card_screen.dart';
+
 import 'package:flutter/material.dart';
 
 import '../services/app_controller.dart';
@@ -165,22 +167,6 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
     }
   }
 
-  void _records(String resource, String title, [Map<String, dynamic>? owner]) {
-    Navigator.push(
-      context,
-      MaterialPageRoute<void>(
-        builder: (_) => CloudRecordsScreen(
-          api: widget.api,
-          resource: resource,
-          title: title,
-          ownerId: owner?['id'] as String?,
-          ownerName: owner?['name'] as String?,
-          controller: widget.controller,
-        ),
-      ),
-    );
-  }
-
   String query = '', roleFilter = 'all';
   List<Map<String, dynamic>> get visibleUsers => users.where((user) {
     if (widget.api.role != 'admin' && user['id'] == widget.api.user?['id']) {
@@ -275,21 +261,6 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                 label: 'Chưa xác thực email',
                 color: context.colors.orange,
               ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            TextButton(
-              onPressed: () => _records('checkins', 'Lịch hẹn xác nhận', user),
-              child: const Text('Lịch hẹn'),
-            ),
-            TextButton(
-              onPressed: () => _records('contacts', 'Liên hệ đám mây', user),
-              child: const Text('Liên hệ'),
-            ),
           ],
         ),
       ],
@@ -394,23 +365,34 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                   ),
                   const SizedBox(height: 12),
                   if (api.role == 'admin')
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        for (final entry in const {
-                          'all': 'Tất cả',
-                          'member': 'Người dùng',
-                          'staff': 'Nhân viên',
-                          'admin': 'Quản trị',
-                        }.entries)
-                          FilterChip(
-                            label: Text(entry.value),
-                            selected: roleFilter == entry.key,
-                            onSelected: (_) =>
-                                setState(() => roleFilter = entry.key),
-                          ),
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      key: const Key('roleFilter'),
+                      initialValue: roleFilter,
+                      decoration: const InputDecoration(
+                        labelText: 'Lọc vai trò',
+                        isDense: true,
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'all',
+                          child: Text('Tất cả vai trò'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'member',
+                          child: Text('Người dùng'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'staff',
+                          child: Text('Nhân viên'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'admin',
+                          child: Text('Quản trị'),
+                        ),
                       ],
+                      onChanged: (value) =>
+                          setState(() => roleFilter = value ?? 'all'),
                     ),
                   if (api.role == 'admin')
                     Padding(
@@ -436,70 +418,16 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                     ),
                   const SizedBox(height: 20),
                 ],
-                Text(
-                  'Vòng an toàn',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Lịch hẹn xác nhận bạn vẫn an toàn, chia sẻ với người hỗ trợ được phân công.',
-                ),
-                const SizedBox(height: 16),
-                SurfacePanel(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      MorphIcon(
-                        AppGlyph.circleCheck,
-                        color: context.colors.lime,
-                        size: 28,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Một lời xác nhận. Thêm an tâm.',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Bạn đặt thời điểm cần xác nhận. Khi mở lịch, chọn TÔI ỔN hoặc CẦN HỖ TRỢ để người phụ trách biết trạng thái.',
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton(
-                        onPressed: () =>
-                            _records('checkins', 'Lịch hẹn của tôi'),
-                        child: const Text('MỞ VÒNG AN TOÀN'),
-                      ),
-                      Theme(
-                        data: Theme.of(context)
-                            .copyWith(dividerColor: Colors.transparent),
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: ExpansionTile(
-                            tilePadding: EdgeInsets.zero,
-                            title: const Text(
-                              'Lịch hẹn hoạt động thế nào?',
-                              style: TextStyle(fontSize: 13),
-                            ),
-                            children: const [
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 12),
-                                child: Text(
-                                  'Đây là lịch hẹn trong app, không phải vòng đeo tay. Lịch quá hạn được cập nhật khi mở hoặc làm mới. Hiện chưa có nhắc tự động, thông báo đẩy hay gửi SOS khi lịch quá hạn.',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () => _records('contacts', 'Liên hệ đám mây'),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => const EmergencyCardScreen(),
+                    ),
+                  ),
                   child: const Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Text('LIÊN HỆ ĐÁM MÂY'),
+                    padding: EdgeInsets.all(12),
+                    child: Text('THẺ THÔNG TIN KHẨN CẤP'),
                   ),
                 ),
                 const SizedBox(height: 28),

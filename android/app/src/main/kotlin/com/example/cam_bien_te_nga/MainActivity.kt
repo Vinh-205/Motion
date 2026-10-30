@@ -69,6 +69,21 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "motion/device_safety").setMethodCallHandler { call, result ->
             try {
                 when (call.method) {
+                    "getEmergencyCard" -> {
+                        check(!getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked) { "Hãy mở khóa để quản lý thẻ." }
+                        val card = EmergencyCardStore.read(this)
+                        result.success(card.keys().asSequence().associateWith { card.get(it) })
+                    }
+                    "saveEmergencyCard" -> {
+                        check(!getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked) { "Hãy mở khóa để sửa thẻ." }
+                        EmergencyCardStore.save(this, call.arguments as? Map<*, *> ?: emptyMap<String, Any>())
+                        result.success(null)
+                    }
+                    "deleteEmergencyCard" -> {
+                        check(!getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked) { "Hãy mở khóa để xóa thẻ." }
+                        EmergencyCardStore.delete(this); result.success(null)
+                    }
+                    "openEmergencyCard" -> { startActivity(Intent(this, EmergencyCardActivity::class.java)); result.success(null) }
                     "state" -> result.success(state())
                     "requestSmsPermission" -> {
                         check(smsPermissionResult == null && permissionResult == null && callPermissionResult == null) { "Một yêu cầu quyền đang mở." }

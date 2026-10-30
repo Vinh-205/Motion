@@ -291,27 +291,30 @@ class MonitorScreen extends StatelessWidget {
             'Không có dữ liệu con quay khả dụng. Dấu — không phải 0 rad/s. Máy dùng chế độ gia tốc nếu được hỗ trợ.',
           ),
         if (c.realSmsEnabled && c.monitoring)
-          ExpansionTile(
-            key: const Key('detectionDiagnostics'),
-            title: const Text('Tình trạng phát hiện'),
-            trailing: const MorphIcon(AppGlyph.info, size: 20),
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: NoteLine(
-                  c.detectionDetail.isEmpty
-                      ? 'Đang chờ dữ liệu.'
-                      : c.detectionDetail,
-                ),
-              ),
-              if (c.lastDetectionRejection.isNotEmpty)
+          Material(
+            type: MaterialType.transparency,
+            child: ExpansionTile(
+              key: const PageStorageKey('detectionDiagnostics'),
+              title: const Text('Tình trạng phát hiện'),
+              trailing: const MorphIcon(AppGlyph.info, size: 20),
+              children: [
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: NoteLine(
-                    'Lần gần nhất chưa đạt: ${c.lastDetectionRejection}',
+                    c.detectionDetail.isEmpty
+                        ? 'Đang chờ dữ liệu.'
+                        : c.detectionDetail,
                   ),
                 ),
-            ],
+                if (c.lastDetectionRejection.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: NoteLine(
+                      'Lần gần nhất chưa đạt: ${c.lastDetectionRejection}',
+                    ),
+                  ),
+              ],
+            ),
           ),
         const SizedBox(height: 6),
         NoteLine(

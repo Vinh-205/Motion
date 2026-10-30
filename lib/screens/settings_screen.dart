@@ -1,3 +1,4 @@
+import 'emergency_card_screen.dart';
 import '../widgets/morph_icon.dart';
 
 import 'package:flutter/material.dart';
@@ -41,6 +42,16 @@ class SettingsScreen extends StatelessWidget {
             builder: (_) =>
                 AccountScreen(controller: controller, api: cloudApi),
           ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      ActionButton(
+        label: 'THẺ THÔNG TIN KHẨN CẤP',
+        icon: AppGlyph.contact,
+        outlined: true,
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(builder: (_) => const EmergencyCardScreen()),
         ),
       ),
       const SizedBox(height: 12),

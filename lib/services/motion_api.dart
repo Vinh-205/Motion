@@ -67,6 +67,7 @@ class MotionApi extends ChangeNotifier {
   bool _disposed = false;
   Future<void>? _restoring;
   static const _tokenKey = 'motion.cloud.accessToken.v1';
+  static const _profileKey = 'motion.cloud.profile.v1';
   bool get signedIn => _token != null && user != null;
   String get role => user?['role'] as String? ?? 'member';
   void _emit() {
@@ -77,7 +78,28 @@ class MotionApi extends ChangeNotifier {
   Future<void> _restoreOnce() async {
     try {
       _token = await _storage.read(key: _tokenKey);
-      if (_token != null) user = await request('GET', '/me');
+      if (_token != null) {
+        final cached = await _storage.read(key: _profileKey);
+        if (cached != null) {
+          try {
+            final payload = jsonDecode(
+              utf8.decode(
+                base64Url.decode(base64Url.normalize(_token!.split('.')[1])),
+              ),
+            ) as Map<String, dynamic>;
+            if ((payload['exp'] as num).toInt() * 1000 >
+                DateTime.now().millisecondsSinceEpoch) {
+              user = jsonDecode(cached) as Map<String, dynamic>;
+              restored = true;
+              _emit();
+            }
+          } catch (_) {
+            /* A legacy token without a valid cache must be checked online. */
+          }
+        }
+        user = await request('GET', '/me');
+        await _storage.write(key: _profileKey, value: jsonEncode(user));
+      }
     } on ApiFailure catch (e) {
       if (e.status != 401) restoreError = e.message;
     } catch (_) {
@@ -123,6 +145,7 @@ class MotionApi extends ChangeNotifier {
           _token = null;
           user = null;
           await _storage.delete(key: _tokenKey);
+          await _storage.delete(key: _profileKey);
           _emit();
         }
         throw ApiFailure(
@@ -153,6 +176,7 @@ class MotionApi extends ChangeNotifier {
   Future<void> _acceptSession(Map<String, dynamic> result) async {
     final token = result['accessToken'] as String;
     await _storage.write(key: _tokenKey, value: token);
+    await _storage.write(key: _profileKey, value: jsonEncode(result['user']));
     _token = token;
     user = result['user'] as Map<String, dynamic>;
     restoreError = null;
@@ -241,6 +265,7 @@ class MotionApi extends ChangeNotifier {
           .cast<Map<String, dynamic>>();
   Future<void> updateName(String name) async {
     user = await request('PATCH', '/me', {'name': name});
+    await _storage.write(key: _profileKey, value: jsonEncode(user));
     _emit();
   }
 
@@ -252,6 +277,7 @@ class MotionApi extends ChangeNotifier {
 
   Future<void> clearSession() async {
     await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _profileKey);
     _token = null;
     user = null;
     _emit();

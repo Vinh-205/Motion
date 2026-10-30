@@ -37,6 +37,10 @@ flowchart TB
     START --> SNAP
     SNAP -->|"Luôn xử lý"| S1
     SNAP -->|"Nếu đã bật tự gọi"| C1
+    SNAP --> CARD["THẺ KHẨN CẤP TRÊN MÁY<br/>Nút trong app và thông báo SOS"]
+    CARD --> CONSENT{"Đã đồng ý xem khi khóa<br/>và SOS đang hoạt động?"}
+    CONSENT -->|"Có"| READONLY["Màn hình riêng chỉ đọc<br/>Không mở tài khoản · không cần mạng"]
+    CONSENT -->|"Không"| UNLOCK["Cần mở khóa để xem thẻ"]
     S3 --> HISTORY
     C3 --> HISTORY
 
@@ -50,5 +54,6 @@ flowchart TB
     class S1,S2,S3 sms;
     class C1,C2,C3 voice;
     class HISTORY record;
+    class CARD,READONLY,UNLOCK neutral;
     style SMS fill:#f5fafb,stroke:#c5dfe1,color:#16494d,rx:18,ry:18
     style CALL fill:#f6f9f1,stroke:#d1dfbf,color:#243713,rx:18,ry:18

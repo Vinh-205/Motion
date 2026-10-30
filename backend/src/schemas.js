@@ -55,7 +55,7 @@ const session = object({
     description:
       "Bearer token; expires after 12 hours; revoked by logout/reset/lock/role change",
   },
-  expiresIn: { type: "integer", example: 43200 },
+  expiresIn: { type: "integer", example: 2592000 },
   user: { $ref: "User#" },
 });
 const list = (item) => object({ items: { type: "array", items: item } });

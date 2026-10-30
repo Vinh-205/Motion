@@ -91,6 +91,11 @@ test("email registration, verification and password + OTP login; OTP cannot be r
   r = await f.call("POST", "/auth/login/verify", login);
   assert.equal(r.status, 200);
   assert.equal(r.data.user.role, "member");
+  assert.equal(r.data.expiresIn, 30 * 24 * 60 * 60);
+  const claims = f.app.jwt.verify(r.data.accessToken);
+  assert.equal(claims.exp - claims.iat, r.data.expiresIn);
+  const persistedSession = await f.app.store.one("SELECT * FROM sessions WHERE id=?", claims.sid);
+  assert.ok(persistedSession.expires_at > Date.now() + 29 * 24 * 60 * 60 * 1000);
   assert.equal(
     (await f.call("GET", "/me", undefined, r.data.accessToken)).status,
     200,
