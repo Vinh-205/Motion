@@ -82,3 +82,50 @@ test("Render rejects ephemeral SQLite and supports HTTPS mail configuration", ()
     Object.assign(process.env, saved);
   }
 });
+
+test("bootstrap diagnoses invalid configuration without logging credentials", async (t) => {
+  const store = openStore(":memory:");
+  t.after(() => store.close());
+  const cases = [
+    [{ BOOTSTRAP_ADMIN_EMAIL: "admin@example.org" }, /PASSWORD is missing/],
+    [
+      { BOOTSTRAP_ADMIN_PASSWORD: "synthetic-test-password" },
+      /EMAIL is missing/,
+    ],
+    [
+      {
+        BOOTSTRAP_ADMIN_EMAIL: "not-an-email",
+        BOOTSTRAP_ADMIN_PASSWORD: "synthetic-test-password",
+      },
+      /EMAIL must be a valid/,
+    ],
+    [
+      {
+        BOOTSTRAP_ADMIN_EMAIL: "admin@example.org",
+        BOOTSTRAP_ADMIN_PASSWORD: "short1234",
+      },
+      /received length=9/,
+    ],
+    [
+      {
+        BOOTSTRAP_ADMIN_EMAIL: "admin@example.org",
+        BOOTSTRAP_ADMIN_PASSWORD: "synthetic-test-password\n",
+      },
+      /line breaks/,
+    ],
+  ];
+  for (const [env, pattern] of cases) {
+    await assert.rejects(ensureInitialAdmin(store, env), (error) => {
+      assert.match(error.message, pattern);
+      if (env.BOOTSTRAP_ADMIN_PASSWORD)
+        assert.equal(
+          error.message.includes(env.BOOTSTRAP_ADMIN_PASSWORD),
+          false,
+        );
+      if (env.BOOTSTRAP_ADMIN_EMAIL)
+        assert.equal(error.message.includes(env.BOOTSTRAP_ADMIN_EMAIL), false);
+      return true;
+    });
+  }
+  assert.equal((await store.one("SELECT COUNT(*) AS n FROM users")).n, 0);
+});

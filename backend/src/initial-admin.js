@@ -7,17 +7,27 @@ export async function ensureInitialAdmin(store, env = process.env) {
   const email = env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
   const password = env.BOOTSTRAP_ADMIN_PASSWORD;
   if (!email && !password) return false;
-  if (
-    !email ||
-    !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ||
-    !password ||
-    password.length < 14 ||
-    password.length > 128
-  ) {
-    throw new Error(
-      "Configure BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD (14-128 characters) together",
+  const errors = [];
+  if (!email) errors.push("BOOTSTRAP_ADMIN_EMAIL is missing or empty");
+  else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || /["'<>]/.test(email)) {
+    errors.push(
+      "BOOTSTRAP_ADMIN_EMAIL must be a valid email address without quotes or a display name",
     );
   }
+  if (!password) errors.push("BOOTSTRAP_ADMIN_PASSWORD is missing or empty");
+  else {
+    if (password.length < 14 || password.length > 128) {
+      errors.push(
+        `BOOTSTRAP_ADMIN_PASSWORD must contain 14-128 characters; received length=${password.length}`,
+      );
+    }
+    if (/[\r\n]/.test(password))
+      errors.push("BOOTSTRAP_ADMIN_PASSWORD must not contain line breaks");
+  }
+  if (errors.length)
+    throw new Error(
+      `Initial admin configuration invalid: ${errors.join("; ")}. Update Render Environment and redeploy.`,
+    );
   const existing = await store.one(
     "SELECT role FROM users WHERE email=?",
     email,
