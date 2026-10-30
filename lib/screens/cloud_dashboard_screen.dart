@@ -355,6 +355,24 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                   onPressed: busy ? null : () => _run(api.logout),
                   child: const Text('ĐĂNG XUẤT'),
                 ),
+                OutlinedButton(
+                  key: const Key('linkGoogleAccount'),
+                  onPressed: busy
+                      ? null
+                      : () => _run(() async {
+                          await api.signInWithGoogle(linkAccount: true);
+                          if (mounted) {
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Đã liên kết Google. Lần sau bạn có thể đăng nhập bằng Google.',
+                                ),
+                              ),
+                            );
+                          }
+                        }),
+                  child: const Text('LIÊN KẾT GOOGLE'),
+                ),
                 TextButton(
                   onPressed: busy ? null : _deleteAccount,
                   child: const Text('Xóa tài khoản đám mây'),

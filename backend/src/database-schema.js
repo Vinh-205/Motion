@@ -33,6 +33,19 @@ export const sqliteSchema = `PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PR
     CREATE INDEX IF NOT EXISTS checkins_owner ON checkins(owner_id,due_at);
     CREATE INDEX IF NOT EXISTS challenges_user ON challenges(user_id,purpose,created_at);
     CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
+    CREATE TABLE IF NOT EXISTS google_identities (
+      subject TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS google_oauth_flows (
+      id TEXT PRIMARY KEY, state_digest TEXT UNIQUE NOT NULL, nonce TEXT NOT NULL,
+      google_verifier TEXT NOT NULL, app_challenge TEXT NOT NULL,
+      link_user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      link_session_id TEXT REFERENCES sessions(id) ON DELETE CASCADE,
+      user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+      ticket_digest TEXT, callback_used INTEGER NOT NULL DEFAULT 0,
+      exchanged INTEGER NOT NULL DEFAULT 0, expires_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS google_flows_expiry ON google_oauth_flows(expires_at);
     PRAGMA user_version=1;
   `;
 export const postgresSchema = sqliteSchema

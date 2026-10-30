@@ -4,6 +4,7 @@
 *.pyc
 *.swp
 .DS_Store
+client_secret*.json
 .atom/
 .build/
 .buildlog/

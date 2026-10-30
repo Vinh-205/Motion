@@ -14,6 +14,7 @@ import {
   validOtp,
 } from "./security.js";
 import { responses, registerModels, requestModel } from "./schemas.js";
+import { registerGoogleOAuth } from "./google-oauth.js";
 
 const str = (maxLength, minLength = 1) => ({
   type: "string",
@@ -119,7 +120,7 @@ export async function buildApp(config, overrides = {}) {
     if (status >= 500) request.log.error({ err: error }, "Request failed");
     reply.code(status).send({
       message:
-        status >= 500
+        status >= 500 && error.publicMessage !== true
           ? "Dịch vụ đang bận. Vui lòng thử lại."
           : status === 409
             ? "Dữ liệu trùng lặp hoặc xung đột."
@@ -951,5 +952,12 @@ export async function buildApp(config, overrides = {}) {
     },
     authenticated,
   );
+  await registerGoogleOAuth(app, {
+    store,
+    config,
+    authenticated,
+    sessionFor,
+    provider: overrides.googleProvider,
+  });
   return app;
 }

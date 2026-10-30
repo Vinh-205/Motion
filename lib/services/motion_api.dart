@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 class ApiFailure implements Exception {
   const ApiFailure(this.message, [this.status]);
@@ -16,17 +20,22 @@ class ApiFailure implements Exception {
 /// Cloud accounts are independent of the on-device emergency service.
 /// An expired cloud session must never stop an active SOS or sensor monitoring.
 class MotionApi extends ChangeNotifier {
-  MotionApi({http.Client? client, FlutterSecureStorage? storage, Uri? baseUrl})
-    : _client = client ?? http.Client(),
-      _storage = storage ?? const FlutterSecureStorage(),
-      baseUrl =
-          baseUrl ??
-          Uri.parse(
-            const String.fromEnvironment(
-              'MOTION_API_URL',
-              defaultValue: 'https://motion-api.vihx.online',
-            ),
-          ) {
+  MotionApi({
+    http.Client? client,
+    FlutterSecureStorage? storage,
+    Uri? baseUrl,
+    Future<String> Function(String url)? googleBrowser,
+  }) : _client = client ?? http.Client(),
+       _storage = storage ?? const FlutterSecureStorage(),
+       _googleBrowser = googleBrowser ?? _openGoogleBrowser,
+       baseUrl =
+           baseUrl ??
+           Uri.parse(
+             const String.fromEnvironment(
+               'MOTION_API_URL',
+               defaultValue: 'https://motion-api.vihx.online',
+             ),
+           ) {
     if (this.baseUrl.scheme != 'https' ||
         this.baseUrl.host.isEmpty ||
         this.baseUrl.userInfo.isNotEmpty ||
@@ -44,6 +53,13 @@ class MotionApi extends ChangeNotifier {
   final Uri baseUrl;
   final http.Client _client;
   final FlutterSecureStorage _storage;
+  final Future<String> Function(String url) _googleBrowser;
+  bool _googleBusy = false;
+  static Future<String> _openGoogleBrowser(String url) =>
+      FlutterWebAuth2.authenticate(
+        url: url,
+        callbackUrlScheme: 'com.vihx.motion',
+      );
   String? _token;
   Map<String, dynamic>? user;
   bool restored = false;
@@ -131,12 +147,92 @@ class MotionApi extends ChangeNotifier {
       'challengeId': challengeId,
       'code': code,
     });
+    await _acceptSession(result);
+  }
+
+  Future<void> _acceptSession(Map<String, dynamic> result) async {
     final token = result['accessToken'] as String;
     await _storage.write(key: _tokenKey, value: token);
     _token = token;
     user = result['user'] as Map<String, dynamic>;
     restoreError = null;
     _emit();
+  }
+
+  Future<void> signInWithGoogle({bool linkAccount = false}) async {
+    if (_googleBusy) {
+      throw const ApiFailure(
+        'Đang có một phiên Google. Hãy hoàn tất hoặc đóng phiên trước.',
+      );
+    }
+    _googleBusy = true;
+    try {
+      final random = Random.secure();
+      final verifier = base64UrlEncode(
+        List<int>.generate(32, (_) => random.nextInt(256)),
+      ).replaceAll('=', '');
+      final challenge = base64UrlEncode(
+        sha256.convert(ascii.encode(verifier)).bytes,
+      ).replaceAll('=', '');
+      final flow = await request('POST', '/auth/google/start', {
+        'codeChallenge': challenge,
+        'linkAccount': linkAccount,
+      });
+      final authorization = Uri.parse(flow['authorizationUrl'] as String);
+      if (authorization.scheme != 'https' ||
+          authorization.host != 'accounts.google.com' ||
+          authorization.path != '/o/oauth2/v2/auth' ||
+          authorization.userInfo.isNotEmpty) {
+        throw const ApiFailure('Địa chỉ đăng nhập Google không hợp lệ.');
+      }
+      final callback = Uri.parse(
+        await _googleBrowser(authorization.toString()),
+      );
+      if (callback.scheme != 'com.vihx.motion' ||
+          callback.host != 'oauth' ||
+          callback.path != '/google' ||
+          callback.queryParameters['flowId'] != flow['flowId']) {
+        throw const ApiFailure(
+          'Phiên Google không khớp. Hãy thử đăng nhập lại.',
+        );
+      }
+      final error = callback.queryParameters['error'];
+      if (error != null) {
+        throw ApiFailure(switch (error) {
+          'cancelled' => 'Bạn đã hủy đăng nhập Google.',
+          'account_exists' => 'Email này đã có tài khoản Motion. Hãy đăng nhập bằng email, rồi chọn Liên kết Google trong tài khoản.',
+          'email_mismatch' => 'Chọn tài khoản Google có cùng email với tài khoản Motion đang đăng nhập.',
+          'already_linked' =>
+            'Tài khoản Google đã được liên kết với người dùng khác.',
+          'account_disabled' =>
+            'Tài khoản không còn hoạt động. Hãy liên hệ quản trị viên.',
+          'authorization_expired' =>
+            'Phiên liên kết đã hết hạn. Hãy đăng nhập lại bằng email trước.',
+          _ => 'Chưa đăng nhập được Google. Hãy thử lại hoặc dùng email.',
+        });
+      }
+      final ticket = callback.queryParameters['ticket'];
+      if (ticket == null || !RegExp(r'^[A-Za-z0-9_-]{43}$').hasMatch(ticket)) {
+        throw const ApiFailure('Google chưa trả về mã đăng nhập hợp lệ.');
+      }
+      final result = await request('POST', '/auth/google/exchange', {
+        'flowId': flow['flowId'],
+        'ticket': ticket,
+        'codeVerifier': verifier,
+      });
+      await _acceptSession(result);
+    } on ApiFailure {
+      rethrow;
+    } on PlatformException catch (e) {
+      if (e.code == 'CANCELED' || e.code == 'CANCELLED') {
+        throw const ApiFailure('Bạn đã hủy đăng nhập Google.');
+      }
+      throw const ApiFailure(
+        'Không mở được trình đăng nhập Google. Hãy dùng email hoặc thử lại.',
+      );
+    } finally {
+      _googleBusy = false;
+    }
   }
 
   Future<List<Map<String, dynamic>>> list(String path) async =>

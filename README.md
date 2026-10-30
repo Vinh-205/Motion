@@ -24,14 +24,14 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 
 ## Đồ án cuối kỳ — tài khoản, backend và Vòng an toàn
 
-**Trạng thái:** source **1.1.1+7** đã bổ sung đăng nhập trước khi vào app, hỗ trợ Render/Neon/Resend; **chưa xác nhận triển khai API công khai hoặc gửi Email OTP thật**. APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Không dùng kết quả kiểm thử với email giả lập để kết luận gửi email thực tế đã hoạt động.
+**Trạng thái:** source **1.1.2+8** bổ sung đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
 
-Domain riêng dự kiến cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Phương án miễn phí: **Render chạy Node.js + Neon lưu PostgreSQL + Resend gửi Email OTP qua HTTPS**; Cloudflare quản lý DNS. Không cần thuê VPS khi dùng phương án này. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
+Domain riêng đang dùng cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Phương án miễn phí: **Render chạy Node.js + Neon lưu PostgreSQL + Resend gửi Email OTP qua HTTPS**; Cloudflare quản lý DNS. Không cần thuê VPS khi dùng phương án này. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
 
 | Yêu cầu | Phần triển khai trong source | Điều kiện nghiệm thu |
 | --- | --- | --- |
 | Flutter | Màn hình tài khoản và dashboard dùng Flutter, cùng giao diện sáng/tối Motion | Chạy trên thiết bị của các thành viên |
-| Đăng ký email | Tài khoản mới mặc định `member`; xác thực email bằng OTP | SMTP thật + email đến hộp thư |
+| Đăng ký email | Tài khoản mới mặc định `member`; xác thực email bằng OTP | Resend HTTPS hoặc SMTP thật + email đến hộp thư |
 | Đăng nhập + OTP | Email là tên đăng nhập; mật khẩu đúng mới gửi Email OTP; nhập mã mới được cấp phiên | Thử mật khẩu sai, OTP sai/hết hạn/dùng lại |
 | Quên mật khẩu | Email OTP đặt lại mật khẩu, thu hồi mọi phiên cũ | Thử lại phiên cũ trên máy thứ hai |
 | Phân quyền | `admin`, `staff`, `member`; API kiểm tra vai trò hiện tại và chủ sở hữu | Kiểm tra cả API bằng Swagger, không chỉ ẩn nút Flutter |
@@ -41,17 +41,19 @@ Domain riêng dự kiến cho đồ án: **`motion-api.vihx.online`**. **`api.vi
 
 Đây là đối chiếu chức năng, không cam kết điểm số. Vòng an toàn là phần mở rộng phù hợp Motion, không khẳng định chưa từng có ở mọi ứng dụng khác. Hiện lịch quá hạn được tính khi tải/làm mới trang; chưa có lịch chạy máy chủ, push notification hay tự SOS từ lịch hẹn.
 
-**Phạm vi xác thực:** chọn nhánh **đăng ký qua email + Email OTP** trong đề bài. Backend dùng phiên JWT; **JWT không đồng nghĩa OAuth2.0**. Đăng nhập Google/Apple/OAuth2 và SMS OTP chưa triển khai. Nếu giảng viên bắt buộc OAuth2 ngay cả khi chọn đăng ký email, cần bổ sung nhà cung cấp OAuth/OIDC trước nghiệm thu. Google Maps link trong SMS chỉ là liên kết bản đồ; không thay thế yêu cầu backend của đồ án.
+**Phạm vi xác thực:** đăng ký email + mật khẩu/Email OTP, hoặc **Google OAuth2 Authorization Code + OIDC**. Backend đổi authorization code với Google, xác minh chữ ký/audience/issuer/hạn ID token qua thư viện Google và kiểm tra nonce; sau đó cấp JWT phiên riêng của Motion. JWT phiên không tự nó là OAuth2. Apple và SMS OTP chưa triển khai. Google Maps link trong SMS chỉ là liên kết bản đồ; backend của đồ án là API Motion riêng.
 
 ### Kiến trúc cuối kỳ
 
-Swagger UI tại `/docs/` có mục **Schemas** ở cuối trang, gồm 24 model request/response dùng chung (ví dụ `User`, `EmergencyContact`, `SafetyCheckIn`, `RegisterRequest`, `LoginRequest`, `AuthSessionResponse`). Endpoint tham chiếu model qua `$ref`; mở từng model để xem trường bắt buộc, kiểu dữ liệu và giới hạn nhập. Mật khẩu chỉ nằm trong request với `writeOnly`, không có trong model trả về `User`.
+Swagger UI tại `/docs/` có mục **Schemas** ở cuối trang, gồm 27 model request/response dùng chung (ví dụ `User`, `EmergencyContact`, `SafetyCheckIn`, `RegisterRequest`, `LoginRequest`, `AuthSessionResponse`, `GoogleOAuthStartRequest`, `GoogleOAuthExchangeRequest`). Endpoint tham chiếu model qua `$ref`; mở từng model để xem trường bắt buộc, kiểu dữ liệu và giới hạn nhập. Mật khẩu chỉ nằm trong request với `writeOnly`, không có trong model trả về `User`.
 
 ```mermaid
 flowchart TD
     Flutter["Flutter Motion"] -->|"HTTPS / Bearer JWT"| API["motion-api.vihx.online · Fastify API"]
     API --> DB["Neon PostgreSQL · dữ liệu lưu ngoài Render"]
     API --> Mail["Resend HTTPS · Email OTP"]
+    Flutter -->|"Trình duyệt hệ thống"| Google["Google OAuth2 / OIDC"]
+    API -->|"Đổi code / xác minh ID token"| Google
     API --> RBAC{"Vai trò + chủ sở hữu"}
     RBAC --> Admin["Admin · quản lý tài khoản / phân công"]
     RBAC --> Staff["Nhân viên · người được phân công"]
@@ -76,6 +78,28 @@ API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên ho�
 8. Người dùng có thể xóa tài khoản đám mây sau khi xác nhận mật khẩu. Dữ liệu đám mây liên quan bị xóa; liên hệ/SOS cục bộ trên điện thoại vẫn giữ nguyên. Muốn đổi người sử dụng điện thoại, kiểm tra lại cấu hình SOS cục bộ.
 
 **Ngoại lệ khẩn cấp:** cảnh báo SOS đang diễn ra luôn được ưu tiên, kể cả khi chưa đăng nhập hoặc vừa đăng xuất. Người dùng vẫn có thể nhấn TÔI ỔN/xử lý cảnh báo; kết thúc cảnh báo sẽ quay về đăng nhập nếu chưa có phiên. Đăng xuất cũng đóng các trang dữ liệu đám mây đang mở, không tắt dịch vụ SOS trên Android.
+
+### Cấu hình đăng nhập Google OAuth2/OIDC
+
+**Luồng sử dụng:** màn hình đăng nhập có nút **TIẾP TỤC VỚI GOOGLE**. App mở trình đăng nhập Google của hệ thống, backend nhận authorization code qua HTTPS, rồi trả ticket dùng một lần về app. Ticket chỉ đổi được khi app cung cấp PKCE verifier của đúng phiên. JWT/Google access token không nằm trong URL callback; không lưu Google refresh/access token trong database.
+
+- Tài khoản Google mới tạo người dùng Motion với vai trò `member`, không lấy quyền từ dữ liệu Google gửi lên.
+- Email đã có tài khoản Motion không được tự liên kết: đăng nhập Motion bằng email + mật khẩu + OTP trước, mở **Tài khoản → LIÊN KẾT GOOGLE**, chọn Google có cùng email. Sau đó có thể đăng nhập Google và giữ vai trò hiện có.
+- Người dùng bị khóa không được cấp phiên Google mới. Người dùng Google mới có thể dùng **Quên mật khẩu** qua email để tự đặt mật khẩu Motion nếu muốn dùng thêm cách đăng nhập email.
+- Nhánh Google dùng xác thực của Google; nhánh email vẫn yêu cầu Email OTP như trước. Google không tự gửi thêm Email OTP Motion khi đăng nhập bằng Google.
+
+**Tạo OAuth Client riêng cho Motion:**
+
+1. Mở [Google Cloud Console](https://console.cloud.google.com), tạo/chọn project riêng **`motion-final`**. Vào **Google Auth Platform** (hoặc APIs & Services → OAuth consent screen nếu giao diện hiện cách cũ).
+2. Cấu hình **Branding**: tên app `Motion`, email hỗ trợ và email liên hệ do bạn sở hữu. Nếu yêu cầu Authorized domains, thêm `vihx.online`. Trong **Audience**, chọn **External**, giữ **Testing** cho giai đoạn báo cáo và thêm email admin/các thành viên ở **Test users** nếu giao diện yêu cầu. Kiểm tra giới hạn trong [hướng dẫn Audience của Google](https://support.google.com/cloud/answer/15549945?hl=en) trước khi mở rộng nhóm.
+3. Trong **Data Access**, chỉ dùng `openid`, `email`, `profile` (có thể hiện dưới dạng `userinfo.email`, `userinfo.profile`). Không cần quyền Gmail, Drive hoặc danh bạ Google.
+4. Vào **Clients → Create client → Web application**, đặt tên **`Motion Backend`**. Chọn Web vì backend nhận callback HTTPS; luồng này không cần tạo Android OAuth client/SHA-1.
+5. Thêm **Authorized redirect URI** đúng hoàn toàn: **`https://motion-api.vihx.online/auth/google/callback`**. Không thêm dấu `/` cuối, không dùng `/docs` và không đặt custom scheme Android vào Google Cloud. Authorized JavaScript origins không cần cho luồng backend này.
+6. Tạo client, sao chép **Client ID** và **Client secret** trực tiếp vào Render → Environment với KEY **`GOOGLE_CLIENT_ID`**, **`GOOGLE_CLIENT_SECRET`**. Điền cả hai trước khi lưu. Không gửi secret trong chat, không đưa file `client_secret*.json` lên Git, không đóng gói secret vào Flutter/`--dart-define`.
+7. Đảm bảo Render có **`PUBLIC_URL=https://motion-api.vihx.online`** → Save, rebuild, and deploy. Khi chưa có cả hai biến Google, API Google trả lỗi chưa sẵn sàng; đăng nhập email vẫn hoạt động. Xóa cả hai biến nếu muốn tắt Google; không để thiếu một biến.
+8. Cài/chạy bản Flutter mới (hot reload không đủ khi thêm plugin Android). Chọn Google bằng nút trong app; không tự điền `code/state/ticket` từ ví dụ Swagger để giả lập đăng nhập Google. `redirect_uri_mismatch` cần kiểm tra URI ở bước 5 và `PUBLIC_URL`; `access_denied` cần kiểm tra Audience/Test users hoặc việc người dùng hủy.
+
+API bổ sung: `POST /auth/google/start`, `GET /auth/google/callback`, `POST /auth/google/exchange`. Luồng Google hết hạn sau 10 phút; ticket chỉ dùng một lần. PKCE bảo vệ cả đoạn đổi code với Google và đoạn ticket quay về app. Phiên Motion vẫn dùng cơ chế lưu an toàn/thu hồi như đăng nhập email. Tài liệu giao thức: [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect), [Google OAuth2 cho backend](https://developers.google.com/identity/protocols/oauth2/web-server).
 
 ### Triển khai miễn phí — Render + Neon + Resend + Cloudflare
 

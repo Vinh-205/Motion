@@ -110,6 +110,22 @@ class _AccountScreenState extends State<AccountScreen> {
     _password.clear();
     _code.clear();
   });
+  Future<void> _google() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _busy = true;
+      _error = null;
+      _notice = null;
+    });
+    try {
+      await api.signInWithGoogle();
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: api,
@@ -263,6 +279,15 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: const Text('Quay lại / xin mã mới'),
                   ),
                 if (_challenge == null) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    key: const Key('googleSignIn'),
+                    onPressed: _busy ? null : _google,
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('TIẾP TỤC VỚI GOOGLE'),
+                    ),
+                  ),
                   TextButton(
                     onPressed: _busy
                         ? null

@@ -26,6 +26,17 @@
             android:foregroundServiceType="health|location" />
         <receiver android:name=".SmsStatusReceiver" android:exported="false" />
         <activity
+            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:exported="true"
+            android:taskAffinity="">
+            <intent-filter android:label="Motion Google sign-in">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.vihx.motion" android:host="oauth" android:path="/google" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"

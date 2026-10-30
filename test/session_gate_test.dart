@@ -66,6 +66,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.text('Chào bạn trở lại.'), findsOneWidget);
       expect(find.byType(HomeScreen), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('Tạo tài khoản bằng email'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('Tạo tài khoản bằng email'));
       await tester.pump();
       expect(find.text('Tạo tài khoản.'), findsOneWidget);

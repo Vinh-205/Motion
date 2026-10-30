@@ -39,6 +39,8 @@ export function configFromEnv() {
       "https://motion-api.vihx.online",
     mailProvider: process.env.MAIL_PROVIDER || "smtp",
     resendApiKey: process.env.RESEND_API_KEY,
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     smtp: {
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
@@ -54,6 +56,10 @@ export function configFromEnv() {
   }
   if (config.jwtSecret === config.otpSecret)
     throw new Error("JWT_SECRET and OTP_SECRET must differ");
+  if (!!config.googleClientId !== !!config.googleClientSecret)
+    throw new Error(
+      "Configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET together, or leave both unset",
+    );
   if (!/^https:\/\//.test(config.publicUrl))
     throw new Error("PUBLIC_URL must use HTTPS");
   if (process.env.RENDER && !config.databaseUrl)
