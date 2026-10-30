@@ -13,6 +13,7 @@ async function fixture(t, enabled = true) {
   let profile = {
     sub: "google-stable-subject",
     email: "owner@example.org",
+    hd: "example.org",
     email_verified: true,
     name: "Google Test",
     role: "admin",
@@ -216,6 +217,27 @@ test("unverified Google email is rejected", async (t) => {
     (await f.callback(flow)).uri.searchParams.get("error"),
     "invalid_identity",
   );
+});
+
+test("non-Gmail external mailboxes require Motion OTP registration before linking", async (t) => {
+  const f = await fixture(t);
+  f.setProfile({ hd: undefined, email_verified: true });
+  const flow = await f.start();
+  assert.equal(
+    (await f.callback(flow)).uri.searchParams.get("error"),
+    "email_verification_required",
+  );
+  assert.equal((await f.app.store.one("SELECT COUNT(*) AS n FROM users")).n, 0);
+});
+
+test("Gmail can create a member without a Workspace hd claim", async (t) => {
+  const f = await fixture(t);
+  f.setProfile({ email: "motion-test-member@gmail.com", hd: undefined });
+  const flow = await f.start(),
+    result = await f.callback(flow);
+  const session = await f.exchange(flow, result.uri);
+  assert.equal(session.statusCode, 200);
+  assert.equal(session.json().user.role, "member");
 });
 test("existing email never auto-links; authenticated explicit linking preserves admin role", async (t) => {
   const f = await fixture(t),

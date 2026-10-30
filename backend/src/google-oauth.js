@@ -278,6 +278,15 @@ export async function registerGoogleOAuth(
           } else {
             if (await store.one("SELECT id FROM users WHERE email=?", email))
               return { error: "account_exists" };
+            // Google is authoritative for Gmail and signed Workspace hd claims.
+            // A third-party mailbox may have changed owners since Google verified it.
+            // Require Motion mailbox OTP registration and explicit linking first.
+            if (
+              !email.endsWith("@gmail.com") &&
+              !(typeof profile.hd === "string" && profile.hd.length > 0)
+            ) {
+              return { error: "email_verification_required" };
+            }
             const userId = randomUUID();
             const name =
               (typeof profile.name === "string"

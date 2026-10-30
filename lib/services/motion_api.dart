@@ -201,6 +201,7 @@ class MotionApi extends ChangeNotifier {
         throw ApiFailure(switch (error) {
           'cancelled' => 'Bạn đã hủy đăng nhập Google.',
           'account_exists' => 'Email này đã có tài khoản Motion. Hãy đăng nhập bằng email, rồi chọn Liên kết Google trong tài khoản.',
+          'email_verification_required' => 'Email Google này cần xác thực thêm. Hãy đăng ký Motion bằng email và OTP, rồi chọn Liên kết Google trong tài khoản.',
           'email_mismatch' => 'Chọn tài khoản Google có cùng email với tài khoản Motion đang đăng nhập.',
           'already_linked' =>
             'Tài khoản Google đã được liên kết với người dùng khác.',

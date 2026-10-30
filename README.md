@@ -84,6 +84,7 @@ API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên ho�
 **Luồng sử dụng:** màn hình đăng nhập có nút **TIẾP TỤC VỚI GOOGLE**. App mở trình đăng nhập Google của hệ thống, backend nhận authorization code qua HTTPS, rồi trả ticket dùng một lần về app. Ticket chỉ đổi được khi app cung cấp PKCE verifier của đúng phiên. JWT/Google access token không nằm trong URL callback; không lưu Google refresh/access token trong database.
 
 - Tài khoản Google mới tạo người dùng Motion với vai trò `member`, không lấy quyền từ dữ liệu Google gửi lên.
+- Tài khoản Google dùng Gmail hoặc Google Workspace có `hd` đã ký có thể tạo tài khoản mới trực tiếp. Với email ngoài Google không có `hd`, đăng ký Motion và xác thực Email OTP trước rồi liên kết Google; không chỉ dựa vào `email_verified` cũ. Đây là trường hợp được [Google hướng dẫn xác minh thêm](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token).
 - Email đã có tài khoản Motion không được tự liên kết: đăng nhập Motion bằng email + mật khẩu + OTP trước, mở **Tài khoản → LIÊN KẾT GOOGLE**, chọn Google có cùng email. Sau đó có thể đăng nhập Google và giữ vai trò hiện có.
 - Người dùng bị khóa không được cấp phiên Google mới. Người dùng Google mới có thể dùng **Quên mật khẩu** qua email để tự đặt mật khẩu Motion nếu muốn dùng thêm cách đăng nhập email.
 - Nhánh Google dùng xác thực của Google; nhánh email vẫn yêu cầu Email OTP như trước. Google không tự gửi thêm Email OTP Motion khi đăng nhập bằng Google.
