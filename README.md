@@ -4,7 +4,7 @@
 
 Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay trong README này. Người test chỉ cần điện thoại Android; không cần tải source hay cài công cụ lập trình.
 
-**Xem nhanh:** [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt).
+**Xem nhanh:** [Đồ án cuối kỳ / backend](#đồ-án-cuối-kỳ--tài-khoản-backend-và-vòng-an-toàn) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt).
 
 ## Tải APK để tham gia test (không cần máy tính)
 
@@ -21,6 +21,108 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 Đây là bản phát hành thử dành cho nhóm dự kiến 50–100 người. Mỗi máy tự cấu hình liên hệ/SIM; không có tài khoản hay hệ thống thu thập phản hồi tự động. Không tự dùng số của người tổ chức làm người nhận SOS cho cả nhóm. Thống nhất trước với người nhận khi thử SMS hoặc cuộc gọi thật vì có thể phát sinh cước.
 
 [Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.0.3-test.5). QR này cố định ở bản 1.0.3+5, không tự chuyển sang bản mới.
+
+## Đồ án cuối kỳ — tài khoản, backend và Vòng an toàn
+
+**Trạng thái:** source **1.1.0+6** đã bổ sung mô-đun tài khoản và backend; **chưa triển khai API công khai, chưa cấu hình Email OTP thật**. APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Không dùng kết quả kiểm thử với email giả lập để kết luận gửi email thực tế đã hoạt động.
+
+Domain riêng dự kiến cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Cloudflare hiện quản lý DNS; cần thêm VPS/hosting để chạy backend Node.js bên dưới. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
+
+| Yêu cầu | Phần triển khai trong source | Điều kiện nghiệm thu |
+| --- | --- | --- |
+| Flutter | Màn hình tài khoản và dashboard dùng Flutter, cùng giao diện sáng/tối Motion | Chạy trên thiết bị của các thành viên |
+| Đăng ký email | Tài khoản mới mặc định `member`; xác thực email bằng OTP | SMTP thật + email đến hộp thư |
+| Đăng nhập + OTP | Email là tên đăng nhập; mật khẩu đúng mới gửi Email OTP; nhập mã mới được cấp phiên | Thử mật khẩu sai, OTP sai/hết hạn/dùng lại |
+| Quên mật khẩu | Email OTP đặt lại mật khẩu, thu hồi mọi phiên cũ | Thử lại phiên cũ trên máy thứ hai |
+| Phân quyền | `admin`, `staff`, `member`; API kiểm tra vai trò hiện tại và chủ sở hữu | Kiểm tra cả API bằng Swagger, không chỉ ẩn nút Flutter |
+| CRUD | Tài khoản (admin), liên hệ đám mây, lịch hẹn xác nhận an toàn | Tạo/xem/sửa/xóa, dữ liệu sai/trùng và truy cập chéo |
+| Tính năng mở rộng | **Vòng an toàn**: hẹn xác nhận, trạng thái cần hỗ trợ/an toàn/đã hỗ trợ, nhân viên theo phân công | Người dùng tạo lịch; nhân viên thấy đúng người được giao |
+| Backend + Swagger | Node.js 24, Fastify, SQLite có volume lưu bền, REST API, OpenAPI 3 + Swagger UI | Deploy HTTPS trên domain công khai; nhóm dùng chung dữ liệu |
+
+Đây là đối chiếu chức năng, không cam kết điểm số. Vòng an toàn là phần mở rộng phù hợp Motion, không khẳng định chưa từng có ở mọi ứng dụng khác. Hiện lịch quá hạn được tính khi tải/làm mới trang; chưa có lịch chạy máy chủ, push notification hay tự SOS từ lịch hẹn.
+
+**Phạm vi xác thực:** chọn nhánh **đăng ký qua email + Email OTP** trong đề bài. Backend dùng phiên JWT; **JWT không đồng nghĩa OAuth2.0**. Đăng nhập Google/Apple/OAuth2 và SMS OTP chưa triển khai. Nếu giảng viên bắt buộc OAuth2 ngay cả khi chọn đăng ký email, cần bổ sung nhà cung cấp OAuth/OIDC trước nghiệm thu. Google Maps link trong SMS chỉ là liên kết bản đồ; không thay thế yêu cầu backend của đồ án.
+
+### Kiến trúc cuối kỳ
+
+```mermaid
+flowchart TD
+    Flutter["Flutter Motion"] -->|"HTTPS / Bearer JWT"| API["motion-api.vihx.online · Fastify API"]
+    API --> DB["SQLite · volume lưu bền trên VPS"]
+    API --> Mail["SMTP · Email OTP"]
+    API --> RBAC{"Vai trò + chủ sở hữu"}
+    RBAC --> Admin["Admin · quản lý tài khoản / phân công"]
+    RBAC --> Staff["Nhân viên · người được phân công"]
+    RBAC --> Member["Người dùng · dữ liệu của mình"]
+    Flutter --> Native["Android SafetyService · cảm biến / đếm ngược"]
+    Native --> SIM["SIM · SMS / cuộc gọi SOS"]
+```
+
+API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên hoặc đăng xuất tài khoản không tắt dịch vụ giám sát/SOS trên thiết bị. Lịch sử vị trí/SMS cục bộ chưa tự tải lên backend. Liên hệ đám mây được lưu riêng theo tài khoản; chỉ khi **người dùng xác nhận “Thêm vào SOS trên máy”** mới thêm người nhận trên điện thoại, không tự thay danh sách đang dùng.
+
+### Cách sử dụng phần tài khoản
+
+<img src="docs/images/motion-account-preview.png" alt="Màn hình tài khoản Motion 1.1.0 trên máy ảo; API chưa triển khai" width="260">
+
+1. Bấm **biểu tượng người dùng** trên thanh đầu Motion → **Tạo tài khoản bằng email** → nhập tên, email, mật khẩu 10–128 ký tự → nhập OTP nhận qua email (hiệu lực 5 phút).
+2. Đăng nhập bằng **email + mật khẩu** → nhập một Email OTP mới → vào trang đúng vai trò. Mã không được trả về trong API/Swagger hay ghi log.
+3. **Người dùng:** sửa tên, CRUD liên hệ đám mây, CRUD lịch hẹn; xác nhận **TÔI ỔN** hoặc **CẦN HỖ TRỢ**. Các nút này cập nhật lịch hẹn đám mây, không thay nút gửi SOS tại màn hình theo dõi.
+4. **Nhân viên:** xem người được admin phân công; xem/sửa liên hệ, lịch hẹn và ghi nhận hỗ trợ cho đúng người. Không quản trị tài khoản hay dữ liệu người không được giao.
+5. **Admin:** tạo/xem/sửa/xóa tài khoản, đổi vai trò, khóa/mở khóa, phân công người dùng cho nhân viên đang hoạt động. Không cho xóa/khóa/hạ quyền admin cuối cùng.
+6. Tài khoản do admin tạo: chủ email dùng **Quên mật khẩu** để nhận OTP, tự đặt mật khẩu và xác thực email trước đăng nhập. Không chia sẻ mật khẩu admin cho nhóm.
+7. **Quên mật khẩu** cần truy cập email tài khoản. Đổi mật khẩu thu hồi toàn bộ phiên; đăng xuất thu hồi phiên hiện tại. Sau 12 giờ cần đăng nhập lại. Khóa hoặc đổi vai trò cũng thu hồi phiên.
+8. Người dùng có thể xóa tài khoản đám mây sau khi xác nhận mật khẩu. Dữ liệu đám mây liên quan bị xóa; liên hệ/SOS cục bộ trên điện thoại vẫn giữ nguyên. Muốn đổi người sử dụng điện thoại, kiểm tra lại cấu hình SOS cục bộ.
+
+### Triển khai backend công khai trên VPS
+
+Chuẩn bị VPS Linux có Docker Compose, Caddy, IP công khai và dịch vụ SMTP cho email giao dịch. Không đặt mật khẩu/khóa trong Flutter, README, Swagger hoặc Git. Backend chỉ một instance SQLite; sao lưu trước cập nhật. Không nhân bản nhiều instance với các file SQLite riêng.
+
+1. Tải repo trên VPS, vào `backend`, sao chép `.env.example` thành `.env`. Điền `PUBLIC_URL=https://motion-api.vihx.online`, SMTP và **hai khóa ngẫu nhiên khác nhau**, mỗi khóa ít nhất 48 ký tự, cho `JWT_SECRET` và `OTP_SECRET`. Sinh từng khóa bằng `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. `.env` được Git bỏ qua; đặt quyền đọc chỉ cho người quản trị. Không gửi khóa trong chat.
+2. Trong Cloudflare, tạo **A record `motion-api`** → IP VPS. Không sửa record `api`. Dùng **DNS only** cho cấu hình hiện tại để Caddy nhìn đúng IP người gọi/rate limit. Nếu bật proxy Cloudflare sau đó, cần thêm danh sách proxy tin cậy và IP client tại Caddy, dùng SSL/TLS **Full (strict)**. Chỉ tạo AAAA khi VPS thực sự phục vụ IPv6. Không tạo cache rule cho API xác thực/dữ liệu cá nhân.
+3. Cấu hình firewall cho SSH, HTTP 80 và HTTPS 443. Không mở cổng 3000 ra Internet. Nếu VPS đang có website khác, gộp block Motion vào cấu hình Caddy hiện có thay vì ghi đè toàn bộ.
+4. Chạy trong `backend`:
+
+```bash
+docker compose up -d --build
+docker compose ps
+docker compose logs --tail=50 api
+```
+
+5. Thêm `backend/Caddyfile` vào Caddy trên **host VPS** rồi validate/reload cấu hình. Caddy reverse proxy HTTPS về `127.0.0.1:3000`; Docker chỉ bind cổng này trên loopback. Cấu hình trong source không phải cấu hình Caddy chạy trong container.
+6. Tạo admin lần đầu: điền `ADMIN_EMAIL`, mật khẩu riêng ít nhất 14 ký tự vào `.env`, rồi chạy lệnh sau. Script không nâng quyền/đổi mật khẩu tài khoản đã tồn tại. Sau khi tạo, xóa `ADMIN_PASSWORD` khỏi `.env` và tạo lại container để bỏ biến khỏi môi trường. Admin đăng nhập vẫn cần Email OTP thật.
+
+```bash
+docker compose run --rm api node src/bootstrap-admin.js
+docker compose up -d --force-recreate
+```
+
+7. Kiểm tra từ mạng ngoài VPS: `https://motion-api.vihx.online/health`, Swagger `https://motion-api.vihx.online/docs/`, OpenAPI `https://motion-api.vihx.online/docs/json`. **Các URL này là địa chỉ dự kiến, chưa được xác nhận đang hoạt động.** Đăng ký, xác thực email và đăng nhập thật; Swagger: gọi `/auth/login`, lấy mã từ email, gọi `/auth/login/verify`, sao chép `accessToken` vào **Authorize**, sau đó thử các API cần quyền.
+8. SMTP phải hỗ trợ TLS, cấu hình SPF/DKIM theo nhà cung cấp; kiểm tra thư rác và email của các thành viên. Backend không có chế độ OTP giả trong production và sẽ từ chối chạy khi thiếu cấu hình.
+9. Cơ sở dữ liệu nằm trong volume `motion_data` tại `/app/data/motion.sqlite`. Sao lưu bằng SQLite backup API hoặc dừng container trước khi sao chép cả thư mục dữ liệu (bao gồm WAL/SHM nếu có). Không dùng `docker compose down -v` khi muốn giữ dữ liệu. Kiểm thử khôi phục bản sao lưu trước buổi báo cáo.
+
+Để kiểm thử source backend trong quá trình phát triển: cài Node.js 24.14 trở lên, trong `backend` chạy `npm ci`, `npm test`, `npm run export-openapi`. Kiểm thử dùng database trong bộ nhớ và mailer giả, không lắng nghe localhost và không gửi email thật. Swagger được sinh từ chính route/schema, file đã xuất nằm ở [backend/openapi/motion.openapi.json](backend/openapi/motion.openapi.json). Production chạy `npm start` với `.env` đầy đủ hoặc Docker như trên. Các dependency đã khóa trong `package-lock.json`; Node SQLite hiện có cảnh báo experimental nên cần giữ phiên bản runtime nhất quán.
+
+### Cả nhóm chạy cùng backend
+
+Sau khi API HTTPS thật hoạt động, mỗi thành viên clone repo, cài cùng Flutter SDK như phần cài đặt bên dưới, chạy `flutter pub get`, rồi:
+
+```bash
+flutter run --dart-define=MOTION_API_URL=https://motion-api.vihx.online
+# Hoặc tạo APK riêng cho phần cuối kỳ:
+flutter build apk --release --dart-define=MOTION_API_URL=https://motion-api.vihx.online
+```
+
+Không dùng localhost/`10.0.2.2` trong cấu hình Flutter. URL mặc định trong source cũng là `https://motion-api.vihx.online`. Không đóng gói khóa SMTP, JWT hay mật khẩu admin vào `--dart-define`. Cần tự đăng ký email từng thành viên; admin phân quyền đúng người, không có tài khoản/mật khẩu mặc định trong source. Dữ liệu CRUD dùng chung trên API, còn quyền SIM/cảm biến, liên hệ SOS và lịch sử tại từng thiết bị là riêng.
+
+### Checklist nghiệm thu cuối kỳ
+
+- Đăng ký, xác thực email; login sai/đúng mật khẩu; OTP sai, hết hạn, dùng lại; quên mật khẩu và phiên cũ bị thu hồi.
+- Tạo/xem/sửa/xóa tài khoản bằng admin, khóa tài khoản, đổi vai trò, phân công/gỡ phân công nhân viên; không xóa admin cuối cùng.
+- CRUD liên hệ/lịch hẹn: trường trống, số sai/trùng, thời gian quá khứ, bản ghi đã bị xóa, hủy dialog và mất mạng. Kiểm tra thao tác bằng hai thiết bị/tài khoản khác nhau.
+- Người dùng A không đọc/sửa/xóa dữ liệu B bằng cách đổi ID; nhân viên không xem người chưa được giao; gọi thẳng API cũng bị chặn. Tự gửi `role=admin` khi đăng ký/sửa hồ sơ bị từ chối.
+- Lịch hẹn quá hạn, trạng thái cần hỗ trợ/an toàn/đã hỗ trợ và ghi chú hiển thị khi làm mới. Không mô tả chức năng này là có push hay tự SOS.
+- Mất mạng/đăng xuất không làm mất luồng SOS trên máy; dùng liên hệ test có đồng ý, không gọi thật 113/114/115 khi báo cáo.
+- Swagger công khai bằng HTTPS từ 4G và Wi-Fi; restart backend vẫn còn dữ liệu; cả nhóm cài/chạy Flutter cùng API. Chỉ cập nhật QR/APK cuối kỳ sau khi kiểm tra deployment và email thật.
 
 ## Bản sửa 1.0.3 — giám sát nền riêng, bổ sung bằng chứng cảnh báo
 

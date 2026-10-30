@@ -11,6 +11,7 @@ import 'history_screen.dart';
 import 'contact_screen.dart';
 import 'settings_screen.dart';
 import 'alert_screen.dart';
+import 'account_screen.dart';
 import '../widgets/startup_animation.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -171,6 +172,18 @@ class _HomeScreenState extends State<HomeScreen>
                               color: context.colors.ink,
                             ),
                           ),
+                        IconButton(
+                          key: const Key('openCloudAccount'),
+                          tooltip: 'Tài khoản / Vòng an toàn',
+                          icon: const MorphIcon(AppGlyph.user, size: 22),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  AccountScreen(controller: _controller),
+                            ),
+                          ),
+                        ),
                         Expanded(
                           child: Align(
                             alignment: Alignment.centerRight,

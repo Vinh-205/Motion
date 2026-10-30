@@ -1,0 +1,11 @@
+# Install Caddy on the VPS host, point motion-api.vihx.online A/AAAA to the VPS.
+# Only API port 3000 is bound to loopback; public HTTPS enters via Caddy.
+motion-api.vihx.online {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        Strict-Transport-Security "max-age=31536000"
+    }
+    reverse_proxy 127.0.0.1:3000
+}

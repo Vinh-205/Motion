@@ -1,0 +1,26 @@
+name: Motion backend
+on:
+  push:
+    paths: ['backend/**', '.github/workflows/motion-api.yml']
+  pull_request:
+    paths: ['backend/**', '.github/workflows/motion-api.yml']
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.14.0'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --omit=dev
+      - run: npm run export-openapi
+      - run: git diff --exit-code -- openapi/motion.openapi.json
