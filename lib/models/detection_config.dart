@@ -3,10 +3,10 @@ enum Sensitivity { low, medium, high }
 // Ngưỡng THỬ NGHIỆM cho bài tập, chưa được xác thực y tế.
 class DetectionConfig {
   const DetectionConfig({
-    this.abnormalDelta = 4,
-    this.impact = 22,
-    this.rotationAngle = 0.65,
-    this.stillness = const Duration(seconds: 3),
+    this.abnormalDelta = 3.5,
+    this.impact = 19,
+    this.rotationAngle = 0.5,
+    this.stillness = const Duration(milliseconds: 1000),
     this.adaptiveCeiling = 1.3,
     this.quietToleranceMs = 100,
     this.impactMargin = 4,
@@ -27,30 +27,32 @@ class DetectionConfig {
   static const quietAcceleration = 1.3;
   static const quietRotation = 0.35;
   static const impactWindow = Duration(milliseconds: 1500);
-  static const rotationWindow = Duration(milliseconds: 1500);
+  static const rotationWindow = Duration(milliseconds: 800);
   static const sequenceWindow = Duration(seconds: 8);
   static const maxGap = Duration(milliseconds: 400);
   static const cooldown = Duration(seconds: 8);
 
   static DetectionConfig forSensitivity(Sensitivity value) => switch (value) {
     Sensitivity.low => const DetectionConfig(
-      abnormalDelta: 5,
-      impact: 26,
+      abnormalDelta: 4,
+      impact: 24,
       impactMargin: 6,
       quietDeviation: 1.3,
       quietAngularSpeed: 0.35,
-      rotationAngle: 0.9,
+      rotationAngle: 0.7,
+      stillness: Duration(milliseconds: 1500),
       adaptiveCeiling: 1.5,
       quietToleranceMs: 0,
     ),
     Sensitivity.medium => const DetectionConfig(),
     Sensitivity.high => const DetectionConfig(
-      abnormalDelta: 3,
-      impact: 18,
+      abnormalDelta: 2.5,
+      impact: 15,
       impactMargin: 2,
       quietDeviation: 1.9,
       quietAngularSpeed: 0.6,
-      rotationAngle: 0.45,
+      rotationAngle: 0.35,
+      stillness: Duration(milliseconds: 600),
       adaptiveCeiling: 1.15,
       quietToleranceMs: 200,
     ),

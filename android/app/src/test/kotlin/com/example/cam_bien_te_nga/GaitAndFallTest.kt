@@ -14,15 +14,15 @@ class GaitAndFallTest {
                 val a = if (phase < 100) 3.0 else if (phase < 130) 28.0 else 9.81
                 assertFalse("repeated footfall at $at", d.update(at, a, 1.8, gyro, 0.8))
             }
-            assertTrue(d.impactThreshold > 20.0)
+            assertTrue(d.impactThreshold > 16.0)
             if (!thenFall) {
                 for (at in 20000L..25000L step 10) assertFalse(d.update(at, 9.81, 0.0, gyro))
             } else {
                 for (at in 20000L..20090L step 10) assertFalse(d.update(at, 2.0, 0.0, gyro))
                 assertFalse(d.update(20100, 45.0, 8.0, gyro, 50.0))
                 for (at in 20110L..20300L step 10) assertFalse(d.update(at, 9.81, 8.0, gyro, 2.0))
-                for (at in 20310L..23300L step 10) assertFalse(d.update(at, 9.81, 0.0, gyro))
-                assertTrue(d.update(23310, 9.81, 0.0, gyro))
+                for (at in 20310L until 20310L + 600L step 10) assertFalse(d.update(at, 9.81, 0.0, gyro))
+                assertTrue(d.update(20310L + 600L, 9.81, 0.0, gyro))
             }
         }
     }
@@ -45,8 +45,9 @@ class GaitAndFallTest {
             for (at in 0L..90L step 10) assertFalse(d.update(at, 2.0, 0.0, gyro))
             assertFalse(d.update(100, 35.0, 8.0, gyro, 50.0))
             for (at in 110L..300L step 10) assertFalse(d.update(at, 9.81, 8.0, gyro, 2.0))
-            for (at in 310L..3300L step 10) assertFalse(d.update(at, 9.81, 0.0, gyro))
-            assertTrue("fall $gyro $level", d.update(3310, 9.81, 0.0, gyro))
+            val stillness = when (level) { "low" -> 1500L; "high" -> 600L; else -> 1000L }
+            for (at in 310L until 310L + stillness step 10) assertFalse(d.update(at, 9.81, 0.0, gyro))
+            assertTrue("fall $gyro $level", d.update(310L + stillness, 9.81, 0.0, gyro))
         }
     }
     @Test fun briefLowGlitchOrBumpCannotTriggerAccelerometerMode() {

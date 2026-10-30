@@ -27,6 +27,24 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 fab1c0e311be902bacbb2e659007c89c10e214a0734e96ceadfdc9e4178e4884
 ```
 
+### Cập nhật cảm biến phản ứng nhanh (30/10/2026, sau 1.1.4+10)
+
+Người test phản ánh cảm biến nhận ra cú ngã quá chậm. Nguyên nhân nằm ở thuật toán: sau khi ghi nhận va chạm, ứng dụng còn bắt máy nằm yên đủ 3 giây và chờ thêm tối đa 1,5 giây để thấy bằng chứng xoay, rồi mới mở cảnh báo. Tốc độ lấy mẫu vốn đã là 100 Hz và chuông báo động bật ngay khi detector kết luận, nên bản này chỉ chỉnh thuật toán, không đổi luồng SOS.
+
+| Thông số | Trước | Sau (Thấp / Trung bình / Cao) |
+| --- | --- | --- |
+| Thời gian yên sau va chạm | 3 giây | 1,5 / 1 / 0,6 giây |
+| Chờ bằng chứng xoay sau va chạm | 1,5 giây | 0,8 giây |
+| Ngưỡng va chạm | 26 / 22 / 18 m/s² | 24 / 19 / 15 m/s² |
+| Góc xoay tích lũy cần có | 0,90 / 0,65 / 0,45 rad | 0,70 / 0,50 / 0,35 rad |
+| Độ lệch gia tốc để bắt đầu nghi ngờ | 5 / 4 / 3 m/s² | 4 / 3,5 / 2,5 m/s² |
+
+Thay đổi nằm ở [FallDetector](lib/services/fall_detector.dart), [DetectionConfig](lib/models/detection_config.dart) và [NativeFallDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/NativeFallDetector.kt); hai bản Dart và Kotlin được giữ giống nhau. Trên chuỗi dữ liệu mô phỏng 100 Hz, độ trễ từ lúc va chạm đến lúc báo động của cú ngã mạnh giảm từ khoảng 3,2 giây xuống 1,7 / 1,2 / 0,8 giây. Một số cú ngã vừa và nhẹ mà bản trước bỏ sót nay cũng được bắt, nhất là ở mức Cao. Các tình huống đời thường mô phỏng (đi bộ, chạy, ngồi phịch xuống ghế, ném điện thoại lên giường, nhảy dây, va nhẹ vào túi) không tạo báo nhầm ở cả ba mức. Đây là số liệu mô phỏng, không phải độ chính xác thực tế; ngưỡng thấp hơn đồng nghĩa dễ báo nhầm hơn trên máy thật, nên cần thử đi lại, ngồi xuống và bỏ điện thoại vào túi trước khi tin dùng. Nếu báo nhầm nhiều, tăng lại thời gian yên trong `DetectionConfig.forSensitivity` và hằng số tương ứng trong `NativeFallDetector.kt`. Thời gian đếm ngược 15–30 giây trước khi gửi SMS không đổi, vì đó là cơ hội để bấm TÔI ỔN khi báo nhầm.
+
+**Kiểm thử đã chạy cho thay đổi này:** 15 test JUnit của detector Kotlin đạt; 27 test backend đạt. Các test Dart tương ứng (`fall_detector_test`, `gait_and_fall_test`, `detector_field_regression_test`) đã được sửa theo mốc thời gian mới nhưng **chưa được chạy lại**; hãy chạy `flutter test` trước khi phát hành. Chưa thử trên điện thoại thật.
+
+**APK build ngày 30/10/2026 (`build/app/outputs/flutter-apk/app-release.apk`):** 57.569.961 byte, SHA-256 `c7cfc3cf776718b22226909545535cadc664b020f89c3bcd59cb4471627f114a`, vẫn mang phiên bản 1.1.4 (`versionCode=10`). Tệp này được build trên máy không có `android/key.properties`, nên nhiều khả năng đã ký bằng khoá debug: không cài đè được lên bản release chính thức (sẽ báo xung đột chữ ký) và chưa được đưa lên GitHub Releases. Liên kết và mã SHA-256 ở đầu tài liệu vẫn là của bản 1.1.4-test.10 cũ. Để phát hành bản có cảm biến mới, người giữ khoá ký cần build lại với `key.properties`, tăng phiên bản (ví dụ 1.1.5+11), tải APK lên Releases rồi cập nhật liên kết, kích thước và SHA-256 ở đầu README.
+
 ### Tổng hợp thay đổi đã có trong source và APK 1.1.4+10
 
 | Nhóm | Nội dung đã thực hiện | Mã nguồn / hướng dẫn |
@@ -38,7 +56,7 @@ fab1c0e311be902bacbb2e659007c89c10e214a0734e96ceadfdc9e4178e4884
 | Thẻ khẩn cấp | Thêm/xem/sửa/xóa tên, bệnh nền, dị ứng, thuốc, nhóm máu tự khai, chiều cao/cân nặng và liên hệ; một thẻ cho người mang điện thoại, không tự đổi theo tài khoản | [Form thẻ](lib/screens/emergency_card_screen.dart) |
 | Thẻ ngoại tuyến và màn hình khóa | Mã hóa AES-GCM/Keystore, không gửi thông tin thẻ lên API; mặc định tắt chia sẻ; đọc qua thông báo SOS khi đã đồng ý và SOS đang hoạt động; Activity riêng không mở sang tài khoản | [Lưu mã hóa](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardStore.kt), [màn hình chỉ đọc](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardActivity.kt) |
 | Bố cục ứng dụng | Tài khoản ở Cài đặt, sáng/tối trên cùng bên phải; nhãn SOS cập nhật theo trạng thái; bắt đầu giám sát nền chỉ ở Theo dõi; logo thống nhất, thanh điều hướng kính mờ, Morphicons/Lottie | [Header](lib/widgets/motion_header.dart), [navigation](lib/widgets/liquid_navigation.dart), [startup](lib/widgets/startup_animation.dart) |
-| Cảm biến | Xử lý va chạm ngay mẫu đầu; ngưỡng Thấp/Vừa/Cao 26/22/18 m/s², có thích nghi theo dao động; kiểm tra giảm gia tốc/xoay/ít chuyển động, loại va chạm lặp và dữ liệu cũ; đồng bộ Dart/Android | [FallDetector](lib/services/fall_detector.dart), [NativeFallDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/NativeFallDetector.kt) |
+| Cảm biến | Xử lý va chạm ngay mẫu đầu; ngưỡng Thấp/Vừa/Cao 24/19/15 m/s², có thích nghi theo dao động; kiểm tra giảm gia tốc/xoay/ít chuyển động, loại va chạm lặp và dữ liệu cũ; đồng bộ Dart/Android | [FallDetector](lib/services/fall_detector.dart), [NativeFallDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/NativeFallDetector.kt) |
 | Giám sát nền và SOS | Công tắc phát hiện và nền tách riêng; native foreground service xử lý cảm biến/đếm ngược/chuông, SMS nhiều liên hệ và cuộc gọi một số ưu tiên; quyền SMS/gọi/thông báo và kiểm tra full-screen/pin | [SafetyService](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SafetyService.kt), hướng dẫn sử dụng bên dưới |
 | Âm thanh, liên hệ, lịch sử | Chuông SOS Motion mặc định, chọn/nghe thử âm; nhập/chọn danh bạ, nhiều người nhận, số gọi ưu tiên; nút 113/114/115 mở trình quay số; lưu trạng thái SMS/gọi và nguyên nhân kích hoạt riêng | [Các màn hình](lib/screens), [Emergency services](lib/widgets/emergency_services.dart) |
 | Sửa vùng xám Theo dõi | Tách PageStorageKey của chẩn đoán khỏi vị trí cuộn, thêm Material cho ExpansionTile; có regression test cuộn/mở mục cuối trang | [MonitorScreen](lib/screens/monitor_screen.dart), [test](test/emergency_card_test.dart) |
@@ -312,7 +330,7 @@ Không dùng localhost/`10.0.2.2` trong cấu hình Flutter. URL mặc định t
 
 - **Sửa độ nhạy:** ngưỡng tự điều chỉnh có trần theo độ nhạy và được giữ nguyên trong từng ứng viên ngã. Rung mạnh không làm ngưỡng tăng vô hạn.
 - **Không bắt buộc xoay cho một nhánh rõ hơn:** giảm gia tốc ít nhất 120 ms, rồi va chạm mạnh hơn ngưỡng ít nhất 6 m/s² có thể đi đến bước xác nhận ít chuyển động, dù con quay không ghi nhận xoay. Điều này chỉ là nghi ngờ điện thoại rơi/ngã, không chứng minh người mang điện thoại đã ngã.
-- **Bớt khắt khe với nhiễu:** vẫn xét cửa sổ 3 giây, yêu cầu ít nhất 85% thời gian đạt mức ít chuyển động; mức Cao cho phép nhiễu nhỏ từng đợt tối đa 200 ms, Trung bình 100 ms. Chuyển động rõ vẫn bắt đầu lại bước xác nhận; rung lắc liên tục không đủ để kết luận ngã.
+- **Bớt khắt khe với nhiễu:** xét cửa sổ yên ngắn 1,5 / 1 / 0,6 giây (Thấp / Trung bình / Cao), yêu cầu ít nhất 85% thời gian đạt mức ít chuyển động; mức Cao cho phép nhiễu nhỏ từng đợt tối đa 200 ms, Trung bình 100 ms. Chuyển động rõ vẫn bắt đầu lại bước xác nhận; rung lắc liên tục không đủ để kết luận ngã.
 - **Theo dõi → Tình trạng phát hiện:** xem bước hiện tại, đỉnh gia tốc, ngưỡng, bằng chứng xoay, thời gian gia tốc thấp và lý do gần nhất chưa đạt.
 - **Lịch sử:** cảnh báo mới lưu nhánh kích hoạt và số đo thực tế tại lúc cảnh báo bắt đầu; không lấy số đo hiện tại để thay lịch sử. Cảnh báo cũ không có đủ bằng chứng thì không thể suy ra chính xác nguyên nhân về sau.
 
@@ -436,10 +454,10 @@ config:
 ---
 flowchart TB
     READ["ĐỌC VÀ PHÂN TÍCH<br/>Gia tốc · xoay nếu có<br/>Đối chiếu nền dao động"]
-    IMPACT{"Va chạm đạt ngưỡng?<br/>Thấp 26 · Vừa 22 · Cao 18 m/s²"}
+    IMPACT{"Va chạm đạt ngưỡng?<br/>Thấp 24 · Vừa 19 · Cao 15 m/s²"}
     REPEAT{"Đỉnh lặp trong 2 giây<br/>mà chưa mạnh hơn 1,2 lần?"}
     EVIDENCE["KIỂM TRA CHUỖI<br/>Giảm gia tốc hoặc va chạm mạnh<br/>Bằng chứng xoay nếu cần"]
-    SUSPECT{"Đủ chuỗi và ít chuyển động<br/>trong 3 giây?"}
+    SUSPECT{"Đủ chuỗi và ít chuyển động<br/>trong 0,6–1,5 giây?"}
     ALERT["CẢNH BÁO XÁC NHẬN<br/>Chuông · rung · chờ 15–30 giây"]
     CHOICE{"TÔI ỔN?"}
     SAFE["TÔI ỔN<br/>Hủy cảnh báo · lưu lịch sử"]
@@ -705,17 +723,17 @@ Thuật toán dùng tổng `sqrt(x*x + y*y + z*z)`, không dùng ngưỡng riên
 
 `normal → possibleFall → impactDetected → waitingForStillness → fallSuspected`.
 
-Cần bất thường → mẫu va chạm ngay từ đầu hoặc trong 1,5 giây → bằng chứng xoay trong 1,5 giây sau va chạm nếu cần → kiểm tra ít chuyển động trong cửa sổ 3 giây; hoàn tất chuỗi trong 8 giây. Với con quay, va chạm cần có pha gia tốc thấp < 5 m/s² ít nhất 40 ms trước đó, hoặc mạnh hơn ngưỡng động ít nhất 6 m/s²; khi tốc độ xoay tại va chạm ≥ 2,5 rad/s, mức cộng tương ứng Thấp / Trung bình / Cao là 6 / 4 / 2 m/s². Nhánh giảm gia tốc ≥ 120 ms và va chạm ≥ ngưỡng + 6 m/s² không bắt buộc xoay, nhưng vẫn cần xác nhận ít chuyển động. Không có con quay: bắt buộc pha gia tốc thấp ít nhất 80 ms, va chạm rồi kiểm tra ít chuyển động trong 3 giây; kiểm tra thêm biến đổi vector gia tốc để không coi chuyển động đều là nằm yên. Nhánh gia tốc có thể bỏ sót ngã không có pha giảm gia tốc. Một đỉnh rung đơn lẻ không đủ. Tích phân độ lớn gyroscope là bằng chứng xoay, không phải góc tư thế tuyệt đối.
+Cần bất thường → mẫu va chạm ngay từ đầu hoặc trong 1,5 giây → bằng chứng xoay trong 0,8 giây sau va chạm nếu cần → kiểm tra ít chuyển động trong cửa sổ 1,5 / 1 / 0,6 giây; hoàn tất chuỗi trong 8 giây. Với con quay, va chạm cần có pha gia tốc thấp < 5 m/s² ít nhất 40 ms trước đó, hoặc mạnh hơn ngưỡng động ít nhất 6 m/s²; khi tốc độ xoay tại va chạm ≥ 2,5 rad/s, mức cộng tương ứng Thấp / Trung bình / Cao là 6 / 4 / 2 m/s². Nhánh giảm gia tốc ≥ 120 ms và va chạm ≥ ngưỡng + 6 m/s² không bắt buộc xoay, nhưng vẫn cần xác nhận ít chuyển động. Không có con quay: bắt buộc pha gia tốc thấp ít nhất 80 ms, va chạm rồi kiểm tra ít chuyển động trong 3 giây; kiểm tra thêm biến đổi vector gia tốc để không coi chuyển động đều là nằm yên. Nhánh gia tốc có thể bỏ sót ngã không có pha giảm gia tốc. Một đỉnh rung đơn lẻ không đủ. Tích phân độ lớn gyroscope là bằng chứng xoay, không phải góc tư thế tuyệt đối.
 
 Ngưỡng sàn thử nghiệm trong `lib/models/detection_config.dart` và bộ phát hiện native:
 
 | Độ nhạy | Lệch gia tốc khỏi 9,81 m/s² | Va chạm | Tích phân độ lớn gyro |
 | --- | ---: | ---: | ---: |
-| Thấp | > 5 m/s² | ≥ 26 m/s² | ≥ 0,90 rad |
-| Trung bình | > 4 m/s² | ≥ 22 m/s² | ≥ 0,65 rad |
-| Cao | > 3 m/s² | ≥ 18 m/s² | ≥ 0,45 rad |
+| Thấp | > 4 m/s² | ≥ 24 m/s² | ≥ 0,70 rad |
+| Trung bình | > 3,5 m/s² | ≥ 19 m/s² | ≥ 0,50 rad |
+| Cao | > 2,5 m/s² | ≥ 15 m/s² | ≥ 0,35 rad |
 
-Bất thường khác: magnitude < 5 m/s² hoặc gyro > 1,5 rad/s. Mẫu ít chuyển động: lệch gia tốc < 1,3 / 1,5 / 1,9 m/s² và gyro < 0,35 / 0,45 / 0,60 rad/s theo Thấp / Trung bình / Cao (không gyro thì xét biến đổi vector gia tốc đã chuẩn hóa theo thời gian). Xác nhận trong cửa sổ ít nhất 3 giây với tỷ lệ mẫu yên theo thời gian ≥ 85%; nhiễu nhỏ có thời hạn, chuyển động rõ sẽ đặt lại cửa sổ. Lấy mẫu yêu cầu khoảng 100 Hz; gap > 400 ms hoặc gyro cũ > 250 ms bị loại. Sau sự kiện có khoảng nghỉ 8 giây. Máy có con quay rơi thiếu xoay, được nhặt lên sớm hoặc đỉnh va chạm quá ngắn có thể không thỏa chuỗi; không kết luận cần hạ ngưỡng chỉ từ một lần thử.
+Bất thường khác: magnitude < 5 m/s² hoặc gyro > 1,5 rad/s. Mẫu ít chuyển động: lệch gia tốc < 1,3 / 1,5 / 1,9 m/s² và gyro < 0,35 / 0,45 / 0,60 rad/s theo Thấp / Trung bình / Cao (không gyro thì xét biến đổi vector gia tốc đã chuẩn hóa theo thời gian). Xác nhận trong cửa sổ yên 1,5 / 1 / 0,6 giây với tỷ lệ mẫu yên theo thời gian ≥ 85%; nhiễu nhỏ có thời hạn, chuyển động rõ sẽ đặt lại cửa sổ. Lấy mẫu yêu cầu khoảng 100 Hz; gap > 400 ms hoặc gyro cũ > 250 ms bị loại. Sau sự kiện có khoảng nghỉ 8 giây. Máy có con quay rơi thiếu xoay, được nhặt lên sớm hoặc đỉnh va chạm quá ngắn có thể không thỏa chuỗi; không kết luận cần hạ ngưỡng chỉ từ một lần thử.
 
 Trên emulator có thể mở **Extended Controls → Virtual Sensors → Device Pose** để quan sát dữ liệu. Xoay rồi giữ yên vẫn có magnitude gần 9,81 m/s² vì trọng lực. Emulator không tái tạo đầy đủ một cú té. Mô phỏng chỉ dành cho test bật rõ `allowSimulation`, bị khóa trong release; không dùng để vận hành thật.
 
@@ -728,7 +746,7 @@ Không phân loại bằng tốc độ con quay hoặc một trục riêng. Gia 
 | Đi bộ/chạy có dao động lặp lại | Cập nhật nền dao động, không coi rung đơn lẻ là ngã |
 | Va chạm lặp lại sau khoảng ổn định ban đầu 300 ms | Bỏ ứng viên ngã cũ và giữ nền dao động, không tích lũy nhiều bước chân thành một cú ngã |
 | Có chuỗi ngã nhưng vẫn tiếp tục cử động | Chưa đủ bước ít chuyển động, không tự khẳng định ngã |
-| Chuỗi đủ pha giảm gia tốc/va chạm/xoay nếu có, rồi yên 3 giây | Mở cảnh báo xác nhận; SMS chỉ sau thời gian chờ nếu không hủy |
+| Chuỗi đủ pha giảm gia tốc/va chạm/xoay nếu có, rồi yên 0,6–1,5 giây | Mở cảnh báo xác nhận; SMS chỉ sau thời gian chờ nếu không hủy |
 | Mất dữ liệu/gyro quá cũ trên máy có gyro | Bỏ chuỗi, báo tình trạng dữ liệu thay vì giả định đã giám sát |
 
 Nếu đã có hai đỉnh va chạm cách nhau ≥ 200 ms trong 2 giây, đỉnh tiếp theo phải lớn hơn 1,2 lần đỉnh cũ để được xét như sự kiện mới. Chốt này giảm cộng dồn bước chân nhưng có thể bỏ sót sự cố tương tự hoạt động trước đó.

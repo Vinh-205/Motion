@@ -25,13 +25,14 @@ void main() {
       expect(d.state, FallState.impactDetected);
       sample(250, 10, 6);
       expect(d.state, FallState.waitingForStillness);
-      for (int t = 300; t < 3300; t += 50) {
+      final still = d.config.stillness.inMilliseconds;
+      for (int t = 300; t < 300 + still; t += 50) {
         sample(t, 9.81, 0.1);
       }
       expect(d.state, FallState.waitingForStillness);
-      sample(3300, 9.81, 0.1);
+      sample(300 + still, 9.81, 0.1);
       expect(d.state, FallState.fallSuspected);
-      sample(3350, 9.81, 0);
+      sample(350 + still, 9.81, 0);
       expect(d.state, FallState.fallSuspected);
     });
   }

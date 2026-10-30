@@ -45,7 +45,7 @@ void main() {
           ),
           isNot(FallState.fallSuspected),
         );
-        expect(d.impactThreshold, inInclusiveRange(18, 20.7));
+        expect(d.impactThreshold, inInclusiveRange(15, 17.25));
       }
       d.reset();
       for (var at = 0; at < 1000; at += 10) {
@@ -66,7 +66,7 @@ void main() {
       for (var at = 1010; at <= 1400; at += 10) {
         d.update(
           at: Duration(milliseconds: at),
-          magnitude: at % 20 == 0 ? 15 : 2,
+          magnitude: at % 20 == 0 ? 14 : 2,
           rotation: 2,
           gyroFresh: true,
         );
@@ -77,7 +77,8 @@ void main() {
   test('Long freefall plus strong impact no longer requires rotation', () {
     for (final level in Sensitivity.values) {
       final d = FallDetector(config: DetectionConfig.forSensitivity(level));
-      for (var at = 0; at <= 3170; at += 10) {
+      final trigger = 170 + d.config.stillness.inMilliseconds;
+      for (var at = 0; at <= trigger; at += 10) {
         final state = d.update(
           at: Duration(milliseconds: at),
           magnitude: at < 160
@@ -88,7 +89,7 @@ void main() {
           rotation: 0,
           gyroFresh: true,
         );
-        expect(state == FallState.fallSuspected, at == 3170);
+        expect(state == FallState.fallSuspected, at == trigger);
       }
       expect(d.triggerReason, contains('120 ms'));
       expect(d.triggerReason, contains('35.00'));

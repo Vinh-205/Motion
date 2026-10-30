@@ -519,7 +519,7 @@ class AppController extends ChangeNotifier {
             ? 'Người dùng chạy mô phỏng té ngã.'
             : pendingSource == EventSource.manual
             ? 'Người dùng chủ động nhấn SOS.'
-            : 'Chuỗi bất thường → va chạm → xoay → ít chuyển động 3 giây.',
+            : 'Chuỗi bất thường → va chạm → xoay → ít chuyển động ngắn (0,6–1,5 giây tùy mức).',
         recipientName: contactName,
         recipientPhone: contactPhone,
         countdownSeconds: countdownSeconds,

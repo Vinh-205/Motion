@@ -35,7 +35,7 @@ class FallDetector {
   String _path = '', triggerReason = '', lastRejection = '';
   final _impacts = Queue<(Duration, double)>();
   final _baseline = Queue<(Duration, double)>();
-  double impactThreshold = 22;
+  double impactThreshold = 19;
 
   void reset({bool clearBaseline = true}) {
     state = FallState.normal;

@@ -29,7 +29,7 @@ void main() {
             isNot(FallState.fallSuspected),
           );
         }
-        expect(d.impactThreshold, greaterThan(20));
+        expect(d.impactThreshold, greaterThan(16));
         for (var at = 20000; at <= 25000; at += 10) {
           final a = thenFall && at < 20100
               ? 2.0
@@ -44,7 +44,7 @@ void main() {
             gyroFresh: gyro,
             accelerationDelta: moving ? 2 : 0,
           );
-          expect(state == FallState.fallSuspected, thenFall && at >= 23310);
+          expect(state == FallState.fallSuspected, thenFall && at >= 20910);
         }
       }
     }
@@ -77,7 +77,9 @@ void main() {
       test('100 Hz fall sequence confirms after rest: $gyro $level', () {
         final d = FallDetector(config: DetectionConfig.forSensitivity(level))
           ..rotationAvailable = gyro;
-        for (var at = 0; at <= 3310; at += 10) {
+        final trigger =
+            310 + DetectionConfig.forSensitivity(level).stillness.inMilliseconds;
+        for (var at = 0; at <= trigger; at += 10) {
           final a = at < 100
               ? 2.0
               : at == 100
@@ -90,7 +92,7 @@ void main() {
             gyroFresh: gyro,
             accelerationDelta: at >= 100 && at <= 300 ? 2 : 0,
           );
-          expect(state == FallState.fallSuspected, at == 3310);
+          expect(state == FallState.fallSuspected, at == trigger);
         }
       });
     }

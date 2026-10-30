@@ -12,7 +12,7 @@ class NativeFallDetector {
     var rotationAvailable = true
     var state = 0
         private set
-    var impactThreshold = 22.0
+    var impactThreshold = 19.0
         private set
     var lastRejection = ""
         private set
@@ -60,9 +60,11 @@ class NativeFallDetector {
         if (gap < 0 || gap > 400) reject("Dữ liệu ngắt quá 400 ms; bỏ chuỗi cũ.", true)
         if (started != null && at - started!! > 8000) reject("Chuỗi quá 8 giây mà chưa đủ điều kiện xác nhận.")
         last = at
-        val impact = when (sensitivity) { "low" -> 26.0; "high" -> 18.0; else -> 22.0 }
-        val abnormal = when (sensitivity) { "low" -> 5.0; "high" -> 3.0; else -> 4.0 }
-        val angle = when (sensitivity) { "low" -> 0.9; "high" -> 0.45; else -> 0.65 }
+        val impact = when (sensitivity) { "low" -> 24.0; "high" -> 15.0; else -> 19.0 }
+        val abnormal = when (sensitivity) { "low" -> 4.0; "high" -> 2.5; else -> 3.5 }
+        val angle = when (sensitivity) { "low" -> 0.7; "high" -> 0.35; else -> 0.5 }
+        // Yên sau va chạm: rút từ 3 giây xuống ~1 giây để cảnh báo gần như ngay lập tức.
+        val stillnessMs = when (sensitivity) { "low" -> 1500L; "high" -> 600L; else -> 1000L }
         val ceiling = when (sensitivity) { "low" -> 1.5; "high" -> 1.15; else -> 1.3 }
         while (baseline.isNotEmpty() && at - baseline.first.first > 2000) baseline.removeFirst()
         // Learn only before a candidate, then freeze its threshold. Shaking cannot
@@ -118,7 +120,7 @@ class NativeFallDetector {
                 }
             }
             2 -> {
-                if (at - impactAt!! > 1500) reject("Thiếu bằng chứng xoay: ${number(rotationSum)} / ${number(angle)} rad.")
+                if (at - impactAt!! > 800) reject("Thiếu bằng chứng xoay: ${number(rotationSum)} / ${number(angle)} rad.")
                 else if (rotationSum >= angle) state = 3
             }
             3 -> {
@@ -142,7 +144,7 @@ class NativeFallDetector {
                 }
                 wasQuiet = quiet
                 val elapsed = quietSince?.let { at - it } ?: 0
-                if (quiet && elapsed >= 3000 && quietGoodMs >= elapsed * 0.85) {
+                if (quiet && elapsed >= stillnessMs && quietGoodMs >= elapsed * 0.85) {
                     state = 4
                     triggerReason = "Nghi ngờ theo nhánh $path. Đỉnh ${number(peakAcceleration)} m/s²; ngưỡng ${number(impactThreshold)} m/s²; " +
                         "giảm gia tốc ${maxLowMs} ms; xoay tích lũy ${number(rotationSum)} rad; phần yên ${quietGoodMs} / ${elapsed} ms."

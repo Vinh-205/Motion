@@ -11,8 +11,10 @@ class NativeFallDetectorTest {
             d.update(50, 2.0, 0.0, true)
             d.update(100, 30.0, 3.0, true)
             d.update(150, 9.81, 20.0, true)
-            for (at in 200L..3150L step 50) assertFalse(d.update(at, 9.81, 0.0, true))
-            assertTrue(d.update(3200, 9.81, 0.0, true))
+            // Thời gian yên sau va chạm đã rút ngắn: low 1,5 s / medium 1 s / high 0,6 s.
+            val stillness = when (sensitivity) { "low" -> 1500L; "high" -> 600L; else -> 1000L }
+            for (at in 200L until 200L + stillness step 50) assertFalse(d.update(at, 9.81, 0.0, true))
+            assertTrue(d.update(200L + stillness, 9.81, 0.0, true))
             assertEquals(4, d.state)
         }
     }

@@ -17,13 +17,13 @@ class DetectorFieldRegressionTest {
         val d = NativeFallDetector().apply { sensitivity = "high" }
         for (at in 0L..30000L step 10) {
             assertFalse(d.update(at, max(0.5, 9.81 + 19 * sin(at / 35.0)), 2.0, true))
-            assertTrue(d.impactThreshold in 18.0..20.7)
+            assertTrue(d.impactThreshold in 15.0..17.25)
         }
         d.reset()
         for (at in 0L..990L step 10) d.update(at, 9.81, 0.0, true)
         d.update(1000, 2.0, 0.0, true)
         val frozen = d.impactThreshold
-        for (at in 1010L..1400L step 10) d.update(at, if (at % 20 == 0L) 15.0 else 2.0, 2.0, true)
+        for (at in 1010L..1400L step 10) d.update(at, if (at % 20 == 0L) 14.0 else 2.0, 2.0, true)
         assertEquals(frozen, d.impactThreshold, 0.0001)
     }
     @Test fun sustainedLowGravityAndStrongImpactCanTriggerWithoutRotation() {
@@ -32,8 +32,9 @@ class DetectorFieldRegressionTest {
             for (at in 0L..150L step 10) assertFalse(d.update(at, 2.0, 0.0, true))
             assertFalse(d.update(160, 35.0, 0.0, true))
             assertEquals(3, d.state)
-            for (at in 170L..3160L step 10) assertFalse(d.update(at, 9.81, 0.0, true))
-            assertTrue(d.update(3170, 9.81, 0.0, true))
+            val stillness = when (level) { "low" -> 1500L; "high" -> 600L; else -> 1000L }
+            for (at in 170L until 170L + stillness step 10) assertFalse(d.update(at, 9.81, 0.0, true))
+            assertTrue(d.update(170L + stillness, 9.81, 0.0, true))
             assertTrue(d.triggerReason.contains("120 ms"))
             assertTrue(d.triggerReason.contains("35.00"))
         }
