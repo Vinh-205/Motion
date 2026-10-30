@@ -124,13 +124,11 @@ flowchart TD
     Card --> Read
 ```
 
-API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên hoặc đăng xuất tài khoản không tắt dịch vụ giám sát/SOS trên thiết bị. Lịch sử vị trí/SMS cục bộ chưa tự tải lên backend. Liên hệ đám mây được lưu riêng theo tài khoản; chỉ khi **người dùng xác nhận “Thêm vào SOS trên máy”** mới thêm người nhận trên điện thoại, không tự thay danh sách đang dùng.
+API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên hoặc đăng xuất tài khoản không tắt dịch vụ giám sát/SOS trên thiết bị. Lịch sử vị trí/SMS cục bộ chưa tự tải lên backend. Liên hệ đám mây cũ vẫn lưu riêng theo tài khoản qua API, không tự đổi người nhận SOS. Bản mới quản lý danh sách SOS trực tiếp tại tab **Liên hệ** trên điện thoại.
 
 ### Cách sử dụng phần tài khoản
 
-<img src="docs/images/motion-account-preview.png" alt="Màn hình tài khoản Motion 1.1.0 trên máy ảo; API chưa triển khai" width="260">
-
-1. **Mở app bình thường sẽ vào đăng nhập trước**, chưa cho vào màn hình chính. Chọn **Tạo tài khoản bằng email** → nhập tên, email, mật khẩu 10–128 ký tự → nhập OTP nhận qua email (hiệu lực 5 phút). Xác thực đăng ký xong vẫn cần đăng nhập, không tự vào app.
+1. **Lần đầu hoặc khi không còn phiên hợp lệ sẽ vào đăng nhập trước**; các lần mở sau khôi phục phiên như bước 2. Chọn **Tạo tài khoản bằng email** → nhập tên, email, mật khẩu 10–128 ký tự → nhập OTP nhận qua email (hiệu lực 5 phút). Xác thực đăng ký xong vẫn cần đăng nhập, không tự vào app.
 2. Đăng nhập bằng **email + mật khẩu** → Email OTP, hoặc Google khi đã cấu hình. Lần sau app khôi phục phiên đã lưu và vào giao diện theo vai trò; không yêu cầu OTP mỗi lần mở. Phiên mới có hạn tối đa **30 ngày**, không gia hạn vô thời hạn. Phiên 12 giờ cấp bởi bản cũ giữ hạn cũ cho đến khi đăng nhập lại. Cache hồ sơ cho phép vào giao diện khi API tạm mất mạng, nhưng mọi CRUD đám mây vẫn phải qua API kiểm tra quyền. Khi API trả 401, xóa phiên/cache và yêu cầu đăng nhập. Không lưu mật khẩu trên điện thoại.
 3. **Người dùng:** mở tài khoản tại Cài đặt; tạo/sửa/xóa thẻ người mang điện thoại tại **THẺ THÔNG TIN KHẨN CẤP**. Thẻ không gắn tài khoản đám mây và không tự đổi khi đăng nhập tài khoản khác.
 4. **Nhân viên:** danh sách người được phân công. **Admin:** tạo/sửa/xóa/khóa tài khoản, phân quyền và phân công; tìm kiếm và lọc vai trò bằng thanh lọc. Dashboard không còn lịch hẹn/liên hệ.
