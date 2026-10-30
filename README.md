@@ -2,11 +2,56 @@
 
 **Source hiện tại: 1.1.4+10** · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
 
+
+## Tải APK để tham gia test (không cần máy tính)
+
+Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.1.4 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.1.4-test.10/Motion-1.1.4-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
+
+[<img src="docs/images/motion-apk-qr.png" alt="QR tải APK Motion 1.1.4" width="300">](https://github.com/Vinh-205/Motion/releases/download/v1.1.4-test.10/Motion-1.1.4-android.apk)
+
+1. Tải tệp `Motion-1.1.4-android.apk` (khoảng 55 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.
+2. Mở tệp đã tải → nếu Android yêu cầu, cho phép **Cài ứng dụng không rõ nguồn gốc / Cho phép từ nguồn này** cho trình duyệt hoặc ứng dụng quản lý tệp đang mở APK → nhấn **Cài đặt**. Có thể tắt lại quyền cài từ nguồn này sau khi cài xong.
+3. Mở Motion và làm theo **[Hướng dẫn sử dụng bên dưới](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt)**. Người test không cần cài Flutter, Android Studio hay bật USB debugging.
+
+Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột chữ ký, có thể bản cũ là debug; ghi lại liên hệ/cấu hình trước khi quyết định gỡ bản cũ vì gỡ app sẽ xóa dữ liệu cục bộ. Không bỏ qua cảnh báo bảo mật chưa hiểu rõ; gửi ảnh lỗi cho người phát triển để kiểm tra.
+
+Đây là bản phát hành thử dành cho nhóm dự kiến 50–100 người. Mỗi người đăng ký/đăng nhập bằng tài khoản riêng; mỗi máy tự cấu hình liên hệ, SIM và thẻ khẩn cấp. Chưa có hệ thống thu thập phản hồi tự động. Không tự dùng số của người tổ chức làm người nhận SOS cho cả nhóm. Thống nhất trước với người nhận khi thử SMS hoặc cuộc gọi thật vì có thể phát sinh cước.
+
+[Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.1.4-test.10). QR đã cập nhật để tải đúng bản **1.1.4+10**. File cũ trong Downloads không tự đổi; hãy tải lại và kiểm tra phiên bản sau khi cài.
+
+**Kiểm tra đúng bản:** tên tệp `Motion-1.1.4-android.apk`, dung lượng **57.569.941 byte**, Android App info hiển thị **1.1.4** (`versionCode=10`). Cài đè bản release cùng chữ ký để giữ dữ liệu; không cần gỡ app trước. Push source lên GitHub không tự cập nhật ứng dụng đã cài trên điện thoại.
+
+[Tệp SHA-256](https://github.com/Vinh-205/Motion/releases/download/v1.1.4-test.10/Motion-1.1.4-android.apk.sha256):
+
+```text
+fab1c0e311be902bacbb2e659007c89c10e214a0734e96ceadfdc9e4178e4884
+```
+
+### Tổng hợp thay đổi đã có trong source và APK 1.1.4+10
+
+| Nhóm | Nội dung đã thực hiện | Mã nguồn / hướng dẫn |
+| --- | --- | --- |
+| Đăng ký, đăng nhập, quên mật khẩu | Email + mật khẩu + Email OTP; Google OAuth2/OIDC với PKCE và liên kết tài khoản tường minh; Google thật còn cần cấu hình provider | [MotionApi](lib/services/motion_api.dart), [backend auth](backend/src/app.js), phần tài khoản bên dưới |
+| Ghi nhớ đăng nhập | Khôi phục token/cache hồ sơ từ secure storage, không nháy màn đăng nhập khi đang khôi phục; phiên mới tối đa 30 ngày; xử lý offline và xóa khi API trả 401 | [SessionGate](lib/screens/session_gate.dart), [test khôi phục phiên](test/emergency_card_test.dart) |
+| Vai trò và CRUD | Admin quản lý tài khoản, khóa/mở khóa, phân quyền/phân công; nhân viên chỉ thấy người được giao; backend kiểm tra quyền/chủ sở hữu, bảo vệ admin cuối cùng | [Dashboard](lib/screens/cloud_dashboard_screen.dart), [API + kiểm thử](backend/test/api.test.js) |
+| Dọn giao diện quản trị | Bỏ nút lịch hẹn/liên hệ trên tài khoản và Vòng an toàn khỏi giao diện; tìm kiếm tên/email, ô lọc vai trò gọn | [CloudDashboardScreen](lib/screens/cloud_dashboard_screen.dart) |
+| Thẻ khẩn cấp | Thêm/xem/sửa/xóa tên, bệnh nền, dị ứng, thuốc, nhóm máu tự khai, chiều cao/cân nặng và liên hệ; một thẻ cho người mang điện thoại, không tự đổi theo tài khoản | [Form thẻ](lib/screens/emergency_card_screen.dart) |
+| Thẻ ngoại tuyến và màn hình khóa | Mã hóa AES-GCM/Keystore, không gửi thông tin thẻ lên API; mặc định tắt chia sẻ; đọc qua thông báo SOS khi đã đồng ý và SOS đang hoạt động; Activity riêng không mở sang tài khoản | [Lưu mã hóa](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardStore.kt), [màn hình chỉ đọc](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardActivity.kt) |
+| Bố cục ứng dụng | Tài khoản ở Cài đặt, sáng/tối trên cùng bên phải; nhãn SOS cập nhật theo trạng thái; bắt đầu giám sát nền chỉ ở Theo dõi; logo thống nhất, thanh điều hướng kính mờ, Morphicons/Lottie | [Header](lib/widgets/motion_header.dart), [navigation](lib/widgets/liquid_navigation.dart), [startup](lib/widgets/startup_animation.dart) |
+| Cảm biến | Xử lý va chạm ngay mẫu đầu; ngưỡng Thấp/Vừa/Cao 26/22/18 m/s², có thích nghi theo dao động; kiểm tra giảm gia tốc/xoay/ít chuyển động, loại va chạm lặp và dữ liệu cũ; đồng bộ Dart/Android | [FallDetector](lib/services/fall_detector.dart), [NativeFallDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/NativeFallDetector.kt) |
+| Giám sát nền và SOS | Công tắc phát hiện và nền tách riêng; native foreground service xử lý cảm biến/đếm ngược/chuông, SMS nhiều liên hệ và cuộc gọi một số ưu tiên; quyền SMS/gọi/thông báo và kiểm tra full-screen/pin | [SafetyService](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SafetyService.kt), hướng dẫn sử dụng bên dưới |
+| Âm thanh, liên hệ, lịch sử | Chuông SOS Motion mặc định, chọn/nghe thử âm; nhập/chọn danh bạ, nhiều người nhận, số gọi ưu tiên; nút 113/114/115 mở trình quay số; lưu trạng thái SMS/gọi và nguyên nhân kích hoạt riêng | [Các màn hình](lib/screens), [Emergency services](lib/widgets/emergency_services.dart) |
+| Sửa vùng xám Theo dõi | Tách PageStorageKey của chẩn đoán khỏi vị trí cuộn, thêm Material cho ExpansionTile; có regression test cuộn/mở mục cuối trang | [MonitorScreen](lib/screens/monitor_screen.dart), [test](test/emergency_card_test.dart) |
+| API và tài liệu | API HTTPS trên Render, Neon lưu tài khoản, Resend gửi OTP, DNS Cloudflare; Swagger/Schemas, README cài đặt/sử dụng/nơi lưu dữ liệu và Mermaid đồng bộ source | [Swagger](https://motion-api.vihx.online/docs), [OpenAPI trong repo](backend/openapi/motion.openapi.json), [Mermaid](docs/diagrams) |
+
+**Đã kiểm chứng:** 101 Flutter tests, 22 Android unit tests, 27 backend tests, 23 PostgreSQL-compatible tests; integration máy ảo xác nhận đếm ngược chạy nền khi khóa, mở thẻ bằng thông báo và dữ liệu thẻ lưu mã hóa. SMS/gọi trong integration là dry-run. Chưa công bố độ chính xác phát hiện ngã thực tế; cần thử lại SMS/cuộc gọi/cảm biến, pin và khóa màn hình trên điện thoại đích. Google OAuth thật chưa được xác nhận. APK này là bản test, không phải bản đã phát hành lên Play Store/App Store.
+
+
 ### Bố cục và sử dụng bản mới
 
 - **Theo dõi:** bắt đầu giám sát nền, xem số đo và lý do bộ phát hiện đang chờ. Nút bắt đầu không lặp trong Cài đặt.
 - **Lịch sử:** xem thời điểm, nguyên nhân cảnh báo và kết quả gửi SOS.
-- **Liên hệ:** thêm/sửa/xóa người nhận, chọn số gọi ưu tiên. Liên hệ đám mây chỉ vào danh sách SOS trên máy sau khi xác nhận.
+- **Liên hệ:** thêm/sửa/xóa người nhận, chọn số gọi ưu tiên. Danh sách này lưu trên từng điện thoại; dữ liệu liên hệ cloud cũ không tự thay người nhận SOS.
 - **Cài đặt:** tài khoản và quyền truy cập, độ nhạy, thời gian xác nhận, chuông SOS và công tắc giám sát. Sáng/tối nằm trên cùng bên phải; logo trong app thống nhất với launcher. Thanh điều hướng dùng kính mờ, lớp màu trong và chuyển động chọn tab.
 - Nhãn **ĐÃ BẬT SOS** cập nhật khi SOS qua SIM đã được thiết lập và giám sát đang bật; đây là trạng thái cấu hình, không bảo đảm SIM đã gửi thành công. Tắt riêng giám sát nền vẫn giữ giám sát khi app đang mở.
 - **Admin:** quản lý tài khoản, vai trò và phân công. **Nhân viên:** chỉ hỗ trợ người được phân công. **Người dùng:** hồ sơ và thẻ của người mang máy. Dashboard có tìm kiếm; admin có ô lọc vai trò gọn, không còn nút lịch hẹn/liên hệ trên thẻ tài khoản.
@@ -59,31 +104,15 @@ Minh chứng kiểm thử cơ chế thẻ: [Flutter CRUD/cache session](test/eme
 
 Nếu đã có hai đỉnh va chạm cách nhau ít nhất 200 ms trong 2 giây, đỉnh tiếp theo phải lớn hơn 1,2 lần đỉnh cũ mới được xét như sự kiện mới. Chốt này giảm cộng dồn bước chân nhưng có thể bỏ sót sự cố tương tự hoạt động trước đó. Không tự nhân số đo cảm biến để tạo cảm giác nhạy hơn.
 
-Ứng dụng Flutter giám sát dấu hiệu té ngã, cảnh báo xác nhận và hỗ trợ SOS trên Android. **Phiên bản test: 1.0.3+5** · Nhóm dự kiến **50–100 người test**.
+Ứng dụng Flutter giám sát dấu hiệu té ngã, cảnh báo xác nhận và hỗ trợ SOS trên Android. **Phiên bản test: 1.1.4+10** · Nhóm dự kiến **50–100 người test**.
 
 Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay trong README này. Người test chỉ cần điện thoại Android; không cần tải source hay cài công cụ lập trình.
 
 **Xem nhanh:** [Đồ án cuối kỳ / backend](#đồ-án-cuối-kỳ--tài-khoản-backend-và-thẻ-khẩn-cấp) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt).
 
-## Tải APK để tham gia test (không cần máy tính)
-
-Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.0.3 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.0.3-test.5/Motion-1.0.3-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
-
-[<img src="docs/images/motion-apk-qr.png" alt="QR tải APK Motion 1.0.3" width="300">](https://github.com/Vinh-205/Motion/releases/download/v1.0.3-test.5/Motion-1.0.3-android.apk)
-
-1. Tải tệp `Motion-1.0.3-android.apk` (khoảng 54 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.
-2. Mở tệp đã tải → nếu Android yêu cầu, cho phép **Cài ứng dụng không rõ nguồn gốc / Cho phép từ nguồn này** cho trình duyệt hoặc ứng dụng quản lý tệp đang mở APK → nhấn **Cài đặt**. Có thể tắt lại quyền cài từ nguồn này sau khi cài xong.
-3. Mở Motion và làm theo **[Hướng dẫn sử dụng bên dưới](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt)**. Người test không cần cài Flutter, Android Studio hay bật USB debugging.
-
-Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột chữ ký, có thể bản cũ là debug; ghi lại liên hệ/cấu hình trước khi quyết định gỡ bản cũ vì gỡ app sẽ xóa dữ liệu cục bộ. Không bỏ qua cảnh báo bảo mật chưa hiểu rõ; gửi ảnh lỗi cho người phát triển để kiểm tra.
-
-Đây là bản phát hành thử dành cho nhóm dự kiến 50–100 người. Mỗi máy tự cấu hình liên hệ/SIM; không có tài khoản hay hệ thống thu thập phản hồi tự động. Không tự dùng số của người tổ chức làm người nhận SOS cho cả nhóm. Thống nhất trước với người nhận khi thử SMS hoặc cuộc gọi thật vì có thể phát sinh cước.
-
-[Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.0.3-test.5). QR này cố định ở bản 1.0.3+5, không tự chuyển sang bản mới.
-
 ## Đồ án cuối kỳ — tài khoản, backend và thẻ khẩn cấp
 
-**Trạng thái:** source **1.1.4+10** bổ sung đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
+**Trạng thái:** source **1.1.4+10** bổ sung đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.1.4+10 trong link tải/QR ở đầu README đã chứa các thay đổi frontend và Android native mới nhất; API đã cập nhật thời hạn phiên mới 30 ngày. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
 
 Domain riêng đang dùng cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Phương án miễn phí: **Render chạy Node.js + Neon lưu PostgreSQL + Resend gửi Email OTP qua HTTPS**; Cloudflare quản lý DNS. Không cần thuê VPS khi dùng phương án này. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
 
@@ -217,7 +246,7 @@ Không đặt SQLite lên Render Free: file cục bộ có thể bị mất khi 
 - Render Free có thể ngủ khi không hoạt động; lần gọi đầu có thể chậm. Flutter đợi kết nối tối đa 90 giây, không tự lặp yêu cầu gửi OTP. Mở `/health` trước buổi báo cáo để kiểm tra API đang chạy; không dùng bot ping nhằm né giới hạn dịch vụ.
 - Theo [Resend Free](https://resend.com/blog/new-free-tier), hạn mức được công bố là 3.000 email/tháng, 100 email/ngày; kiểm tra lại Usage/Pricing khi triển khai. Mỗi người đăng ký + đăng nhập lần đầu cần ít nhất **2 email**, nên **50 người mới/ngày đã dùng hết 100 email**, chưa tính quên mật khẩu/gửi lại. Muốn 100 người test cùng ngày cần đổi lịch hoặc tự chọn gói phù hợp; source không tự nâng gói hay trả phí.
 - Neon Free cũng có hạn mức; kiểm tra [gói Neon hiện tại](https://neon.com/pricing). Giữ Free, theo dõi compute/storage; không coi gói miễn phí là hệ thống khẩn cấp có cam kết hoạt động liên tục.
-- Thử đăng ký/OTP thật trên email ngoài email chủ Resend, login cả ba vai trò, CRUD bằng hai điện thoại và restart/redeploy Render để xác nhận dữ liệu còn. Chỉ sau các kiểm tra này mới cập nhật APK/QR phát hành.
+- Thử đăng ký/OTP thật trên email ngoài email chủ Resend, login cả ba vai trò, CRUD bằng hai điện thoại và restart/redeploy Render để xác nhận dữ liệu còn. Đây là bước nghiệm thu trên điện thoại thật trước phát hành chính thức; APK/QR hiện là bản test 1.1.4+10.
 - Kiểm thử trong repo: `npm test` chạy SQLite + ranh giới gửi email giả; `npm run test:postgres` chạy các luồng API trên PostgreSQL engine PGlite. Đây không phải kiểm chứng kết nối Neon/TLS hay gửi email thật.
 
 ### Tùy chọn khác — triển khai backend công khai trên VPS
@@ -271,9 +300,9 @@ Không dùng localhost/`10.0.2.2` trong cấu hình Flutter. URL mặc định t
 - Người dùng A không đọc/sửa/xóa dữ liệu B bằng cách đổi ID; nhân viên không xem người chưa được giao; gọi thẳng API cũng bị chặn. Tự gửi `role=admin` khi đăng ký/sửa hồ sơ bị từ chối.
 - Thẻ khẩn cấp: mặc định không chia sẻ trên màn hình khóa; chỉ đọc khi đã đồng ý và SOS đang hoạt động. Không lộ giao diện quản trị từ thẻ.
 - Mất mạng/đăng xuất không làm mất luồng SOS trên máy; dùng liên hệ test có đồng ý, không gọi thật 113/114/115 khi báo cáo.
-- Swagger công khai bằng HTTPS từ 4G và Wi-Fi; restart backend vẫn còn dữ liệu; cả nhóm cài/chạy Flutter cùng API. Chỉ cập nhật QR/APK cuối kỳ sau khi kiểm tra deployment và email thật.
+- Swagger công khai bằng HTTPS từ 4G và Wi-Fi; restart backend vẫn còn dữ liệu; cả nhóm cài/chạy Flutter cùng API. APK test hiện dùng API công khai; vẫn cần nghiệm thu nhiều thiết bị trước chốt bản cuối kỳ.
 
-## Bản sửa 1.0.3 — giám sát nền riêng, bổ sung bằng chứng cảnh báo
+## Các công tắc giám sát và bằng chứng cảnh báo
 
 | Điều khiển | Khi bật | Khi tắt |
 | --- | --- | --- |
@@ -290,6 +319,10 @@ Không dùng localhost/`10.0.2.2` trong cấu hình Flutter. URL mặc định t
 Bản này không công bố tỷ lệ phát hiện hay độ chính xác thực tế. Cần kiểm tra lại trên thiết bị đã gặp lỗi; không thả rơi điện thoại hoặc cố ngã. Nếu chưa cảnh báo, chụp mục Tình trạng phát hiện cùng model/Android thay vì chỉ giảm ngưỡng liên tục.
 
 ## Hướng dẫn sử dụng sau khi cài đặt
+
+### Bước 0 — Đăng nhập và chuẩn bị thẻ
+
+Lần đầu đăng ký email, xác thực OTP rồi đăng nhập; các lần mở sau khôi phục phiên còn hạn. Google chỉ dùng khi backend đã cấu hình Google OAuth. Sau khi vào app, mở **Cài đặt → THẺ THÔNG TIN KHẨN CẤP**, lưu thông tin người mang máy. Tùy chọn đọc khi khóa mặc định tắt; bật và lưu nếu đồng ý. Chi tiết dữ liệu và quyền xem thẻ nằm ở phần đầu README.
 
 ### Bước 1 — Làm quen giao diện
 
