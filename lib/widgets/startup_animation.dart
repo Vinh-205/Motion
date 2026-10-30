@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 import 'app_design.dart';
-import 'morph_icon.dart';
+import 'motion_brand.dart';
 
 /// A brief brand introduction, never a readiness indicator or a blocker for SOS.
 class StartupAnimation extends StatefulWidget {
@@ -104,21 +104,7 @@ class _StartupAnimationState extends State<StartupAnimation>
                           ),
                           Transform.scale(
                             scale: .8 + .2 * appear,
-                            child: Container(
-                              width: 90,
-                              height: 90,
-                              decoration: BoxDecoration(
-                                color: context.colors.lime,
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: MorphIcon(
-                                AppGlyph.orbit,
-                                alternate: AppGlyph.radar,
-                                active: _motion.value > .58,
-                                size: 48,
-                                color: context.colors.background,
-                              ),
-                            ),
+                            child: const MotionBrand(size: 90),
                           ),
                         ],
                       ),

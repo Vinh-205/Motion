@@ -139,6 +139,11 @@ void main() {
       await tester.tap(find.text('XÁC NHẬN'));
       await tester.pumpAndSettle();
       expect(find.text('Người dùng'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('MỞ VÒNG AN TOÀN'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('MỞ VÒNG AN TOÀN'), findsOneWidget);
       expect(find.text('TẠO TÀI KHOẢN'), findsNothing);
       expect(tester.takeException(), isNull);
@@ -194,7 +199,11 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(roleLabel(role)), findsWidgets);
         expect(tester.takeException(), isNull);
-        await tester.ensureVisible(find.text('MỞ VÒNG AN TOÀN'));
+        await tester.scrollUntilVisible(
+          find.text('MỞ VÒNG AN TOÀN'),
+          150,
+          scrollable: find.byType(Scrollable).first,
+        );
         await tester.pumpAndSettle();
         await tester.tap(find.text('MỞ VÒNG AN TOÀN'));
         await tester.pumpAndSettle();

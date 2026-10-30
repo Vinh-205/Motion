@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/motion_api.dart';
 import '../services/app_controller.dart';
-import '../widgets/morph_icon.dart';
+import '../widgets/motion_brand.dart';
 import 'cloud_dashboard_screen.dart';
 
 enum _AuthMode { login, register, forgot }
@@ -156,7 +156,7 @@ class _AccountScreenState extends State<AccountScreen> {
               children: [
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: MorphIcon(AppGlyph.shieldCheck, size: 52),
+                  child: MotionBrand(size: 56),
                 ),
                 const SizedBox(height: 24),
                 Text(title, style: Theme.of(context).textTheme.headlineLarge),

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../models/detection_config.dart';
 import '../services/app_controller.dart';
+import '../services/motion_api.dart';
+import 'account_screen.dart';
 import '../widgets/app_design.dart';
 import '../widgets/alert_sound_settings.dart';
 import 'sms_setup_screen.dart';
@@ -11,12 +13,18 @@ import 'icon_licenses_screen.dart';
 import 'start_monitoring_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key, required this.controller});
+  const SettingsScreen({super.key, required this.controller, this.cloudApi});
   final AppController controller;
+  final MotionApi? cloudApi;
   @override
   Widget build(BuildContext context) => ListView(
     key: const PageStorageKey('settings'),
-    padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+    padding: EdgeInsets.fromLTRB(
+      24,
+      4,
+      24,
+      24 + MediaQuery.paddingOf(context).bottom,
+    ),
     children: [
       const PageHeading(
         index: '04 / THEO NHỊP CỦA BẠN',
@@ -24,12 +32,14 @@ class SettingsScreen extends StatelessWidget {
         description: 'Thiết lập trải nghiệm phù hợp với bạn.',
       ),
       ActionButton(
-        label: 'BẮT ĐẦU GIÁM SÁT NỀN',
-        icon: AppGlyph.shieldCheck,
+        key: const Key('openCloudAccount'),
+        label: 'TÀI KHOẢN & QUYỀN TRUY CẬP',
+        icon: AppGlyph.user,
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute<void>(
-            builder: (_) => StartMonitoringScreen(controller: controller),
+            builder: (_) =>
+                AccountScreen(controller: controller, api: cloudApi),
           ),
         ),
       ),

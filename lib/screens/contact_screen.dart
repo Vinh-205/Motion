@@ -139,7 +139,12 @@ class _ContactScreenState extends State<ContactScreen> {
     child: ListView(
       controller: _scroll,
       key: const PageStorageKey('contact'),
-      padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        4,
+        24,
+        24 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         const PageHeading(
           index: '03 / VÒNG TRÒN TIN CẬY',

@@ -33,8 +33,9 @@ class FallDetector {
   double _rotation = 0, _peak = 0;
   bool _wasQuiet = false;
   String _path = '', triggerReason = '', lastRejection = '';
+  final _impacts = Queue<(Duration, double)>();
   final _baseline = Queue<(Duration, double)>();
-  double impactThreshold = 23;
+  double impactThreshold = 22;
 
   void reset({bool clearBaseline = true}) {
     state = FallState.normal;
@@ -45,7 +46,10 @@ class FallDetector {
     _path = '';
     triggerReason = '';
     _resetQuiet();
-    if (clearBaseline) _baseline.clear();
+    if (clearBaseline) {
+      _baseline.clear();
+      _impacts.clear();
+    }
   }
 
   void _resetQuiet() {
@@ -138,7 +142,10 @@ class FallDetector {
         _started = at;
         _peak = magnitude;
       }
-      return state;
+      // Evaluate the first impact sample as well as subsequent samples.
+      if (state == FallState.normal || magnitude < impactThreshold) {
+        return state;
+      }
     }
     _peak = max(_peak, magnitude);
     if (rotationAvailable) {
@@ -151,9 +158,27 @@ class FallDetector {
             'Chưa có va chạm đạt ngưỡng: đỉnh ${_peak.toStringAsFixed(2)} / ${impactThreshold.toStringAsFixed(2)} m/s².',
           );
         } else if (magnitude >= impactThreshold) {
+          while (_impacts.isNotEmpty &&
+              at - _impacts.first.$1 > const Duration(seconds: 2)) {
+            _impacts.removeFirst();
+          }
+          final repeated =
+              _impacts.length >= 2 &&
+              magnitude <= _impacts.map((e) => e.$2).reduce(max) * 1.2;
+          if (_impacts.isEmpty ||
+              at - _impacts.last.$1 >= const Duration(milliseconds: 200)) {
+            _impacts.add((at, magnitude));
+          }
+          if (repeated) {
+            _reject('Va chạm lặp lại; chờ sự kiện mới mạnh hơn.');
+            return state;
+          }
           final lowEnough = _maxLowMs >= (rotationAvailable ? 40 : 80);
           if (!lowEnough &&
-              !(rotationAvailable && magnitude >= impactThreshold + 6)) {
+              !(rotationAvailable &&
+                  (magnitude >= impactThreshold + 6 ||
+                      (magnitude >= impactThreshold + config.impactMargin &&
+                          rotation >= 2.5)))) {
             _reject('Va chạm thiếu pha giảm gia tốc đủ lâu hoặc chưa đủ mạnh.');
           } else {
             _impactAt = at;
@@ -181,7 +206,11 @@ class FallDetector {
         final deviation = (magnitude - DetectionConfig.gravity).abs();
         final motion = rotationAvailable ? rotation : accelerationDelta;
         final quiet =
-            deviation < 1.3 && motion < (rotationAvailable ? 0.35 : 1.3);
+            deviation < config.quietDeviation &&
+            motion <
+                (rotationAvailable
+                    ? config.quietAngularSpeed
+                    : config.quietDeviation);
         final severe =
             deviation >= 3 || motion >= (rotationAvailable ? 1.0 : 3.0);
         if (quiet) {

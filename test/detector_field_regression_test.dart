@@ -5,6 +5,30 @@ import 'package:cam_bien_te_nga/models/detection_config.dart';
 import 'package:cam_bien_te_nga/services/fall_detector.dart';
 
 void main() {
+  test('First-sample impact is retained and sensitivity profiles differ', () {
+    for (final peak in [20.0, 26.0, 35.0]) {
+      for (final level in Sensitivity.values) {
+        final d = FallDetector(config: DetectionConfig.forSensitivity(level));
+        for (var at = 0; at <= 4000; at += 10) {
+          d.update(
+            at: Duration(milliseconds: at),
+            magnitude: at == 0 ? peak : 9.81,
+            rotation: at <= 300 ? 4 : 0,
+            gyroFresh: true,
+          );
+        }
+        final expected =
+            peak == 35 ||
+            (peak == 26 && level != Sensitivity.low) ||
+            (peak == 20 && level == Sensitivity.high);
+        expect(
+          d.state == FallState.fallSuspected,
+          expected,
+          reason: '$peak $level',
+        );
+      }
+    }
+  });
   test(
     'High sensitivity caps adaptation and freezes a candidate threshold',
     () {
@@ -21,7 +45,7 @@ void main() {
           ),
           isNot(FallState.fallSuspected),
         );
-        expect(d.impactThreshold, inInclusiveRange(20, 23));
+        expect(d.impactThreshold, inInclusiveRange(18, 20.7));
       }
       d.reset();
       for (var at = 0; at < 1000; at += 10) {

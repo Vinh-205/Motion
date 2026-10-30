@@ -93,7 +93,7 @@ void main() {
     await reveal(tester, find.text('Cao'));
     await tester.tap(find.text('Cao'));
     await tester.pump();
-    expect(c.detector.config.impact, 20);
+    expect(c.detector.config.impact, 18);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });

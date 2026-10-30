@@ -16,7 +16,12 @@ class HistoryScreen extends StatelessWidget {
     final safe = events.where((e) => e.outcome == EventOutcome.safe).length;
     return ListView(
       key: const PageStorageKey('history'),
-      padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        4,
+        24,
+        24 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         const PageHeading(
           index: '02 / NHẬT KÝ CHUYỂN ĐỘNG',

@@ -4,12 +4,16 @@ enum Sensitivity { low, medium, high }
 class DetectionConfig {
   const DetectionConfig({
     this.abnormalDelta = 4,
-    this.impact = 23,
+    this.impact = 22,
     this.rotationAngle = 0.65,
     this.stillness = const Duration(seconds: 3),
     this.adaptiveCeiling = 1.3,
     this.quietToleranceMs = 100,
+    this.impactMargin = 4,
+    this.quietDeviation = 1.5,
+    this.quietAngularSpeed = 0.45,
   });
+  final double impactMargin, quietDeviation, quietAngularSpeed;
   final double abnormalDelta;
   final double impact;
   // Tích phân độ lớn vận tốc góc: bằng chứng xoay, không phải góc tư thế tuyệt đối.
@@ -31,7 +35,10 @@ class DetectionConfig {
   static DetectionConfig forSensitivity(Sensitivity value) => switch (value) {
     Sensitivity.low => const DetectionConfig(
       abnormalDelta: 5,
-      impact: 27,
+      impact: 26,
+      impactMargin: 6,
+      quietDeviation: 1.3,
+      quietAngularSpeed: 0.35,
       rotationAngle: 0.9,
       adaptiveCeiling: 1.5,
       quietToleranceMs: 0,
@@ -39,7 +46,10 @@ class DetectionConfig {
     Sensitivity.medium => const DetectionConfig(),
     Sensitivity.high => const DetectionConfig(
       abnormalDelta: 3,
-      impact: 20,
+      impact: 18,
+      impactMargin: 2,
+      quietDeviation: 1.9,
+      quietAngularSpeed: 0.6,
       rotationAngle: 0.45,
       adaptiveCeiling: 1.15,
       quietToleranceMs: 200,

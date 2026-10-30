@@ -65,7 +65,12 @@ class MonitorScreen extends StatelessWidget {
         : 'Chuyển động mạnh';
     return ListView(
       key: const PageStorageKey('monitor'),
-      padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        4,
+        24,
+        24 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         const PageHeading(
           index: '01 / CHUYỂN ĐỘNG & AN TOÀN',

@@ -64,7 +64,7 @@ class AppController extends ChangeNotifier {
   String sensorMode = 'full';
   String deviceModel = '', androidVersion = '';
   double sensorSampleHz = 0;
-  double impactThreshold = 23;
+  double impactThreshold = 22;
   bool backgroundEnabled = true;
   String detectionDetail = '', lastDetectionRejection = '';
   bool get backgroundMonitoring =>
@@ -209,7 +209,7 @@ class AppController extends ChangeNotifier {
     deviceModel = state['deviceModel'] as String? ?? '';
     androidVersion = state['androidVersion'] as String? ?? '';
     sensorSampleHz = (state['sensorSampleHz'] as num?)?.toDouble() ?? 0;
-    impactThreshold = (state['impactThreshold'] as num?)?.toDouble() ?? 23;
+    impactThreshold = (state['impactThreshold'] as num?)?.toDouble() ?? 22;
     sensors.hasGyroscope = hasGyroscope;
     locationPermission = state['locationPermission'] == true;
     notificationPermission = state['notificationPermission'] == true;

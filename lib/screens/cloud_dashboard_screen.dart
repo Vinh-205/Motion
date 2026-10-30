@@ -4,6 +4,8 @@ import '../services/app_controller.dart';
 import '../services/motion_api.dart';
 import '../widgets/app_design.dart';
 import '../widgets/morph_icon.dart';
+import '../widgets/role_overview.dart';
+import '../services/app_appearance.dart';
 
 String roleLabel(String role) => switch (role) {
   'admin' => 'Quản trị viên',
@@ -179,18 +181,151 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
     );
   }
 
+  String query = '', roleFilter = 'all';
+  List<Map<String, dynamic>> get visibleUsers => users.where((user) {
+    if (widget.api.role != 'admin' && user['id'] == widget.api.user?['id']) {
+      return false;
+    }
+    if (roleFilter != 'all' && user['role'] != roleFilter) return false;
+    final text = '${user['name']} ${user['email']}'.toLowerCase();
+    return text.contains(query.trim().toLowerCase());
+  }).toList();
+
+  Widget _userCard(Map<String, dynamic> user) => SurfacePanel(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: context.colors.lime.withValues(alpha: .10),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: MorphIcon(
+                user['role'] == 'admin' ? AppGlyph.shieldCheck : AppGlyph.user,
+                color: context.colors.lime,
+                size: 23,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user['name'] as String,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user['email'] as String,
+                    style: TextStyle(color: context.colors.muted, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            if (widget.api.role == 'admin')
+              PopupMenuButton<String>(
+                tooltip: 'Quản lý tài khoản',
+                icon: const MorphIcon(AppGlyph.sliders, size: 21),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'edit', child: Text('Sửa / phân quyền')),
+                  PopupMenuItem(value: 'delete', child: Text('Xóa tài khoản')),
+                ],
+                onSelected: (action) async {
+                  if (action == 'edit') {
+                    await _editUser(user);
+                    return;
+                  }
+                  if (await confirmCloudDelete(
+                    context,
+                    'Xóa ${user['name']} và toàn bộ dữ liệu đám mây?',
+                  )) {
+                    await _run(() async {
+                      await widget.api.request(
+                        'DELETE',
+                        '/users/${user['id']}',
+                      );
+                    });
+                  }
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _RolePill(
+              label: roleLabel(user['role'] as String),
+              color: context.colors.lime,
+            ),
+            _RolePill(
+              label: user['active'] == true ? 'Đang hoạt động' : 'Đã khóa',
+              color: user['active'] == true
+                  ? context.colors.muted
+                  : context.colors.red,
+            ),
+            if (user['verified'] != true)
+              _RolePill(
+                label: 'Chưa xác thực email',
+                color: context.colors.orange,
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            TextButton(
+              onPressed: () => _records('checkins', 'Lịch hẹn xác nhận', user),
+              child: const Text('Lịch hẹn'),
+            ),
+            TextButton(
+              onPressed: () => _records('contacts', 'Liên hệ đám mây', user),
+              child: const Text('Liên hệ'),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final api = widget.api;
     return Scaffold(
       appBar: AppBar(
-        title: Text(roleLabel(api.role)),
+        title: Text(
+          api.role == 'admin'
+              ? 'Quản trị Motion'
+              : api.role == 'staff'
+              ? 'Không gian hỗ trợ'
+              : 'Tài khoản của bạn',
+        ),
         actions: [
           IconButton(
             tooltip: 'Làm mới',
             onPressed: busy ? null : _load,
             icon: const MorphIcon(AppGlyph.rotateCw),
           ),
+          if (AppearanceScope.of(context) case final appearance?)
+            IconButton(
+              tooltip: appearance.isDark
+                  ? 'Chuyển sang giao diện sáng'
+                  : 'Chuyển sang giao diện tối',
+              onPressed: appearance.toggle,
+              icon: MorphIcon(
+                AppGlyph.sun,
+                alternate: AppGlyph.moon,
+                active: appearance.isDark,
+              ),
+            ),
         ],
       ),
       body: Center(
@@ -199,52 +334,26 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
           child: RefreshIndicator(
             onRefresh: _load,
             child: ListView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
               children: [
-                Text(
-                  'Xin chào, ${api.user?['name'] ?? ''}.',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                RoleOverview(
+                  role: api.role,
+                  label: roleLabel(api.role),
+                  name: api.user?['name'] as String? ?? '',
+                  email: api.user?['email'] as String? ?? '',
                 ),
-                const SizedBox(height: 8),
-                Text(api.user?['email'] as String? ?? ''),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 if (widget.onOpenMonitor != null)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: 20),
                     child: FilledButton(
                       onPressed: widget.onOpenMonitor,
-                      child: const Text('MỞ GIÁM SÁT TRÊN THIẾT BỊ'),
+                      child: const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: Text('MỞ GIÁM SÁT TRÊN THIẾT BỊ'),
+                      ),
                     ),
                   ),
-                SurfacePanel(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'VÒNG AN TOÀN',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Hẹn giờ xác nhận, ghi nhận an toàn hoặc yêu cầu hỗ trợ. Nhân viên chỉ xem người được phân công. Lịch quá hạn hiển thị khi mở hoặc làm mới trang; chưa có thông báo đẩy hay tự gửi SOS.',
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton(
-                        onPressed: () =>
-                            _records('checkins', 'Lịch hẹn của tôi'),
-                        child: const Text('MỞ VÒNG AN TOÀN'),
-                      ),
-                      OutlinedButton(
-                        onPressed: () =>
-                            _records('contacts', 'Liên hệ đám mây'),
-                        child: const Text('LIÊN HỆ ĐÁM MÂY'),
-                      ),
-                    ],
-                  ),
-                ),
                 if (busy) const LinearProgressIndicator(),
                 if (error != null)
                   Padding(
@@ -257,103 +366,151 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                     ),
                   ),
                 if (api.role != 'member') ...[
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
                   Text(
                     api.role == 'admin'
-                        ? 'Quản trị tài khoản'
+                        ? 'Tài khoản & phân quyền'
                         : 'Người được phân công',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  if (api.role == 'admin')
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: FilledButton(
-                        onPressed: busy ? null : _editUser,
-                        child: const Text('TẠO TÀI KHOẢN'),
+                  const SizedBox(height: 8),
+                  Text(
+                    api.role == 'admin'
+                        ? 'Cấp đúng quyền. Phân công đúng người.'
+                        : 'Chỉ những người được giao cho bạn xuất hiện tại đây.',
+                    style: TextStyle(color: context.colors.muted),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const Key('accountSearch'),
+                    onChanged: (value) => setState(() => query = value),
+                    decoration: const InputDecoration(
+                      labelText: 'Tìm theo tên hoặc email',
+                      prefixIcon: Padding(
+                        padding: EdgeInsets.all(14),
+                        child: MorphIcon(AppGlyph.users, size: 20),
                       ),
                     ),
+                  ),
                   const SizedBox(height: 12),
-                  for (final user in users.where(
-                    (u) => api.role == 'admin' || u['id'] != api.user?['id'],
-                  ))
+                  if (api.role == 'admin')
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        for (final entry in const {
+                          'all': 'Tất cả',
+                          'member': 'Người dùng',
+                          'staff': 'Nhân viên',
+                          'admin': 'Quản trị',
+                        }.entries)
+                          FilterChip(
+                            label: Text(entry.value),
+                            selected: roleFilter == entry.key,
+                            onSelected: (_) =>
+                                setState(() => roleFilter = entry.key),
+                          ),
+                      ],
+                    ),
+                  if (api.role == 'admin')
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: SurfacePanel(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user['name'] as String,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            Text(
-                              '${user['email']} · ${roleLabel(user['role'] as String)}${user['active'] == true ? '' : ' · Đã khóa'}',
-                            ),
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 6,
-                              children: [
-                                OutlinedButton(
-                                  onPressed: () => _records(
-                                    'checkins',
-                                    'Vòng an toàn',
-                                    user,
-                                  ),
-                                  child: const Text('Lịch hẹn'),
-                                ),
-                                OutlinedButton(
-                                  onPressed: () => _records(
-                                    'contacts',
-                                    'Liên hệ đám mây',
-                                    user,
-                                  ),
-                                  child: const Text('Liên hệ'),
-                                ),
-                                if (api.role == 'admin') ...[
-                                  TextButton(
-                                    onPressed: busy
-                                        ? null
-                                        : () => _editUser(user),
-                                    child: const Text('Sửa / phân quyền'),
-                                  ),
-                                  TextButton(
-                                    onPressed: busy
-                                        ? null
-                                        : () async {
-                                            if (await confirmCloudDelete(
-                                              context,
-                                              'Xóa ${user['name']} và toàn bộ dữ liệu đám mây?',
-                                            )) {
-                                              await _run(() async {
-                                                await api.request(
-                                                  'DELETE',
-                                                  '/users/${user['id']}',
-                                                );
-                                              });
-                                            }
-                                          },
-                                    child: const Text('Xóa'),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ],
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton(
+                          onPressed: busy ? null : _editUser,
+                          child: const Text('TẠO TÀI KHOẢN'),
                         ),
                       ),
                     ),
-                  if (!busy &&
-                      users.where((u) => u['id'] != api.user?['id']).isEmpty)
-                    const Text('Chưa có người được phân công.'),
+                  const SizedBox(height: 8),
+                  for (final user in visibleUsers)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _userCard(user),
+                    ),
+                  if (!busy && visibleUsers.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Text('Chưa có tài khoản phù hợp.'),
+                    ),
+                  const SizedBox(height: 20),
                 ],
+                Text(
+                  'Vòng an toàn',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Lịch hẹn xác nhận bạn vẫn an toàn, chia sẻ với người hỗ trợ được phân công.',
+                ),
+                const SizedBox(height: 16),
+                SurfacePanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MorphIcon(
+                        AppGlyph.circleCheck,
+                        color: context.colors.lime,
+                        size: 28,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Một lời xác nhận. Thêm an tâm.',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Bạn đặt thời điểm cần xác nhận. Khi mở lịch, chọn TÔI ỔN hoặc CẦN HỖ TRỢ để người phụ trách biết trạng thái.',
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () =>
+                            _records('checkins', 'Lịch hẹn của tôi'),
+                        child: const Text('MỞ VÒNG AN TOÀN'),
+                      ),
+                      Theme(
+                        data: Theme.of(context)
+                            .copyWith(dividerColor: Colors.transparent),
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: ExpansionTile(
+                            tilePadding: EdgeInsets.zero,
+                            title: const Text(
+                              'Lịch hẹn hoạt động thế nào?',
+                              style: TextStyle(fontSize: 13),
+                            ),
+                            children: const [
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 12),
+                                child: Text(
+                                  'Đây là lịch hẹn trong app, không phải vòng đeo tay. Lịch quá hạn được cập nhật khi mở hoặc làm mới. Hiện chưa có nhắc tự động, thông báo đẩy hay gửi SOS khi lịch quá hạn.',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () => _records('contacts', 'Liên hệ đám mây'),
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Text('LIÊN HỆ ĐÁM MÂY'),
+                  ),
+                ),
                 const SizedBox(height: 28),
+                Text(
+                  'Hồ sơ & bảo mật',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: busy ? null : _profile,
                   child: const Text('SỬA TÊN HIỂN THỊ'),
-                ),
-                TextButton(
-                  onPressed: busy ? null : () => _run(api.logout),
-                  child: const Text('ĐĂNG XUẤT'),
                 ),
                 OutlinedButton(
                   key: const Key('linkGoogleAccount'),
@@ -374,12 +531,20 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                   child: const Text('LIÊN KẾT GOOGLE'),
                 ),
                 TextButton(
+                  onPressed: busy ? null : () => _run(api.logout),
+                  child: const Text('ĐĂNG XUẤT'),
+                ),
+                TextButton(
                   onPressed: busy ? null : _deleteAccount,
-                  child: const Text('Xóa tài khoản đám mây'),
+                  child: Text(
+                    'Xóa tài khoản đám mây',
+                    style: TextStyle(color: context.colors.red),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Đăng xuất không tắt giám sát hay SOS trên thiết bị. Liên hệ đám mây chỉ trở thành người nhận SOS khi bạn chủ động thêm vào máy.',
+                  style: TextStyle(color: context.colors.muted, fontSize: 12),
                 ),
               ],
             ),
@@ -388,6 +553,25 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
       ),
     );
   }
+}
+
+class _RolePill extends StatelessWidget {
+  const _RolePill({required this.label, required this.color});
+  final String label;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .08),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: color.withValues(alpha: .20)),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600),
+    ),
+  );
 }
 
 Future<bool> confirmCloudDelete(BuildContext context, String message) async =>
@@ -890,27 +1074,69 @@ class _CloudEditorState extends State<_CloudEditor> {
                   },
                 ),
               for (final entry in widget.choices.entries)
-                DropdownButtonFormField<String>(
-                  initialValue: entry.value.containsKey(selected[entry.key])
-                      ? selected[entry.key]
-                      : entry.value.keys.first,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: widget.choiceLabels[entry.key] ?? entry.key,
-                  ),
-                  items: [
-                    for (final option in entry.value.entries)
-                      DropdownMenuItem(
-                        value: option.key,
-                        child: Text(
-                          option.value,
-                          overflow: TextOverflow.ellipsis,
+                if (entry.key == 'role')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Vai trò truy cập',
+                          style: TextStyle(fontWeight: FontWeight.w700),
                         ),
-                      ),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => selected[entry.key] = value!),
-                ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final option in entry.value.entries)
+                              ChoiceChip(
+                                label: Text(option.value),
+                                selected: selected[entry.key] == option.key,
+                                onSelected: (_) => setState(
+                                  () => selected[entry.key] = option.key,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          switch (selected['role']) {
+                            'admin' => 'Quản lý tài khoản, phân quyền và toàn bộ dữ liệu đám mây.',
+                            'staff' => 'Chỉ hỗ trợ người dùng được phân công; không cấp quyền tài khoản.',
+                            _ => 'Chỉ truy cập hồ sơ, liên hệ và lịch hẹn của chính mình.',
+                          },
+                          style: TextStyle(
+                            color: context.colors.muted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (entry.key != 'assignedStaffId' ||
+                    selected['role'] == 'member')
+                  DropdownButtonFormField<String>(
+                    initialValue: entry.value.containsKey(selected[entry.key])
+                        ? selected[entry.key]
+                        : entry.value.keys.first,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: widget.choiceLabels[entry.key] ?? entry.key,
+                    ),
+                    items: [
+                      for (final option in entry.value.entries)
+                        DropdownMenuItem(
+                          value: option.key,
+                          child: Text(
+                            option.value,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => selected[entry.key] = value!),
+                  ),
               if (widget.dateField != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),

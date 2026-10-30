@@ -12,7 +12,7 @@ class NativeFallDetector {
     var rotationAvailable = true
     var state = 0
         private set
-    var impactThreshold = 23.0
+    var impactThreshold = 22.0
         private set
     var lastRejection = ""
         private set
@@ -30,6 +30,7 @@ class NativeFallDetector {
     private var mildSince: Long? = null
     private var wasQuiet = false
     private var path = ""
+    private val impacts = ArrayDeque<Pair<Long, Double>>()
     private val baseline = ArrayDeque<Pair<Long, Double>>()
 
     private fun number(value: Double) = String.format(Locale.US, "%.2f", value)
@@ -42,7 +43,7 @@ class NativeFallDetector {
         state = 0; last = null; started = null; impactAt = null; lowSince = null
         maxLowMs = 0; rotationSum = 0.0; peakAcceleration = 0.0; path = ""; triggerReason = ""
         resetQuiet()
-        if (clearBaseline) baseline.clear()
+        if (clearBaseline) { baseline.clear(); impacts.clear() }
     }
     private fun resetQuiet() { quietSince = null; quietGoodMs = 0; mildSince = null; wasQuiet = false }
     private fun reject(reason: String, clearBaseline: Boolean = false) {
@@ -59,7 +60,7 @@ class NativeFallDetector {
         if (gap < 0 || gap > 400) reject("Dữ liệu ngắt quá 400 ms; bỏ chuỗi cũ.", true)
         if (started != null && at - started!! > 8000) reject("Chuỗi quá 8 giây mà chưa đủ điều kiện xác nhận.")
         last = at
-        val impact = when (sensitivity) { "low" -> 27.0; "high" -> 20.0; else -> 23.0 }
+        val impact = when (sensitivity) { "low" -> 26.0; "high" -> 18.0; else -> 22.0 }
         val abnormal = when (sensitivity) { "low" -> 5.0; "high" -> 3.0; else -> 4.0 }
         val angle = when (sensitivity) { "low" -> 0.9; "high" -> 0.45; else -> 0.65 }
         val ceiling = when (sensitivity) { "low" -> 1.5; "high" -> 1.15; else -> 1.3 }
@@ -91,7 +92,8 @@ class NativeFallDetector {
             if (magnitude < 5 || (rotationAvailable && (abs(magnitude - 9.81) > abnormal || rotation > 1.5))) {
                 state = 1; started = at; peakAcceleration = magnitude
             }
-            return false
+            // Do not discard an impact that starts the candidate.
+            if (state == 0 || magnitude < impactThreshold) return false
         }
         peakAcceleration = max(peakAcceleration, magnitude)
         if (rotationAvailable) rotationSum += rotation * (gap / 1000.0).coerceIn(0.0, 0.2)
@@ -99,8 +101,13 @@ class NativeFallDetector {
             1 -> {
                 if (at - started!! > 1500) reject("Chưa có va chạm đạt ngưỡng: đỉnh ${number(peakAcceleration)} / ${number(impactThreshold)} m/s².")
                 else if (magnitude >= impactThreshold) {
+                    while (impacts.isNotEmpty() && at - impacts.first.first > 2000) impacts.removeFirst()
+                    val repeated = impacts.size >= 2 && magnitude <= impacts.maxOf { it.second } * 1.2
+                    if (impacts.isEmpty() || at - impacts.last.first >= 200) impacts.addLast(at to magnitude)
+                    if (repeated) { reject("Va chạm lặp lại; chờ sự kiện mới mạnh hơn."); return false }
                     val lowEnough = maxLowMs >= if (rotationAvailable) 40 else 80
-                    if (!lowEnough && !(rotationAvailable && magnitude >= impactThreshold + 6)) {
+                    val margin = when (sensitivity) { "low" -> 6.0; "high" -> 2.0; else -> 4.0 }
+                    if (!lowEnough && !(rotationAvailable && (magnitude >= impactThreshold + 6 || (magnitude >= impactThreshold + margin && rotation >= 2.5)))) {
                         reject("Va chạm thiếu pha giảm gia tốc đủ lâu hoặc chưa đủ mạnh.")
                     } else {
                         impactAt = at
@@ -117,7 +124,9 @@ class NativeFallDetector {
             3 -> {
                 val deviation = abs(magnitude - 9.81)
                 val motion = if (rotationAvailable) rotation else accelerationDelta
-                val quiet = deviation < 1.3 && motion < if (rotationAvailable) 0.35 else 1.3
+                val quietDeviation = when (sensitivity) { "low" -> 1.3; "high" -> 1.9; else -> 1.5 }
+                val quietAngularSpeed = when (sensitivity) { "low" -> 0.35; "high" -> 0.6; else -> 0.45 }
+                val quiet = deviation < quietDeviation && motion < if (rotationAvailable) quietAngularSpeed else quietDeviation
                 val severe = deviation >= 3 || motion >= if (rotationAvailable) 1.0 else 3.0
                 val tolerance = when (sensitivity) { "low" -> 0L; "high" -> 200L; else -> 100L }
                 if (quiet) {

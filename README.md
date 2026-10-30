@@ -1,5 +1,33 @@
 # Motion
 
+**Source hiện tại: 1.1.3+9** · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
+
+### Bố cục và sử dụng bản mới
+
+- **Theo dõi:** bắt đầu giám sát nền, xem số đo và lý do bộ phát hiện đang chờ. Nút bắt đầu không lặp trong Cài đặt.
+- **Lịch sử:** xem thời điểm, nguyên nhân cảnh báo và kết quả gửi SOS.
+- **Liên hệ:** thêm/sửa/xóa người nhận, chọn số gọi ưu tiên. Liên hệ đám mây chỉ vào danh sách SOS trên máy sau khi xác nhận.
+- **Cài đặt:** tài khoản và quyền truy cập, độ nhạy, thời gian xác nhận, chuông SOS và công tắc giám sát. Sáng/tối nằm trên cùng bên phải; logo trong app thống nhất với launcher. Thanh điều hướng dùng kính mờ, lớp màu trong và chuyển động chọn tab.
+- Nhãn **ĐÃ BẬT SOS** cập nhật khi SOS qua SIM đã được thiết lập và giám sát đang bật; đây là trạng thái cấu hình, không bảo đảm SIM đã gửi thành công. Tắt riêng giám sát nền vẫn giữ giám sát khi app đang mở.
+- **Admin:** quản lý tài khoản, vai trò và phân công. **Nhân viên:** chỉ hỗ trợ người được phân công. **Người dùng:** hồ sơ, liên hệ và lịch hẹn của mình. Dashboard có tìm kiếm; admin có bộ lọc vai trò.
+- **Vòng an toàn** là lịch hẹn xác nhận an toàn dùng chung với người hỗ trợ, không phải vòng tay phần cứng. Hiện chưa có push hay tự gửi SOS khi lịch quá hạn.
+
+### Frontend, backend và cách nhóm chạy
+
+| Thành phần | Source / triển khai | Vai trò |
+| --- | --- | --- |
+| Frontend | `lib/`, Flutter; Android native ở `android/` | Giao diện, đăng nhập, cảm biến, giám sát nền, chuông, SMS và gọi qua thiết bị |
+| Backend | `backend/`, Node.js/Fastify trên Render | Xác thực Email OTP / Google OAuth2, phân quyền, CRUD tài khoản, liên hệ và lịch hẹn |
+| Database | PostgreSQL trên Neon | Dữ liệu tài khoản và dữ liệu đám mây; không tự đồng bộ lịch sử cảm biến cục bộ |
+| Email | Resend, `motion-mail.vihx.online` | Email OTP và khôi phục mật khẩu |
+| API | [motion-api.vihx.online/docs](https://motion-api.vihx.online/docs) | Swagger, request/response và Schemas |
+
+Nhóm cài Flutter/Android SDK, clone repo, chạy `flutter pub get`, rồi `flutter run --dart-define=MOTION_API_URL=https://motion-api.vihx.online` (đối chiếu mục cấu hình bên dưới). Dùng tài khoản riêng; không đưa mật khẩu, khóa Resend, JWT hoặc chuỗi kết nối database vào app/Git. Hướng dẫn cài APK, build, deploy backend và sử dụng chi tiết vẫn nằm trong các mục phía dưới.
+
+**Thay đổi cảm biến 1.1.3:** xử lý cả va chạm xuất hiện ở mẫu bất thường đầu tiên; ba mức có ngưỡng va chạm 26 / 22 / 18 m/s². Chuỗi bước chân/va chạm lặp được loại trước khi kiểm tra nằm yên; một sự kiện mới mạnh hơn vẫn được xét. Đây là thuật toán thử nghiệm trên dữ liệu tổng hợp, cần kiểm chứng lại trên điện thoại thật; rung mạnh không đồng nghĩa chắc chắn té ngã.
+
+Nếu đã có hai đỉnh va chạm cách nhau ít nhất 200 ms trong 2 giây, đỉnh tiếp theo phải lớn hơn 1,2 lần đỉnh cũ mới được xét như sự kiện mới. Chốt này giảm cộng dồn bước chân nhưng có thể bỏ sót sự cố tương tự hoạt động trước đó. Không tự nhân số đo cảm biến để tạo cảm giác nhạy hơn.
+
 Ứng dụng Flutter giám sát dấu hiệu té ngã, cảnh báo xác nhận và hỗ trợ SOS trên Android. **Phiên bản test: 1.0.3+5** · Nhóm dự kiến **50–100 người test**.
 
 Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay trong README này. Người test chỉ cần điện thoại Android; không cần tải source hay cài công cụ lập trình.
@@ -24,7 +52,7 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 
 ## Đồ án cuối kỳ — tài khoản, backend và Vòng an toàn
 
-**Trạng thái:** source **1.1.2+8** bổ sung đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
+**Trạng thái:** source **1.1.3+9** bổ sung đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
 
 Domain riêng đang dùng cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Phương án miễn phí: **Render chạy Node.js + Neon lưu PostgreSQL + Resend gửi Email OTP qua HTTPS**; Cloudflare quản lý DNS. Không cần thuê VPS khi dùng phương án này. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
 
@@ -342,13 +370,20 @@ config:
 ---
 flowchart TB
     READ["ĐỌC VÀ PHÂN TÍCH<br/>Gia tốc · xoay nếu có<br/>Đối chiếu nền dao động"]
-    SUSPECT{"Nghi ngờ ngã?"}
+    IMPACT{"Va chạm đạt ngưỡng?<br/>Thấp 26 · Vừa 22 · Cao 18 m/s²"}
+    REPEAT{"Đỉnh lặp trong 2 giây<br/>mà chưa mạnh hơn 1,2 lần?"}
+    EVIDENCE["KIỂM TRA CHUỖI<br/>Giảm gia tốc hoặc va chạm mạnh<br/>Bằng chứng xoay nếu cần"]
+    SUSPECT{"Đủ chuỗi và ít chuyển động<br/>trong 3 giây?"}
     ALERT["CẢNH BÁO XÁC NHẬN<br/>Chuông · rung · chờ 15–30 giây"]
     CHOICE{"TÔI ỔN?"}
     SAFE["TÔI ỔN<br/>Hủy cảnh báo · lưu lịch sử"]
     SOS(["CHUYỂN SANG SOS"])
 
-    READ --> SUSPECT
+    READ --> IMPACT
+    IMPACT -- "Chưa đạt" --> READ
+    IMPACT -- "Đạt, kể cả mẫu đầu" --> REPEAT
+    REPEAT -- "Có" --> READ
+    REPEAT -- "Không" --> EVIDENCE --> SUSPECT
     SUSPECT -- "Chưa đủ điều kiện" --> READ
     SUSPECT -- "Có" --> ALERT --> CHOICE
     CHOICE -- "Xác nhận trước hạn" --> SAFE
@@ -359,8 +394,8 @@ flowchart TB
     classDef warning fill:#fff2dc,stroke:#c38b35,color:#6b4815,stroke-width:1.5px,rx:14,ry:14;
     classDef safe fill:#edf5df,stroke:#6b8f3c,color:#243713,stroke-width:1.5px,rx:14,ry:14;
     classDef sos fill:#fce9e6,stroke:#c7685c,color:#762d24,stroke-width:1.5px;
-    class READ monitor;
-    class SUSPECT,CHOICE decision;
+    class READ,EVIDENCE monitor;
+    class IMPACT,REPEAT,SUSPECT,CHOICE decision;
     class ALERT warning;
     class SAFE safe;
     class SOS sos;
@@ -599,23 +634,23 @@ Thuật toán dùng tổng `sqrt(x*x + y*y + z*z)`, không dùng ngưỡng riên
 
 `normal → possibleFall → impactDetected → waitingForStillness → fallSuspected`.
 
-Cần bất thường → mẫu va chạm đến sau trong 1,5 giây → bằng chứng xoay trong 1,5 giây sau va chạm nếu cần → kiểm tra ít chuyển động trong cửa sổ 3 giây; hoàn tất chuỗi trong 8 giây. Với con quay, va chạm cần có pha gia tốc thấp < 5 m/s² ít nhất 40 ms trước đó, hoặc mạnh hơn ngưỡng động ít nhất 6 m/s². Nhánh giảm gia tốc ≥ 120 ms và va chạm ≥ ngưỡng + 6 m/s² không bắt buộc xoay, nhưng vẫn cần xác nhận ít chuyển động. Không có con quay: bắt buộc pha gia tốc thấp ít nhất 80 ms, va chạm rồi kiểm tra ít chuyển động trong 3 giây; kiểm tra thêm biến đổi vector gia tốc để không coi chuyển động đều là nằm yên. Nhánh gia tốc có thể bỏ sót ngã không có pha giảm gia tốc. Một đỉnh rung đơn lẻ không đủ. Tích phân độ lớn gyroscope là bằng chứng xoay, không phải góc tư thế tuyệt đối.
+Cần bất thường → mẫu va chạm ngay từ đầu hoặc trong 1,5 giây → bằng chứng xoay trong 1,5 giây sau va chạm nếu cần → kiểm tra ít chuyển động trong cửa sổ 3 giây; hoàn tất chuỗi trong 8 giây. Với con quay, va chạm cần có pha gia tốc thấp < 5 m/s² ít nhất 40 ms trước đó, hoặc mạnh hơn ngưỡng động ít nhất 6 m/s²; khi tốc độ xoay tại va chạm ≥ 2,5 rad/s, mức cộng tương ứng Thấp / Trung bình / Cao là 6 / 4 / 2 m/s². Nhánh giảm gia tốc ≥ 120 ms và va chạm ≥ ngưỡng + 6 m/s² không bắt buộc xoay, nhưng vẫn cần xác nhận ít chuyển động. Không có con quay: bắt buộc pha gia tốc thấp ít nhất 80 ms, va chạm rồi kiểm tra ít chuyển động trong 3 giây; kiểm tra thêm biến đổi vector gia tốc để không coi chuyển động đều là nằm yên. Nhánh gia tốc có thể bỏ sót ngã không có pha giảm gia tốc. Một đỉnh rung đơn lẻ không đủ. Tích phân độ lớn gyroscope là bằng chứng xoay, không phải góc tư thế tuyệt đối.
 
 Ngưỡng sàn thử nghiệm trong `lib/models/detection_config.dart` và bộ phát hiện native:
 
 | Độ nhạy | Lệch gia tốc khỏi 9,81 m/s² | Va chạm | Tích phân độ lớn gyro |
 | --- | ---: | ---: | ---: |
-| Thấp | > 5 m/s² | ≥ 27 m/s² | ≥ 0,90 rad |
-| Trung bình | > 4 m/s² | ≥ 23 m/s² | ≥ 0,65 rad |
-| Cao | > 3 m/s² | ≥ 20 m/s² | ≥ 0,45 rad |
+| Thấp | > 5 m/s² | ≥ 26 m/s² | ≥ 0,90 rad |
+| Trung bình | > 4 m/s² | ≥ 22 m/s² | ≥ 0,65 rad |
+| Cao | > 3 m/s² | ≥ 18 m/s² | ≥ 0,45 rad |
 
-Bất thường khác: magnitude < 5 m/s² hoặc gyro > 1,5 rad/s. Mẫu ít chuyển động: lệch gia tốc < 1,3 m/s² và gyro < 0,35 rad/s (không gyro thì xét biến đổi vector gia tốc đã chuẩn hóa theo thời gian). Xác nhận trong cửa sổ ít nhất 3 giây với tỷ lệ mẫu yên theo thời gian ≥ 85%; nhiễu nhỏ có thời hạn, chuyển động rõ sẽ đặt lại cửa sổ. Lấy mẫu yêu cầu khoảng 100 Hz; gap > 400 ms hoặc gyro cũ > 250 ms bị loại. Sau sự kiện có khoảng nghỉ 8 giây. Máy có con quay rơi thiếu xoay, được nhặt lên sớm hoặc đỉnh va chạm quá ngắn có thể không thỏa chuỗi; không kết luận cần hạ ngưỡng chỉ từ một lần thử.
+Bất thường khác: magnitude < 5 m/s² hoặc gyro > 1,5 rad/s. Mẫu ít chuyển động: lệch gia tốc < 1,3 / 1,5 / 1,9 m/s² và gyro < 0,35 / 0,45 / 0,60 rad/s theo Thấp / Trung bình / Cao (không gyro thì xét biến đổi vector gia tốc đã chuẩn hóa theo thời gian). Xác nhận trong cửa sổ ít nhất 3 giây với tỷ lệ mẫu yên theo thời gian ≥ 85%; nhiễu nhỏ có thời hạn, chuyển động rõ sẽ đặt lại cửa sổ. Lấy mẫu yêu cầu khoảng 100 Hz; gap > 400 ms hoặc gyro cũ > 250 ms bị loại. Sau sự kiện có khoảng nghỉ 8 giây. Máy có con quay rơi thiếu xoay, được nhặt lên sớm hoặc đỉnh va chạm quá ngắn có thể không thỏa chuỗi; không kết luận cần hạ ngưỡng chỉ từ một lần thử.
 
 Trên emulator có thể mở **Extended Controls → Virtual Sensors → Device Pose** để quan sát dữ liệu. Xoay rồi giữ yên vẫn có magnitude gần 9,81 m/s² vì trọng lực. Emulator không tái tạo đầy đủ một cú té. Mô phỏng chỉ dành cho test bật rõ `allowSimulation`, bị khóa trong release; không dùng để vận hành thật.
 
 ### Phân biệt đi lại và nghi ngờ ngã
 
-Không phân loại bằng tốc độ con quay hoặc một trục riêng. Gia tốc tổng có đơn vị m/s²; con quay đo rad/s. Trong cửa sổ 2 giây trước mẫu hiện tại, tính trung bình μ và độ lệch chuẩn σ của độ lớn gia tốc; sau khi đủ dữ liệu (ít nhất 20 mẫu và 0,5 giây), ngưỡng va chạm là `min(trần, max(ngưỡng sàn, μ + 3σ))`. Trần Thấp = 40,5; Trung bình = 29,9; Cao = 23 m/s² (tương ứng 1,5 / 1,3 / 1,15 lần ngưỡng sàn). Ngưỡng được giữ nguyên trong một chuỗi nghi ngờ, chỉ học lại khi quay về chờ chuỗi mới. Mẫu va chạm hiện tại không tham gia tính ngưỡng của chính nó. Đây là heuristic thử nghiệm, không phải ngưỡng lâm sàng đã được xác thực.
+Không phân loại bằng tốc độ con quay hoặc một trục riêng. Gia tốc tổng có đơn vị m/s²; con quay đo rad/s. Trong cửa sổ 2 giây trước mẫu hiện tại, tính trung bình μ và độ lệch chuẩn σ của độ lớn gia tốc; sau khi đủ dữ liệu (ít nhất 20 mẫu và 0,5 giây), ngưỡng va chạm là `min(trần, max(ngưỡng sàn, μ + 3σ))`. Trần Thấp = 39; Trung bình = 28,6; Cao = 20,7 m/s² (tương ứng 1,5 / 1,3 / 1,15 lần ngưỡng sàn). Ngưỡng được giữ nguyên trong một chuỗi nghi ngờ, chỉ học lại khi quay về chờ chuỗi mới. Mẫu va chạm hiện tại không tham gia tính ngưỡng của chính nó. Đây là heuristic thử nghiệm, không phải ngưỡng lâm sàng đã được xác thực.
 
 | Tình huống | Cách xử lý |
 | --- | --- |
@@ -624,6 +659,8 @@ Không phân loại bằng tốc độ con quay hoặc một trục riêng. Gia 
 | Có chuỗi ngã nhưng vẫn tiếp tục cử động | Chưa đủ bước ít chuyển động, không tự khẳng định ngã |
 | Chuỗi đủ pha giảm gia tốc/va chạm/xoay nếu có, rồi yên 3 giây | Mở cảnh báo xác nhận; SMS chỉ sau thời gian chờ nếu không hủy |
 | Mất dữ liệu/gyro quá cũ trên máy có gyro | Bỏ chuỗi, báo tình trạng dữ liệu thay vì giả định đã giám sát |
+
+Nếu đã có hai đỉnh va chạm cách nhau ≥ 200 ms trong 2 giây, đỉnh tiếp theo phải lớn hơn 1,2 lần đỉnh cũ để được xét như sự kiện mới. Chốt này giảm cộng dồn bước chân nhưng có thể bỏ sót sự cố tương tự hoạt động trước đó.
 
 Bộ kiểm thử có dữ liệu tổng hợp 100 Hz: đi bộ 2 Hz, chạy 3 Hz, các đỉnh bước chân 28 m/s² lặp mỗi 400 ms rồi dừng, và một va chạm ngã mạnh hơn sau khi chạy. Kết quả chỉ chứng minh hành vi trên các chuỗi đó, chưa đo độ nhạy/độ đặc hiệu thực tế. Cần dữ liệu từ vị trí đeo/túi và từng máy để hiệu chỉnh tiếp.
 
@@ -638,7 +675,7 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 python tool/test_background_sos.py --device emulator-5554
 ```
 
-Integration test chỉ chạy khi SOS thật đang tắt. Runner Python mở lại Activity bằng adb sau khi kiểm tra chuyến đi về Home; app không vượt hạn chế mở Activity nền của Android. Nếu Flutter chưa có trên PATH, truyền `--flutter` kèm đường dẫn đầy đủ tới flutter.bat. Phép thử xác nhận tắt/bật thu cảm biến trong nền không hủy countdown. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả kiểm chứng gần nhất: 75 Flutter tests, 20 Kotlin tests và 1 integration dry-run đạt; không đại diện mọi điện thoại.
+Integration test chỉ chạy khi SOS thật đang tắt. Runner Python mở lại Activity bằng adb sau khi kiểm tra chuyến đi về Home; app không vượt hạn chế mở Activity nền của Android. Nếu Flutter chưa có trên PATH, truyền `--flutter` kèm đường dẫn đầy đủ tới flutter.bat. Phép thử xác nhận tắt/bật thu cảm biến trong nền không hủy countdown. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả kiểm chứng gần nhất: 96 Flutter tests và 21 Kotlin tests đạt trên source 1.1.3; integration dry-run đã đạt ở bản trước, chưa chạy lại trong đợt này; không đại diện mọi điện thoại.
 
 ### Icon và animation morphicons trong Flutter
 

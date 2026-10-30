@@ -1,18 +1,15 @@
-import '../widgets/morph_icon.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/app_controller.dart';
 import '../services/motion_api.dart';
-import '../services/app_appearance.dart';
-import '../widgets/app_design.dart';
 import 'monitor_screen.dart';
 import 'history_screen.dart';
 import 'contact_screen.dart';
 import 'settings_screen.dart';
 import 'alert_screen.dart';
-import 'account_screen.dart';
+import '../widgets/motion_header.dart';
+import '../widgets/liquid_navigation.dart';
 import '../widgets/startup_animation.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -121,9 +118,10 @@ class _HomeScreenState extends State<HomeScreen>
         MonitorScreen(controller: _controller),
         HistoryScreen(controller: _controller),
         ContactScreen(controller: _controller),
-        SettingsScreen(controller: _controller),
+        SettingsScreen(controller: _controller, cloudApi: widget.cloudApi),
       ];
       return Scaffold(
+        extendBody: true,
         body: SafeArea(
           bottom: false,
           child: Center(
@@ -131,102 +129,7 @@ class _HomeScreenState extends State<HomeScreen>
               constraints: const BoxConstraints(maxWidth: 680),
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 35,
-                          height: 35,
-                          decoration: BoxDecoration(
-                            color: context.colors.lime,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: MorphIcon(
-                            AppGlyph.orbit,
-                            alternate: AppGlyph.radar,
-                            active: _controller.realSmsEnabled,
-                            color: context.colors.background,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'MOTION',
-                          textScaler: TextScaler.noScaling,
-                          style: TextStyle(
-                            fontSize: 17,
-                            letterSpacing: 3,
-                            fontWeight: FontWeight.w800,
-                            color: context.colors.ink,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        if (AppearanceScope.of(context) case final appearance?)
-                          IconButton(
-                            key: const Key('toggleAppearance'),
-                            tooltip: appearance.isDark
-                                ? 'Chuyển sang giao diện sáng'
-                                : 'Chuyển sang giao diện tối',
-                            onPressed: appearance.toggle,
-                            icon: MorphIcon(
-                              AppGlyph.sun,
-                              alternate: AppGlyph.moon,
-                              active: appearance.isDark,
-                              size: 22,
-                              color: context.colors.ink,
-                            ),
-                          ),
-                        IconButton(
-                          key: const Key('openCloudAccount'),
-                          tooltip: 'Tài khoản / Vòng an toàn',
-                          icon: const MorphIcon(AppGlyph.user, size: 22),
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(
-                              builder: (_) => AccountScreen(
-                                controller: _controller,
-                                api: widget.cloudApi,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: context.colors.line,
-                                  ),
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                child: Text(
-                                  _controller.realSmsEnabled
-                                      ? 'SMS QUA SIM'
-                                      : _controller.canSimulate
-                                      ? 'KIỂM THỬ'
-                                      : 'CHƯA BẬT SOS',
-                                  textScaler: TextScaler.noScaling,
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    letterSpacing: 1,
-                                    color: context.colors.muted,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  MotionHeader(controller: _controller),
                   Expanded(
                     child: FadeTransition(
                       opacity: _opacity,
@@ -254,131 +157,11 @@ class _HomeScreenState extends State<HomeScreen>
             heightFactor: 1,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 632),
-              child: _MotionNavigation(index: _index, onChanged: _select),
+              child: LiquidNavigation(index: _index, onChanged: _select),
             ),
           ),
         ),
       );
     },
-  );
-}
-
-class _MotionNavigation extends StatelessWidget {
-  const _MotionNavigation({required this.index, required this.onChanged});
-  final int index;
-  final ValueChanged<int> onChanged;
-  static const labels = ['Theo dõi', 'Lịch sử', 'Liên hệ', 'Cài đặt'];
-  static const icons = [
-    AppGlyph.radar,
-    AppGlyph.timeline,
-    AppGlyph.users,
-    AppGlyph.sliders,
-  ];
-  static const activeIcons = [
-    AppGlyph.activity,
-    AppGlyph.history,
-    AppGlyph.contact,
-    AppGlyph.settings,
-  ];
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(6),
-    decoration: BoxDecoration(
-      color: context.colors.surface,
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: context.colors.line),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.2),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ],
-    ),
-    child: LayoutBuilder(
-      builder: (context, constraints) => Stack(
-        children: [
-          AnimatedPositioned(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 380),
-            curve: Curves.easeOutCubic,
-            left: constraints.maxWidth / 4 * index,
-            top: 0,
-            bottom: 0,
-            width: constraints.maxWidth / 4,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.colors.lime,
-                borderRadius: BorderRadius.circular(22),
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              for (var i = 0; i < 4; i++)
-                Expanded(
-                  child: Semantics(
-                    selected: i == index,
-                    button: true,
-                    label: labels[i],
-                    excludeSemantics: true,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(22),
-                        onTap: () => onChanged(i),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 3,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AnimatedRotation(
-                                turns: 0,
-                                duration:
-                                    MediaQuery.disableAnimationsOf(context)
-                                    ? Duration.zero
-                                    : const Duration(milliseconds: 350),
-                                child: MorphIcon(
-                                  icons[i],
-                                  alternate: activeIcons[i],
-                                  active: i == index,
-                                  size: 23,
-                                  color: i == index
-                                      ? context.colors.background
-                                      : context.colors.muted,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  labels[i],
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: i == index
-                                        ? FontWeight.w800
-                                        : FontWeight.w500,
-                                    color: i == index
-                                        ? context.colors.background
-                                        : context.colors.muted,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    ),
   );
 }

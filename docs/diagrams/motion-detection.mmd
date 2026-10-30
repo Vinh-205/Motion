@@ -16,13 +16,20 @@ config:
 ---
 flowchart TB
     READ["ĐỌC VÀ PHÂN TÍCH<br/>Gia tốc · xoay nếu có<br/>Đối chiếu nền dao động"]
-    SUSPECT{"Nghi ngờ ngã?"}
+    IMPACT{"Va chạm đạt ngưỡng?<br/>Thấp 26 · Vừa 22 · Cao 18 m/s²"}
+    REPEAT{"Đỉnh lặp trong 2 giây<br/>mà chưa mạnh hơn 1,2 lần?"}
+    EVIDENCE["KIỂM TRA CHUỖI<br/>Giảm gia tốc hoặc va chạm mạnh<br/>Bằng chứng xoay nếu cần"]
+    SUSPECT{"Đủ chuỗi và ít chuyển động<br/>trong 3 giây?"}
     ALERT["CẢNH BÁO XÁC NHẬN<br/>Chuông · rung · chờ 15–30 giây"]
     CHOICE{"TÔI ỔN?"}
     SAFE["TÔI ỔN<br/>Hủy cảnh báo · lưu lịch sử"]
     SOS(["CHUYỂN SANG SOS"])
 
-    READ --> SUSPECT
+    READ --> IMPACT
+    IMPACT -- "Chưa đạt" --> READ
+    IMPACT -- "Đạt, kể cả mẫu đầu" --> REPEAT
+    REPEAT -- "Có" --> READ
+    REPEAT -- "Không" --> EVIDENCE --> SUSPECT
     SUSPECT -- "Chưa đủ điều kiện" --> READ
     SUSPECT -- "Có" --> ALERT --> CHOICE
     CHOICE -- "Xác nhận trước hạn" --> SAFE
@@ -33,8 +40,8 @@ flowchart TB
     classDef warning fill:#fff2dc,stroke:#c38b35,color:#6b4815,stroke-width:1.5px,rx:14,ry:14;
     classDef safe fill:#edf5df,stroke:#6b8f3c,color:#243713,stroke-width:1.5px,rx:14,ry:14;
     classDef sos fill:#fce9e6,stroke:#c7685c,color:#762d24,stroke-width:1.5px;
-    class READ monitor;
-    class SUSPECT,CHOICE decision;
+    class READ,EVIDENCE monitor;
+    class IMPACT,REPEAT,SUSPECT,CHOICE decision;
     class ALERT warning;
     class SAFE safe;
     class SOS sos;
