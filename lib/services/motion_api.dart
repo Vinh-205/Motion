@@ -49,6 +49,7 @@ class MotionApi extends ChangeNotifier {
   bool restored = false;
   String? restoreError;
   bool _disposed = false;
+  Future<void>? _restoring;
   static const _tokenKey = 'motion.cloud.accessToken.v1';
   bool get signedIn => _token != null && user != null;
   String get role => user?['role'] as String? ?? 'member';
@@ -56,7 +57,8 @@ class MotionApi extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  Future<void> restore() async {
+  Future<void> restore() => _restoring ??= _restoreOnce();
+  Future<void> _restoreOnce() async {
     try {
       _token = await _storage.read(key: _tokenKey);
       if (_token != null) user = await request('GET', '/me');
@@ -88,7 +90,7 @@ class MotionApi extends ChangeNotifier {
               })
               ..body = data == null ? '' : jsonEncode(data),
           )
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 90));
       final text = await response.stream.bytesToString().timeout(
         const Duration(seconds: 20),
       );

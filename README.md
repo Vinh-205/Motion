@@ -24,9 +24,9 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 
 ## Đồ án cuối kỳ — tài khoản, backend và Vòng an toàn
 
-**Trạng thái:** source **1.1.0+6** đã bổ sung mô-đun tài khoản và backend; **chưa triển khai API công khai, chưa cấu hình Email OTP thật**. APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Không dùng kết quả kiểm thử với email giả lập để kết luận gửi email thực tế đã hoạt động.
+**Trạng thái:** source **1.1.1+7** đã bổ sung đăng nhập trước khi vào app, hỗ trợ Render/Neon/Resend; **chưa xác nhận triển khai API công khai hoặc gửi Email OTP thật**. APK 1.0.3 và QR bên dưới vẫn là bản giám sát/SOS cũ, chưa chứa mô-đun cuối kỳ. Không dùng kết quả kiểm thử với email giả lập để kết luận gửi email thực tế đã hoạt động.
 
-Domain riêng dự kiến cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Cloudflare hiện quản lý DNS; cần thêm VPS/hosting để chạy backend Node.js bên dưới. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
+Domain riêng dự kiến cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Phương án miễn phí: **Render chạy Node.js + Neon lưu PostgreSQL + Resend gửi Email OTP qua HTTPS**; Cloudflare quản lý DNS. Không cần thuê VPS khi dùng phương án này. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
 
 | Yêu cầu | Phần triển khai trong source | Điều kiện nghiệm thu |
 | --- | --- | --- |
@@ -37,7 +37,7 @@ Domain riêng dự kiến cho đồ án: **`motion-api.vihx.online`**. **`api.vi
 | Phân quyền | `admin`, `staff`, `member`; API kiểm tra vai trò hiện tại và chủ sở hữu | Kiểm tra cả API bằng Swagger, không chỉ ẩn nút Flutter |
 | CRUD | Tài khoản (admin), liên hệ đám mây, lịch hẹn xác nhận an toàn | Tạo/xem/sửa/xóa, dữ liệu sai/trùng và truy cập chéo |
 | Tính năng mở rộng | **Vòng an toàn**: hẹn xác nhận, trạng thái cần hỗ trợ/an toàn/đã hỗ trợ, nhân viên theo phân công | Người dùng tạo lịch; nhân viên thấy đúng người được giao |
-| Backend + Swagger | Node.js 24, Fastify, SQLite có volume lưu bền, REST API, OpenAPI 3 + Swagger UI | Deploy HTTPS trên domain công khai; nhóm dùng chung dữ liệu |
+| Backend + Swagger | Node.js 24, Fastify, PostgreSQL trên Neon (hoặc SQLite trên VPS có volume), REST API, OpenAPI 3 + Swagger UI | Deploy HTTPS trên domain công khai; nhóm dùng chung dữ liệu |
 
 Đây là đối chiếu chức năng, không cam kết điểm số. Vòng an toàn là phần mở rộng phù hợp Motion, không khẳng định chưa từng có ở mọi ứng dụng khác. Hiện lịch quá hạn được tính khi tải/làm mới trang; chưa có lịch chạy máy chủ, push notification hay tự SOS từ lịch hẹn.
 
@@ -48,8 +48,8 @@ Domain riêng dự kiến cho đồ án: **`motion-api.vihx.online`**. **`api.vi
 ```mermaid
 flowchart TD
     Flutter["Flutter Motion"] -->|"HTTPS / Bearer JWT"| API["motion-api.vihx.online · Fastify API"]
-    API --> DB["SQLite · volume lưu bền trên VPS"]
-    API --> Mail["SMTP · Email OTP"]
+    API --> DB["Neon PostgreSQL · dữ liệu lưu ngoài Render"]
+    API --> Mail["Resend HTTPS · Email OTP"]
     API --> RBAC{"Vai trò + chủ sở hữu"}
     RBAC --> Admin["Admin · quản lý tài khoản / phân công"]
     RBAC --> Staff["Nhân viên · người được phân công"]
@@ -64,8 +64,8 @@ API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên ho�
 
 <img src="docs/images/motion-account-preview.png" alt="Màn hình tài khoản Motion 1.1.0 trên máy ảo; API chưa triển khai" width="260">
 
-1. Bấm **biểu tượng người dùng** trên thanh đầu Motion → **Tạo tài khoản bằng email** → nhập tên, email, mật khẩu 10–128 ký tự → nhập OTP nhận qua email (hiệu lực 5 phút).
-2. Đăng nhập bằng **email + mật khẩu** → nhập một Email OTP mới → vào trang đúng vai trò. Mã không được trả về trong API/Swagger hay ghi log.
+1. **Mở app bình thường sẽ vào đăng nhập trước**, chưa cho vào màn hình chính. Chọn **Tạo tài khoản bằng email** → nhập tên, email, mật khẩu 10–128 ký tự → nhập OTP nhận qua email (hiệu lực 5 phút). Xác thực đăng ký xong vẫn cần đăng nhập, không tự vào app.
+2. Đăng nhập bằng **email + mật khẩu** → nhập một Email OTP mới. Người dùng vào giao diện giám sát; admin/nhân viên vào dashboard đúng vai trò, có nút **MỞ GIÁM SÁT TRÊN THIẾT BỊ**. Biểu tượng người dùng trên thanh đầu mở phần tài khoản/Vòng an toàn. Phiên đã lưu được API kiểm tra lại khi khởi động; nếu không có phiên hợp lệ, cần đăng nhập. Mã không được trả về trong API/Swagger hay ghi log.
 3. **Người dùng:** sửa tên, CRUD liên hệ đám mây, CRUD lịch hẹn; xác nhận **TÔI ỔN** hoặc **CẦN HỖ TRỢ**. Các nút này cập nhật lịch hẹn đám mây, không thay nút gửi SOS tại màn hình theo dõi.
 4. **Nhân viên:** xem người được admin phân công; xem/sửa liên hệ, lịch hẹn và ghi nhận hỗ trợ cho đúng người. Không quản trị tài khoản hay dữ liệu người không được giao.
 5. **Admin:** tạo/xem/sửa/xóa tài khoản, đổi vai trò, khóa/mở khóa, phân công người dùng cho nhân viên đang hoạt động. Không cho xóa/khóa/hạ quyền admin cuối cùng.
@@ -73,9 +73,68 @@ API không tự gửi SMS SOS hay gọi điện. Mất mạng, hết phiên ho�
 7. **Quên mật khẩu** cần truy cập email tài khoản. Đổi mật khẩu thu hồi toàn bộ phiên; đăng xuất thu hồi phiên hiện tại. Sau 12 giờ cần đăng nhập lại. Khóa hoặc đổi vai trò cũng thu hồi phiên.
 8. Người dùng có thể xóa tài khoản đám mây sau khi xác nhận mật khẩu. Dữ liệu đám mây liên quan bị xóa; liên hệ/SOS cục bộ trên điện thoại vẫn giữ nguyên. Muốn đổi người sử dụng điện thoại, kiểm tra lại cấu hình SOS cục bộ.
 
-### Triển khai backend công khai trên VPS
+**Ngoại lệ khẩn cấp:** cảnh báo SOS đang diễn ra luôn được ưu tiên, kể cả khi chưa đăng nhập hoặc vừa đăng xuất. Người dùng vẫn có thể nhấn TÔI ỔN/xử lý cảnh báo; kết thúc cảnh báo sẽ quay về đăng nhập nếu chưa có phiên. Đăng xuất cũng đóng các trang dữ liệu đám mây đang mở, không tắt dịch vụ SOS trên Android.
 
-Chuẩn bị VPS Linux có Docker Compose, Caddy, IP công khai và dịch vụ SMTP cho email giao dịch. Không đặt mật khẩu/khóa trong Flutter, README, Swagger hoặc Git. Backend chỉ một instance SQLite; sao lưu trước cập nhật. Không nhân bản nhiều instance với các file SQLite riêng.
+### Triển khai miễn phí — Render + Neon + Resend + Cloudflare
+
+Không đặt SQLite lên Render Free: file cục bộ có thể bị mất khi restart/redeploy, và gói này chặn cổng SMTP 25/465/587. Backend từ chối chạy trên Render nếu thiếu `DATABASE_URL`. [Giới hạn Render Free](https://render.com/docs/free).
+
+**1. Tạo database riêng trên Neon**
+
+- Đăng ký tại [Neon Console](https://console.neon.tech), chọn **Free**, tạo project **`motion-final`**. Chọn US West/Oregon nếu có để gần Render Oregon; không cần trùng chính xác để kết nối được.
+- Chọn **Connect**, bật **Connection pooling**, sao chép PostgreSQL connection string có thông tin TLS (`sslmode=require` theo hướng dẫn Neon). Dán riêng vào Render với KEY `DATABASE_URL`; không gửi chuỗi vào chat/Git/Flutter vì chứa mật khẩu.
+- Chỉ sao chép chuỗi bắt đầu bằng `postgresql://...` (hoặc `postgres://...`), không kèm lệnh `psql`, dấu nháy bao ngoài hoặc khoảng trắng đầu/cuối.
+- Không dùng database của bài kiểm tra. Backend tự tạo bảng/index khi khởi động; không cần chạy file SQL bằng tay. PostgreSQL tồn tại ngoài filesystem Render nên redeploy Render không xóa dữ liệu Neon. Dữ liệu SQLite cũ **không tự chuyển** sang Neon.
+
+**2. Tạo dịch vụ email trên Resend**
+
+- Đăng ký [Resend](https://resend.com), vào **Domains → Add Domain**, dùng subdomain riêng **`motion-mail.vihx.online`**. Thêm đúng TXT/MX/CNAME mà Resend hiển thị vào Cloudflare; không thay bản ghi email/DNS đang phục vụ bài kiểm tra hoặc hosting hiện tại. Các bản ghi DKIM/CNAME xác thực email để **DNS only** nếu Cloudflare có lựa chọn proxy.
+- Chờ domain **Verified**. Mở **API Keys → Create API Key**, chọn quyền gửi email cho domain Motion nếu giao diện hỗ trợ giới hạn. Sao chép vào Render với KEY `RESEND_API_KEY`; không đưa khóa vào source hoặc chụp ảnh khi còn hiện giá trị.
+- Dùng `MAIL_FROM=Motion <no-reply@motion-mail.vihx.online>`. Sender dùng thử của Resend chỉ phù hợp thử với email chủ tài khoản, không thay domain đã xác thực khi gửi OTP cho cả nhóm.
+
+**3. Tạo Web Service trên Render**
+
+- [Render Dashboard](https://dashboard.render.com) → **New → Web Service**, kết nối GitHub, chọn **`Vinh-205/Motion`**.
+- **Name:** `motion-final-api`; **Language:** Node; **Branch:** `main`; **Region:** Oregon; **Root Directory:** `backend`.
+- **Build Command:** `npm ci --omit=dev`; **Start Command:** `npm start`; **Compute:** Free ($0/month). Không dùng Yarn hoặc Docker cho các ô cấu hình hướng dẫn này.
+- Thêm các biến sau trong **Environment Variables**. Nút **Generate** chỉ dùng cho khóa ngẫu nhiên, không dùng cho `MAIL_PROVIDER`.
+
+| KEY | VALUE |
+| --- | --- |
+| `NODE_VERSION` | `24.14.0` |
+| `NODE_ENV` | `production` |
+| `MAIL_PROVIDER` | `resend` |
+| `DATABASE_URL` | Connection string riêng từ Neon |
+| `RESEND_API_KEY` | API key gửi email riêng từ Resend |
+| `MAIL_FROM` | `Motion <no-reply@motion-mail.vihx.online>` |
+| `JWT_SECRET` | Bấm Generate; chuỗi ngẫu nhiên ít nhất 32 ký tự |
+| `OTP_SECRET` | Generate riêng một chuỗi khác, ít nhất 32 ký tự |
+| `BOOTSTRAP_ADMIN_EMAIL` | Email thật bạn sở hữu và sẽ dùng nhận OTP admin |
+| `BOOTSTRAP_ADMIN_PASSWORD` | Tự đặt mật khẩu admin riêng, 14–128 ký tự |
+
+- Không đặt `PORT`, Render tự cấp. Chưa cần `PUBLIC_URL`: backend dùng `RENDER_EXTERNAL_URL` tự có để Swagger chạy đúng domain `.onrender.com` ban đầu. Không thêm `SMTP_*` khi dùng Resend HTTPS.
+- Sau khi source hỗ trợ Neon/Resend đã có trên `main` và đủ biến trên, bấm **Deploy Web Service**. Theo dõi **Logs**. Mở URL HTTPS Render cấp cộng `/health`, cần nhận `status: ok`; mở `/docs/` để xem Swagger.
+- Admin đầu tiên được tạo trước khi API nhận request. Khởi động lại không đổi mật khẩu hay nâng quyền tài khoản cũ. Sau khi đăng nhập admin thành công, xóa **cả hai** biến `BOOTSTRAP_ADMIN_EMAIL` và `BOOTSTRAP_ADMIN_PASSWORD` khỏi Render rồi redeploy. Sau đó quản lý tài khoản bằng trang admin. Render Free không cần SSH/chạy script bootstrap thủ công.
+- Repo có [render.yaml](render.yaml) để dùng Blueprint nếu muốn tự điền các ô cấu hình. Không tạo thêm service trả phí hay database Render bằng Blueprint này.
+
+**4. Gắn domain riêng qua Cloudflare**
+
+- Render service → **Settings → Custom Domains → Add Custom Domain**: `motion-api.vihx.online`. Sao chép đích CNAME mà Render cung cấp.
+- Cloudflare → DNS → thêm **CNAME `motion-api`** trỏ tới hostname `.onrender.com` được Render cấp, **DNS only**. Không dán `https://` hoặc `/docs` vào giá trị CNAME. Không sửa/xóa record `api.vihx.online`.
+- Quay lại Render **Verify** và chờ chứng chỉ HTTPS. Chỉ sau khi `https://motion-api.vihx.online/health` hoạt động mới đặt `PUBLIC_URL=https://motion-api.vihx.online` trong Render và redeploy.
+- Flutter mặc định gọi domain Motion này. Nếu cần kiểm tra tạm bằng URL Render trước DNS, chạy `flutter run --dart-define=MOTION_API_URL=https://HOSTNAME-THỰC-TẾ.onrender.com`; không dùng placeholder nguyên văn, localhost hoặc API bài kiểm tra.
+
+**5. Giới hạn gói miễn phí và kiểm tra thực tế**
+
+- Render Free có thể ngủ khi không hoạt động; lần gọi đầu có thể chậm. Flutter đợi kết nối tối đa 90 giây, không tự lặp yêu cầu gửi OTP. Mở `/health` trước buổi báo cáo để kiểm tra API đang chạy; không dùng bot ping nhằm né giới hạn dịch vụ.
+- Theo [Resend Free](https://resend.com/blog/new-free-tier), hạn mức được công bố là 3.000 email/tháng, 100 email/ngày; kiểm tra lại Usage/Pricing khi triển khai. Mỗi người đăng ký + đăng nhập lần đầu cần ít nhất **2 email**, nên **50 người mới/ngày đã dùng hết 100 email**, chưa tính quên mật khẩu/gửi lại. Muốn 100 người test cùng ngày cần đổi lịch hoặc tự chọn gói phù hợp; source không tự nâng gói hay trả phí.
+- Neon Free cũng có hạn mức; kiểm tra [gói Neon hiện tại](https://neon.com/pricing). Giữ Free, theo dõi compute/storage; không coi gói miễn phí là hệ thống khẩn cấp có cam kết hoạt động liên tục.
+- Thử đăng ký/OTP thật trên email ngoài email chủ Resend, login cả ba vai trò, CRUD bằng hai điện thoại và restart/redeploy Render để xác nhận dữ liệu còn. Chỉ sau các kiểm tra này mới cập nhật APK/QR phát hành.
+- Kiểm thử trong repo: `npm test` chạy SQLite + ranh giới gửi email giả; `npm run test:postgres` chạy các luồng API trên PostgreSQL engine PGlite. Đây không phải kiểm chứng kết nối Neon/TLS hay gửi email thật.
+
+### Tùy chọn khác — triển khai backend công khai trên VPS
+
+Nếu đã chọn Render ở trên thì bỏ qua mục này. Với VPS, chuẩn bị Linux có Docker Compose, Caddy, IP công khai và dịch vụ SMTP cho email giao dịch. Đặt `MAIL_PROVIDER=smtp` khi dùng SMTP. Không đặt mật khẩu/khóa trong Flutter, README, Swagger hoặc Git. Chế độ SQLite chỉ chạy một instance; sao lưu trước cập nhật. Không nhân bản nhiều instance với các file SQLite riêng.
 
 1. Tải repo trên VPS, vào `backend`, sao chép `.env.example` thành `.env`. Điền `PUBLIC_URL=https://motion-api.vihx.online`, SMTP và **hai khóa ngẫu nhiên khác nhau**, mỗi khóa ít nhất 48 ký tự, cho `JWT_SECRET` và `OTP_SECRET`. Sinh từng khóa bằng `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. `.env` được Git bỏ qua; đặt quyền đọc chỉ cho người quản trị. Không gửi khóa trong chat.
 2. Trong Cloudflare, tạo **A record `motion-api`** → IP VPS. Không sửa record `api`. Dùng **DNS only** cho cấu hình hiện tại để Caddy nhìn đúng IP người gọi/rate limit. Nếu bật proxy Cloudflare sau đó, cần thêm danh sách proxy tin cậy và IP client tại Caddy, dùng SSL/TLS **Full (strict)**. Chỉ tạo AAAA khi VPS thực sự phục vụ IPv6. Không tạo cache rule cho API xác thực/dữ liệu cá nhân.
@@ -111,6 +170,8 @@ flutter run --dart-define=MOTION_API_URL=https://motion-api.vihx.online
 # Hoặc tạo APK riêng cho phần cuối kỳ:
 flutter build apk --release --dart-define=MOTION_API_URL=https://motion-api.vihx.online
 ```
+
+Nếu Flutter báo `package dev.flutter.plugins.integration_test does not exist` khi build release sau khi chạy debug/test, hãy tạo lại cấu hình plugin cho release bằng `flutter build apk --release --config-only`, rồi chạy `flutter build apk --release --no-pub --dart-define=MOTION_API_URL=https://motion-api.vihx.online`. Không sửa tay file `GeneratedPluginRegistrant.java` tự sinh và không chuyển thư viện kiểm thử thành dependency production.
 
 Không dùng localhost/`10.0.2.2` trong cấu hình Flutter. URL mặc định trong source cũng là `https://motion-api.vihx.online`. Không đóng gói khóa SMTP, JWT hay mật khẩu admin vào `--dart-define`. Cần tự đăng ký email từng thành viên; admin phân quyền đúng người, không có tài khoản/mật khẩu mặc định trong source. Dữ liệu CRUD dùng chung trên API, còn quyền SIM/cảm biến, liên hệ SOS và lịch sử tại từng thiết bị là riêng.
 

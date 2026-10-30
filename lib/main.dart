@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/session_gate.dart';
 import 'widgets/app_design.dart';
 import 'services/app_appearance.dart';
 import 'services/app_controller.dart';
+import 'services/motion_api.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,11 +25,13 @@ class MyApp extends StatefulWidget {
     super.key,
     this.appearance,
     this.controller,
+    this.api,
     this.showLaunchAnimation = false,
     this.startupPresentation,
   });
   final AppAppearance? appearance;
   final AppController? controller;
+  final MotionApi? api;
   final bool showLaunchAnimation;
   final Future<void>? startupPresentation;
   @override
@@ -71,7 +74,8 @@ class _MyAppState extends State<MyApp> {
           ),
           child: child!,
         ),
-        home: HomeScreen(
+        home: SessionGate(
+          api: widget.api,
           controller: widget.controller,
           showLaunchAnimation: widget.showLaunchAnimation,
           startupPresentation: widget.startupPresentation,

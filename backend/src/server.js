@@ -1,7 +1,9 @@
 import { buildApp } from "./app.js";
 import { configFromEnv } from "./security.js";
+import { ensureInitialAdmin } from "./initial-admin.js";
 
 const app = await buildApp(configFromEnv(), { logger: true });
+await ensureInitialAdmin(app.store);
 const stop = async () => {
   await app.close();
   process.exit(0);

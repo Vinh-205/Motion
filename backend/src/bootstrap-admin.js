@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { openStore } from "./store.js";
+import { storeFromConfig } from "./store.js";
 import { hashPassword } from "./security.js";
 
 const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
@@ -14,14 +14,17 @@ if (
     "Set valid ADMIN_EMAIL and ADMIN_PASSWORD (14-128 characters) in private .env",
   );
 }
-const store = openStore(process.env.DATABASE_PATH || "./data/motion.sqlite");
+const store = await storeFromConfig({
+  databaseUrl: process.env.DATABASE_URL,
+  databasePath: process.env.DATABASE_PATH || "./data/motion.sqlite",
+});
 try {
-  if (store.one("SELECT id FROM users WHERE email=?", email))
+  if (await store.one("SELECT id FROM users WHERE email=?", email))
     throw new Error(
       "Account already exists; refusing to change its role or password",
     );
   const encoded = await hashPassword(password);
-  store.run(
+  await store.run(
     "INSERT INTO users(id,email,name,password,role,verified,created_at) VALUES(?,?,?,?,'admin',1,?)",
     randomUUID(),
     email,
@@ -33,5 +36,5 @@ try {
     "Admin created. Remove ADMIN_PASSWORD from .env. Login still requires Email OTP.",
   );
 } finally {
-  store.close();
+  await store.close();
 }

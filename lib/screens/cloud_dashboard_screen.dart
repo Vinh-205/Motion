@@ -23,9 +23,15 @@ String cloudTime(dynamic value) {
 }
 
 class CloudDashboardScreen extends StatefulWidget {
-  const CloudDashboardScreen({super.key, required this.api, this.controller});
+  const CloudDashboardScreen({
+    super.key,
+    required this.api,
+    this.controller,
+    this.onOpenMonitor,
+  });
   final MotionApi api;
   final AppController? controller;
+  final VoidCallback? onOpenMonitor;
   @override
   State<CloudDashboardScreen> createState() => _CloudDashboardScreenState();
 }
@@ -202,6 +208,14 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                 const SizedBox(height: 8),
                 Text(api.user?['email'] as String? ?? ''),
                 const SizedBox(height: 20),
+                if (widget.onOpenMonitor != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: FilledButton(
+                      onPressed: widget.onOpenMonitor,
+                      child: const Text('MỞ GIÁM SÁT TRÊN THIẾT BỊ'),
+                    ),
+                  ),
                 SurfacePanel(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env src/server.js",
     "test": "node --test test/*.test.js",
+    "test:postgres": "node test/run-postgres.js",
     "bootstrap-admin": "node --env-file=.env src/bootstrap-admin.js",
     "export-openapi": "node src/export-openapi.js"
   },
@@ -18,9 +19,11 @@
     "@fastify/swagger": "9.9.2",
     "@fastify/swagger-ui": "6.1.2",
     "fastify": "5.12.7",
-    "nodemailer": "10.3.1"
+    "nodemailer": "10.3.1",
+    "pg": "8.23.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.13",
     "prettier": "3.9.10"
   }
 }

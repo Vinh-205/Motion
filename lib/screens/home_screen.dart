@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/app_controller.dart';
+import '../services/motion_api.dart';
 import '../services/app_appearance.dart';
 import '../widgets/app_design.dart';
 import 'monitor_screen.dart';
@@ -20,10 +21,14 @@ class HomeScreen extends StatefulWidget {
     this.controller,
     this.showLaunchAnimation = false,
     this.startupPresentation,
+    this.cloudApi,
+    this.manageController = true,
   });
   final AppController? controller;
   final bool showLaunchAnimation;
   final Future<void>? startupPresentation;
+  final MotionApi? cloudApi;
+  final bool manageController;
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -43,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen>
     WidgetsBinding.instance.addObserver(this);
     _controller = widget.controller ?? AppController();
     _controller.addListener(_revealAlert);
-    _controller.start();
+    if (widget.manageController) _controller.start();
     _entrance = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 460),
@@ -84,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen>
     _entranceCurve.dispose();
     _entrance.dispose();
     _controller.removeListener(_revealAlert);
-    _controller.dispose();
+    if (widget.manageController) _controller.dispose();
     super.dispose();
   }
 
@@ -179,8 +184,10 @@ class _HomeScreenState extends State<HomeScreen>
                           onPressed: () => Navigator.push(
                             context,
                             MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  AccountScreen(controller: _controller),
+                              builder: (_) => AccountScreen(
+                                controller: _controller,
+                                api: widget.cloudApi,
+                              ),
                             ),
                           ),
                         ),

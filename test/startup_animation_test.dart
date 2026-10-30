@@ -1,3 +1,5 @@
+import 'support/signed_in_api.dart';
+
 import 'dart:io';
 import 'dart:async';
 import 'dart:ui' as ui;
@@ -185,6 +187,7 @@ void main() {
         RepaintBoundary(
           key: const Key('startupPreview'),
           child: MyApp(
+            api: signedInTestApi(),
             appearance: appearance,
             controller: c,
             showLaunchAnimation: true,

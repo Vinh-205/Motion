@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: motion-final-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.0
+      - key: NODE_ENV
+        value: production
+      - key: MAIL_PROVIDER
+        value: resend
+      - key: MAIL_FROM
+        value: Motion <no-reply@motion-mail.vihx.online>
+      - key: DATABASE_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OTP_SECRET
+        generateValue: true
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false

@@ -21,6 +21,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npm test
+      - run: npm run test:postgres
       - run: npm audit --omit=dev
       - run: npm run export-openapi
       - run: git diff --exit-code -- openapi/motion.openapi.json

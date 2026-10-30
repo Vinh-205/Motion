@@ -1,3 +1,5 @@
+import 'support/signed_in_api.dart';
+
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -94,7 +96,11 @@ void main() {
       await tester.pumpWidget(
         RepaintBoundary(
           key: const Key('previewBoundary'),
-          child: MyApp(appearance: appearance, controller: c),
+          child: MyApp(
+            appearance: appearance,
+            controller: c,
+            api: signedInTestApi(),
+          ),
         ),
       );
       await tester.pump(const Duration(milliseconds: 600));
@@ -129,7 +135,9 @@ void main() {
         device: FakeDeviceSafetyBridge(),
       );
       final appearance = AppAppearance();
-      await tester.pumpWidget(MyApp(appearance: appearance, controller: c));
+      await tester.pumpWidget(
+        MyApp(appearance: appearance, controller: c, api: signedInTestApi()),
+      );
       await tester.pump(const Duration(milliseconds: 600));
       await tester.tap(find.byKey(const Key('openStartMonitoring')));
       await tester.pump();

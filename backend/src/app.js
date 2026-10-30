@@ -3,9 +3,9 @@ import jwt from "@fastify/jwt";
 import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
-import nodemailer from "nodemailer";
 import { randomUUID } from "node:crypto";
-import { openStore, publicUser } from "./store.js";
+import { storeFromConfig, publicUser } from "./store.js";
+import { createMailer } from "./mailer.js";
 import {
   hashPassword,
   verifyPassword,
@@ -63,17 +63,8 @@ export async function buildApp(config, overrides = {}) {
     trustProxy: 1,
     ajv: { customOptions: { removeAdditional: false } },
   });
-  const store = overrides.store ?? openStore(config.databasePath);
-  const transport =
-    overrides.mailer ??
-    nodemailer.createTransport({
-      ...config.smtp,
-      connectionTimeout: 10_000,
-      greetingTimeout: 10_000,
-      socketTimeout: 20_000,
-      disableFileAccess: true,
-      disableUrlAccess: true,
-    });
+  const store = overrides.store ?? (await storeFromConfig(config));
+  const transport = overrides.mailer ?? createMailer(config);
   const dummyHash = await hashPassword(randomUUID());
   app.decorate("store", store);
   await app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
@@ -112,7 +103,8 @@ export async function buildApp(config, overrides = {}) {
     let status = error.statusCode || 500;
     if (
       String(error.code).startsWith("SQLITE_CONSTRAINT") ||
-      [1555, 2067, 787].includes(error.errcode)
+      [1555, 2067, 787].includes(error.errcode) ||
+      ["23505", "23503", "40001", "40P01"].includes(error.code)
     )
       status = 409;
     if (status >= 500) request.log.error({ err: error }, "Request failed");
@@ -127,7 +119,7 @@ export async function buildApp(config, overrides = {}) {
               : error.message,
     });
   });
-  app.addHook("onClose", () => store.close());
+  app.addHook("onClose", async () => await store.close());
 
   const authenticated = async (request) => {
     try {
@@ -135,13 +127,16 @@ export async function buildApp(config, overrides = {}) {
     } catch {
       fail(401, "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
     }
-    const session = store.one(
+    const session = await store.one(
       "SELECT * FROM sessions WHERE id=? AND user_id=? AND expires_at>?",
       request.user.sid,
       request.user.sub,
       Date.now(),
     );
-    const user = store.one("SELECT * FROM users WHERE id=?", request.user.sub);
+    const user = await store.one(
+      "SELECT * FROM users WHERE id=?",
+      request.user.sub,
+    );
     if (!session || !user?.active || !user.verified)
       fail(401, "Phiên đăng nhập đã bị thu hồi.");
     // Current DB role is authoritative, never a stale JWT role or client field.
@@ -151,21 +146,33 @@ export async function buildApp(config, overrides = {}) {
     await authenticated(request);
     if (request.account.role !== "admin") fail(403, "Cần quyền quản trị viên.");
   };
-  function mayAccess(actor, ownerId) {
+  async function mayAccess(actor, ownerId) {
     if (actor.id === ownerId || actor.role === "admin") return true;
     return (
       actor.role === "staff" &&
-      !!store.one(
+      !!(await store.one(
         "SELECT id FROM users WHERE id=? AND role='member' AND assigned_staff_id=?",
         ownerId,
         actor.id,
-      )
+      ))
     );
   }
-  const authConfig = { rateLimit: { max: 12, timeWindow: "15 minutes" } };
+  const checkAuthLimit = app.createRateLimit({
+    max: 12,
+    timeWindow: "15 minutes",
+    keyGenerator: (request) =>
+      `${request.ip}:${request.routeOptions.url}:${typeof request.body?.email === "string" ? cleanEmail(request.body.email) : (request.body?.challengeId ?? "anonymous")}`,
+  });
+  const authLimiter = async (request, reply) => {
+    const limit = await checkAuthLimit(request);
+    if (!limit.isAllowed && limit.isExceeded) {
+      reply.header("Retry-After", limit.ttlInSeconds);
+      fail(429, "Đã thử quá nhiều lần. Vui lòng đợi trước khi thử lại.");
+    }
+  };
   async function issueChallenge(user, purpose) {
     const now = Date.now();
-    const latest = store.one(
+    const latest = await store.one(
       "SELECT created_at FROM challenges WHERE user_id=? AND purpose=? ORDER BY created_at DESC LIMIT 1",
       user.id,
       purpose,
@@ -174,13 +181,13 @@ export async function buildApp(config, overrides = {}) {
       fail(429, "Vui lòng đợi 60 giây trước khi xin mã mới.");
     const id = randomUUID(),
       code = newOtp();
-    store.transaction(() => {
-      store.run(
+    await store.transaction(async () => {
+      await store.run(
         "UPDATE challenges SET used=1 WHERE user_id=? AND purpose=? AND used=0",
         user.id,
         purpose,
       );
-      store.run(
+      await store.run(
         "INSERT INTO challenges(id,user_id,purpose,digest,expires_at,created_at) VALUES(?,?,?,?,?,?)",
         id,
         user.id,
@@ -198,7 +205,7 @@ export async function buildApp(config, overrides = {}) {
         text: `Mã xác thực Motion: ${code}\nMã có hiệu lực 5 phút, chỉ dùng một lần. Không chia sẻ mã. Nếu không yêu cầu, hãy bỏ qua email này.`,
       });
     } catch {
-      store.run("UPDATE challenges SET used=1 WHERE id=?", id);
+      await store.run("UPDATE challenges SET used=1 WHERE id=?", id);
       fail(503, "Chưa gửi được email xác thực. Vui lòng thử lại sau.");
     }
     return {
@@ -207,10 +214,10 @@ export async function buildApp(config, overrides = {}) {
       message: "Kiểm tra email để lấy mã xác thực.",
     };
   }
-  function consumeChallenge(id, code, purpose) {
+  async function consumeChallenge(id, code, purpose) {
     // Synchronous transaction: attempts and use-once state cannot race across requests.
-    return store.transaction(() => {
-      const challenge = store.one(
+    return await store.transaction(async () => {
+      const challenge = await store.one(
         "SELECT * FROM challenges WHERE id=? AND purpose=?",
         id,
         purpose,
@@ -222,10 +229,13 @@ export async function buildApp(config, overrides = {}) {
         challenge.attempts >= 5
       )
         return null;
-      store.run("UPDATE challenges SET attempts=attempts+1 WHERE id=?", id);
+      await store.run(
+        "UPDATE challenges SET attempts=attempts+1 WHERE id=?",
+        id,
+      );
       if (!validOtp(config.otpSecret, challenge, code)) return null;
-      store.run("UPDATE challenges SET used=1 WHERE id=?", id);
-      return store.one(
+      await store.run("UPDATE challenges SET used=1 WHERE id=?", id);
+      return await store.one(
         "SELECT * FROM users WHERE id=? AND active=1",
         challenge.user_id,
       );
@@ -238,8 +248,8 @@ export async function buildApp(config, overrides = {}) {
   });
   async function sessionFor(user) {
     const sid = randomUUID();
-    store.run("DELETE FROM sessions WHERE expires_at<=?", Date.now());
-    store.run(
+    await store.run("DELETE FROM sessions WHERE expires_at<=?", Date.now());
+    await store.run(
       "INSERT INTO sessions(id,user_id,expires_at) VALUES(?,?,?)",
       sid,
       user.id,
@@ -255,14 +265,14 @@ export async function buildApp(config, overrides = {}) {
     app.route({
       method,
       url,
-      config: tag === "Auth" ? authConfig : {},
+      config: {},
       schema: {
         tags: [tag],
         summary,
         response: responses(method, url),
         ...schema,
       },
-      preHandler,
+      preHandler: tag === "Auth" ? authLimiter : preHandler,
       handler,
     });
   }
@@ -273,7 +283,7 @@ export async function buildApp(config, overrides = {}) {
     "Kiểm tra API và cơ sở dữ liệu",
     {},
     async () => {
-      store.one("SELECT 1");
+      await store.one("SELECT 1");
       return { status: "ok", service: "motion-api" };
     },
   );
@@ -287,14 +297,17 @@ export async function buildApp(config, overrides = {}) {
       const data = request.body,
         normalized = cleanEmail(data.email);
       if (!label(data.name)) fail(400, "Tên không được để trống.");
-      let user = store.one("SELECT * FROM users WHERE email=?", normalized);
+      let user = await store.one(
+        "SELECT * FROM users WHERE email=?",
+        normalized,
+      );
       if (user) {
         if (!user.verified && user.active)
           return issueChallenge(user, "verify");
         return genericChallenge();
       }
       const id = randomUUID();
-      store.run(
+      await store.run(
         "INSERT INTO users(id,email,name,password,created_at) VALUES(?,?,?,?,?)",
         id,
         normalized,
@@ -302,7 +315,7 @@ export async function buildApp(config, overrides = {}) {
         await hashPassword(data.password),
         Date.now(),
       );
-      user = store.one("SELECT * FROM users WHERE id=?", id);
+      user = await store.one("SELECT * FROM users WHERE id=?", id);
       return issueChallenge(user, "verify");
     },
   );
@@ -313,13 +326,13 @@ export async function buildApp(config, overrides = {}) {
     "Xác thực email bằng OTP; sau đó đăng nhập",
     { body: body(codeFields) },
     async (request) => {
-      const user = consumeChallenge(
+      const user = await consumeChallenge(
         request.body.challengeId,
         request.body.code,
         "verify",
       );
       if (!user) fail(400, "Mã không đúng, hết hạn hoặc đã được dùng.");
-      store.run("UPDATE users SET verified=1 WHERE id=?", user.id);
+      await store.run("UPDATE users SET verified=1 WHERE id=?", user.id);
       return { message: "Email đã được xác thực. Bạn có thể đăng nhập." };
     },
   );
@@ -330,7 +343,7 @@ export async function buildApp(config, overrides = {}) {
     "Bước 1: email + mật khẩu, gửi Email OTP",
     { body: body({ email, password: str(128) }) },
     async (request) => {
-      const user = store.one(
+      const user = await store.one(
         "SELECT * FROM users WHERE email=?",
         cleanEmail(request.body.email),
       );
@@ -350,7 +363,7 @@ export async function buildApp(config, overrides = {}) {
     "Bước 2: Email OTP, cấp phiên JWT",
     { body: body(codeFields) },
     async (request) => {
-      const user = consumeChallenge(
+      const user = await consumeChallenge(
         request.body.challengeId,
         request.body.code,
         "login",
@@ -367,7 +380,7 @@ export async function buildApp(config, overrides = {}) {
     "Xin mã đặt lại mật khẩu (không tiết lộ tài khoản tồn tại)",
     { body: body({ email }) },
     async (request) => {
-      const user = store.one(
+      const user = await store.one(
         "SELECT * FROM users WHERE email=? AND active=1",
         cleanEmail(request.body.email),
       );
@@ -379,7 +392,7 @@ export async function buildApp(config, overrides = {}) {
         // Return the same public envelope for an unknown mailbox, resend cooldown,
         // or SMTP error. Only the owner of the mailbox can complete a real challenge.
         if (e.statusCode === 429) {
-          const pending = store.one(
+          const pending = await store.one(
             "SELECT id FROM challenges WHERE user_id=? AND purpose='reset' AND used=0 AND attempts<5 AND expires_at>? ORDER BY created_at DESC LIMIT 1",
             user.id,
             Date.now(),
@@ -401,20 +414,23 @@ export async function buildApp(config, overrides = {}) {
     async (request) => {
       // Hash first; consume and change password together without an async gap.
       const encoded = await hashPassword(request.body.password);
-      const user = consumeChallenge(
+      const user = await consumeChallenge(
         request.body.challengeId,
         request.body.code,
         "reset",
       );
       if (!user) fail(400, "Mã không đúng, hết hạn hoặc đã được dùng.");
-      store.transaction(() => {
-        store.run(
+      await store.transaction(async () => {
+        await store.run(
           "UPDATE users SET password=?,verified=1 WHERE id=?",
           encoded,
           user.id,
         );
-        store.run("DELETE FROM sessions WHERE user_id=?", user.id);
-        store.run("UPDATE challenges SET used=1 WHERE user_id=?", user.id);
+        await store.run("DELETE FROM sessions WHERE user_id=?", user.id);
+        await store.run(
+          "UPDATE challenges SET used=1 WHERE user_id=?",
+          user.id,
+        );
       });
       return { message: "Đã đặt lại mật khẩu. Hãy đăng nhập lại." };
     },
@@ -426,7 +442,7 @@ export async function buildApp(config, overrides = {}) {
     "Đăng xuất và thu hồi phiên hiện tại",
     safe,
     async (request) => {
-      store.run("DELETE FROM sessions WHERE id=?", request.user.sid);
+      await store.run("DELETE FROM sessions WHERE id=?", request.user.sid);
       return { message: "Đã đăng xuất." };
     },
     authenticated,
@@ -448,24 +464,26 @@ export async function buildApp(config, overrides = {}) {
     { ...safe, body: body({ name: str(80) }) },
     async (request) => {
       if (!label(request.body.name)) fail(400, "Tên không được để trống.");
-      store.run(
+      await store.run(
         "UPDATE users SET name=? WHERE id=?",
         label(request.body.name),
         request.account.id,
       );
       return publicUser(
-        store.one("SELECT * FROM users WHERE id=?", request.account.id),
+        await store.one("SELECT * FROM users WHERE id=?", request.account.id),
       );
     },
     authenticated,
   );
-  function protectLastAdmin(user, nextRole, nextActive) {
+  async function protectLastAdmin(user, nextRole, nextActive) {
     if (
       user.role === "admin" &&
       user.active &&
       (nextRole !== "admin" || !nextActive) &&
-      store.one(
-        "SELECT COUNT(*) AS n FROM users WHERE role='admin' AND active=1",
+      (
+        await store.one(
+          "SELECT COUNT(*) AS n FROM users WHERE role='admin' AND active=1",
+        )
       ).n <= 1
     )
       fail(409, "Không thể xóa hoặc hạ quyền quản trị viên cuối cùng.");
@@ -481,8 +499,15 @@ export async function buildApp(config, overrides = {}) {
         !(await verifyPassword(request.body.password, request.account.password))
       )
         fail(403, "Mật khẩu không đúng.");
-      protectLastAdmin(request.account, "", false);
-      store.run("DELETE FROM users WHERE id=?", request.account.id);
+      await store.transaction(async () => {
+        const current = await store.one(
+          "SELECT * FROM users WHERE id=?",
+          request.account.id,
+        );
+        if (!current) fail(404, "Không tìm thấy tài khoản.");
+        await protectLastAdmin(current, "", false);
+        await store.run("DELETE FROM users WHERE id=?", current.id);
+      });
       return {
         message:
           "Đã xóa tài khoản và dữ liệu đám mây. Dữ liệu SOS trên máy không bị xóa.",
@@ -500,9 +525,11 @@ export async function buildApp(config, overrides = {}) {
       const actor = request.account;
       const rows =
         actor.role === "admin"
-          ? store.all("SELECT * FROM users ORDER BY created_at DESC LIMIT 500")
+          ? await store.all(
+              "SELECT * FROM users ORDER BY created_at DESC LIMIT 500",
+            )
           : actor.role === "staff"
-            ? store.all(
+            ? await store.all(
                 "SELECT * FROM users WHERE id=? OR assigned_staff_id=? ORDER BY name LIMIT 500",
                 actor.id,
                 actor.id,
@@ -519,11 +546,11 @@ export async function buildApp(config, overrides = {}) {
     "Xem tài khoản của mình hoặc người được phân công",
     { ...safe, params: idParam },
     async (request) => {
-      const user = store.one(
+      const user = await store.one(
         "SELECT * FROM users WHERE id=?",
         request.params.id,
       );
-      if (!user || !mayAccess(request.account, user.id))
+      if (!user || !(await mayAccess(request.account, user.id)))
         fail(404, "Không tìm thấy tài khoản.");
       return publicUser(user);
     },
@@ -546,10 +573,15 @@ export async function buildApp(config, overrides = {}) {
     async (request) => {
       const d = request.body;
       if (!label(d.name)) fail(400, "Tên không được để trống.");
-      if (store.one("SELECT id FROM users WHERE email=?", cleanEmail(d.email)))
+      if (
+        await store.one(
+          "SELECT id FROM users WHERE email=?",
+          cleanEmail(d.email),
+        )
+      )
         fail(409, "Email đã tồn tại.");
       const id = randomUUID();
-      store.run(
+      await store.run(
         "INSERT INTO users(id,email,name,password,role,created_at) VALUES(?,?,?,?,?,?)",
         id,
         cleanEmail(d.email),
@@ -558,7 +590,7 @@ export async function buildApp(config, overrides = {}) {
         d.role,
         Date.now(),
       );
-      return publicUser(store.one("SELECT * FROM users WHERE id=?", id));
+      return publicUser(await store.one("SELECT * FROM users WHERE id=?", id));
     },
     admin,
   );
@@ -583,7 +615,7 @@ export async function buildApp(config, overrides = {}) {
       ),
     },
     async (request) => {
-      const user = store.one(
+      const user = await store.one(
         "SELECT * FROM users WHERE id=?",
         request.params.id,
       );
@@ -591,7 +623,6 @@ export async function buildApp(config, overrides = {}) {
       const d = request.body,
         role = d.role ?? user.role,
         active = d.active ?? !!user.active;
-      protectLastAdmin(user, role, active);
       const assigned =
         d.assignedStaffId === undefined
           ? user.assigned_staff_id
@@ -599,16 +630,27 @@ export async function buildApp(config, overrides = {}) {
       if (
         assigned &&
         (role !== "member" ||
-          !store.one(
+          !(await store.one(
             "SELECT id FROM users WHERE id=? AND role='staff' AND active=1",
             assigned,
-          ))
+          )))
       )
         fail(400, "Chỉ phân công người dùng cho nhân viên đang hoạt động.");
       if (d.name !== undefined && !label(d.name))
         fail(400, "Tên không được để trống.");
-      store.transaction(() => {
-        store.run(
+      await store.transaction(async () => {
+        const current = await store.one(
+          "SELECT * FROM users WHERE id=?",
+          user.id,
+        );
+        if (
+          !current ||
+          current.role !== user.role ||
+          current.active !== user.active
+        )
+          fail(409, "Tài khoản vừa thay đổi. Hãy tải lại.");
+        await protectLastAdmin(current, role, active);
+        await store.run(
           "UPDATE users SET name=?,role=?,active=?,assigned_staff_id=? WHERE id=?",
           d.name === undefined ? user.name : label(d.name),
           role,
@@ -617,16 +659,21 @@ export async function buildApp(config, overrides = {}) {
           user.id,
         );
         if (user.role === "staff" && (role !== "staff" || !active))
-          store.run(
+          await store.run(
             "UPDATE users SET assigned_staff_id=NULL WHERE assigned_staff_id=?",
             user.id,
           );
         if (!active || role !== user.role) {
-          store.run("DELETE FROM sessions WHERE user_id=?", user.id);
-          store.run("UPDATE challenges SET used=1 WHERE user_id=?", user.id);
+          await store.run("DELETE FROM sessions WHERE user_id=?", user.id);
+          await store.run(
+            "UPDATE challenges SET used=1 WHERE user_id=?",
+            user.id,
+          );
         }
       });
-      return publicUser(store.one("SELECT * FROM users WHERE id=?", user.id));
+      return publicUser(
+        await store.one("SELECT * FROM users WHERE id=?", user.id),
+      );
     },
     admin,
   );
@@ -637,13 +684,20 @@ export async function buildApp(config, overrides = {}) {
     "Xóa tài khoản và dữ liệu liên quan",
     { ...safe, params: idParam },
     async (request) => {
-      const user = store.one(
+      const user = await store.one(
         "SELECT * FROM users WHERE id=?",
         request.params.id,
       );
       if (!user) fail(404, "Không tìm thấy tài khoản.");
-      protectLastAdmin(user, "", false);
-      store.run("DELETE FROM users WHERE id=?", user.id);
+      await store.transaction(async () => {
+        const current = await store.one(
+          "SELECT * FROM users WHERE id=?",
+          user.id,
+        );
+        if (!current) fail(404, "Không tìm thấy tài khoản.");
+        await protectLastAdmin(current, "", false);
+        await store.run("DELETE FROM users WHERE id=?", user.id);
+      });
       return { message: "Đã xóa tài khoản." };
     },
     admin,
@@ -656,20 +710,20 @@ export async function buildApp(config, overrides = {}) {
     properties: { ownerId: { type: "string", format: "uuid" } },
   };
   const ownerField = { type: "string", format: "uuid" };
-  function ownerFor(request, explicit) {
+  async function ownerFor(request, explicit) {
     const id = explicit ?? request.account.id;
-    if (!mayAccess(request.account, id))
+    if (!(await mayAccess(request.account, id)))
       fail(403, "Bạn không được truy cập dữ liệu của người này.");
-    if (!store.one("SELECT id FROM users WHERE id=?", id))
+    if (!(await store.one("SELECT id FROM users WHERE id=?", id)))
       fail(404, "Không tìm thấy người dùng.");
     return id;
   }
-  function rowFor(request, table) {
-    const row = store.one(
+  async function rowFor(request, table) {
+    const row = await store.one(
       `SELECT * FROM ${table} WHERE id=?`,
       request.params.id,
     );
-    if (!row || !mayAccess(request.account, row.owner_id))
+    if (!row || !(await mayAccess(request.account, row.owner_id)))
       fail(404, "Không tìm thấy dữ liệu.");
     return row;
   }
@@ -704,14 +758,14 @@ export async function buildApp(config, overrides = {}) {
       "Danh sách của bản thân hoặc người được phân công",
       { ...safe, querystring: ownerQuery },
       async (request) => {
-        const owner = ownerFor(request, request.query.ownerId);
+        const owner = await ownerFor(request, request.query.ownerId);
         return {
-          items: store
-            .all(
+          items: (
+            await store.all(
               `SELECT * FROM ${table} WHERE owner_id=? ORDER BY created_at DESC LIMIT 500`,
               owner,
             )
-            .map(map),
+          ).map(map),
         };
       },
       authenticated,
@@ -722,7 +776,7 @@ export async function buildApp(config, overrides = {}) {
       tag,
       "Xem chi tiết (kiểm tra chủ sở hữu)",
       { ...safe, params: idParam },
-      async (request) => map(rowFor(request, table)),
+      async (request) => map(await rowFor(request, table)),
       authenticated,
     );
     route(
@@ -732,8 +786,8 @@ export async function buildApp(config, overrides = {}) {
       "Xóa bản ghi (kiểm tra chủ sở hữu)",
       { ...safe, params: idParam },
       async (request) => {
-        const row = rowFor(request, table);
-        store.run(`DELETE FROM ${table} WHERE id=?`, row.id);
+        const row = await rowFor(request, table);
+        await store.run(`DELETE FROM ${table} WHERE id=?`, row.id);
         return { message: "Đã xóa." };
       },
       authenticated,
@@ -755,16 +809,20 @@ export async function buildApp(config, overrides = {}) {
     },
     async (request) => {
       const d = request.body,
-        owner = ownerFor(request, d.ownerId),
+        owner = await ownerFor(request, d.ownerId),
         id = randomUUID(),
         now = Date.now();
       if (!label(d.name)) fail(400, "Tên không được để trống.");
       if (
-        store.one("SELECT COUNT(*) AS n FROM contacts WHERE owner_id=?", owner)
-          .n >= 100
+        (
+          await store.one(
+            "SELECT COUNT(*) AS n FROM contacts WHERE owner_id=?",
+            owner,
+          )
+        ).n >= 100
       )
         fail(409, "Tối đa 100 liên hệ đám mây.");
-      store.run(
+      await store.run(
         "INSERT INTO contacts(id,owner_id,name,phone,relationship,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",
         id,
         owner,
@@ -774,7 +832,9 @@ export async function buildApp(config, overrides = {}) {
         now,
         now,
       );
-      return mapContact(store.one("SELECT * FROM contacts WHERE id=?", id));
+      return mapContact(
+        await store.one("SELECT * FROM contacts WHERE id=?", id),
+      );
     },
     authenticated,
   );
@@ -785,11 +845,11 @@ export async function buildApp(config, overrides = {}) {
     "Sửa liên hệ",
     { ...safe, params: idParam, body: body(contactFields, []) },
     async (request) => {
-      const row = rowFor(request, "contacts"),
+      const row = await rowFor(request, "contacts"),
         d = request.body;
       if (d.name !== undefined && !label(d.name))
         fail(400, "Tên không được để trống.");
-      store.run(
+      await store.run(
         "UPDATE contacts SET name=?,phone=?,relationship=?,updated_at=? WHERE id=?",
         d.name === undefined ? row.name : label(d.name),
         d.phone === undefined ? row.phone : normalizePhone(d.phone),
@@ -797,7 +857,9 @@ export async function buildApp(config, overrides = {}) {
         Date.now(),
         row.id,
       );
-      return mapContact(store.one("SELECT * FROM contacts WHERE id=?", row.id));
+      return mapContact(
+        await store.one("SELECT * FROM contacts WHERE id=?", row.id),
+      );
     },
     authenticated,
   );
@@ -821,17 +883,21 @@ export async function buildApp(config, overrides = {}) {
     },
     async (request) => {
       const d = request.body,
-        owner = ownerFor(request, d.ownerId),
+        owner = await ownerFor(request, d.ownerId),
         id = randomUUID(),
         now = Date.now();
       if (!label(d.title) || d.dueAt < now)
         fail(400, "Nhập tiêu đề và thời gian trong tương lai.");
       if (
-        store.one("SELECT COUNT(*) AS n FROM checkins WHERE owner_id=?", owner)
-          .n >= 500
+        (
+          await store.one(
+            "SELECT COUNT(*) AS n FROM checkins WHERE owner_id=?",
+            owner,
+          )
+        ).n >= 500
       )
         fail(409, "Tối đa 500 lịch hẹn. Hãy xóa lịch cũ trước.");
-      store.run(
+      await store.run(
         "INSERT INTO checkins(id,owner_id,title,due_at,status,note,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
         id,
         owner,
@@ -842,7 +908,9 @@ export async function buildApp(config, overrides = {}) {
         now,
         now,
       );
-      return mapCheckin(store.one("SELECT * FROM checkins WHERE id=?", id));
+      return mapCheckin(
+        await store.one("SELECT * FROM checkins WHERE id=?", id),
+      );
     },
     authenticated,
   );
@@ -853,13 +921,13 @@ export async function buildApp(config, overrides = {}) {
     "Sửa lịch hẹn hoặc ghi nhận an toàn/hỗ trợ",
     { ...safe, params: idParam, body: body(checkinFields, []) },
     async (request) => {
-      const row = rowFor(request, "checkins"),
+      const row = await rowFor(request, "checkins"),
         d = request.body;
       if (d.title !== undefined && !label(d.title))
         fail(400, "Tiêu đề không được để trống.");
       if (d.dueAt !== undefined && d.dueAt < Date.now())
         fail(400, "Thời gian mới phải ở tương lai.");
-      store.run(
+      await store.run(
         "UPDATE checkins SET title=?,due_at=?,status=?,note=?,updated_at=? WHERE id=?",
         d.title === undefined ? row.title : label(d.title),
         d.dueAt ?? row.due_at,
@@ -868,7 +936,9 @@ export async function buildApp(config, overrides = {}) {
         Date.now(),
         row.id,
       );
-      return mapCheckin(store.one("SELECT * FROM checkins WHERE id=?", row.id));
+      return mapCheckin(
+        await store.one("SELECT * FROM checkins WHERE id=?", row.id),
+      );
     },
     authenticated,
   );

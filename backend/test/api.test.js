@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { buildApp } from "../src/app.js";
 import { hashPassword } from "../src/security.js";
+import { postgresFixture } from "./postgres-fixture.js";
 
 async function fixture(t) {
   const mails = [];
@@ -14,7 +15,13 @@ async function fixture(t) {
       publicUrl: "https://motion-api.vihx.online",
       mailFrom: "test@example.org",
     },
-    { mailer: { sendMail: async (mail) => mails.push(mail) } },
+    {
+      mailer: { sendMail: async (mail) => mails.push(mail) },
+      store:
+        process.env.MOTION_TEST_DATABASE === "postgres"
+          ? await postgresFixture()
+          : undefined,
+    },
   );
   await app.ready();
   // Use isolated stores/mailboxes per test. No server socket or real email/SMS/call.
@@ -32,7 +39,7 @@ async function fixture(t) {
   async function seed(role = "member", name = randomUUID()) {
     const id = randomUUID(),
       address = `${name}@example.org`;
-    app.store.run(
+    await app.store.run(
       "INSERT INTO users(id,email,name,password,role,verified,created_at) VALUES(?,?,?,?,?,1,?)",
       id,
       address,
@@ -42,7 +49,7 @@ async function fixture(t) {
       Date.now(),
     );
     const sid = randomUUID();
-    app.store.run(
+    await app.store.run(
       "INSERT INTO sessions VALUES(?,?,?)",
       sid,
       id,
@@ -136,7 +143,7 @@ test("OTP expires, is purpose bound, caps attempts and resend cooldown", async (
     ).status,
     400,
   );
-  f.app.store.run(
+  await f.app.store.run(
     "UPDATE challenges SET attempts=0,expires_at=? WHERE id=?",
     Date.now() - 1,
     r.data.challengeId,
@@ -389,7 +396,10 @@ test("admin CRUD users, assignment, staff access and last-admin protection", asy
     200,
   );
   assert.equal(
-    f.app.store.one("SELECT id FROM contacts WHERE id=?", contact.data.id),
+    await f.app.store.one(
+      "SELECT id FROM contacts WHERE id=?",
+      contact.data.id,
+    ),
     undefined,
   );
 });
@@ -430,7 +440,7 @@ test("safety circle full CRUD, overdue and ownership enforcement", async (t) => 
       .data.status,
     "resolved",
   );
-  f.app.store.run(
+  await f.app.store.run(
     "UPDATE checkins SET status='pending',due_at=? WHERE id=?",
     Date.now() - 1,
     id,
@@ -494,8 +504,11 @@ test("SMTP failure never exposes a code or grants a session", async (t) => {
     payload: { email: user.email, name: "x", password: f.pass },
   });
   assert.equal(r.statusCode, 503);
-  assert.equal(app.store.one("SELECT COUNT(*) AS n FROM sessions").n, 0);
-  assert.equal(app.store.one("SELECT used FROM challenges").used, 1);
+  assert.equal(
+    (await app.store.one("SELECT COUNT(*) AS n FROM sessions")).n,
+    0,
+  );
+  assert.equal((await app.store.one("SELECT used FROM challenges")).used, 1);
 });
 test("auth endpoint rate limit rejects repeated password attempts", async (t) => {
   const f = await fixture(t);
@@ -638,8 +651,14 @@ test("self deletion verifies password and cascades cloud records without touchin
     (await f.call("DELETE", "/me", { password: f.pass }, member.token)).status,
     200,
   );
-  assert.equal(f.app.store.one("SELECT COUNT(*) AS n FROM contacts").n, 0);
-  assert.equal(f.app.store.one("SELECT COUNT(*) AS n FROM checkins").n, 0);
+  assert.equal(
+    (await f.app.store.one("SELECT COUNT(*) AS n FROM contacts")).n,
+    0,
+  );
+  assert.equal(
+    (await f.app.store.one("SELECT COUNT(*) AS n FROM checkins")).n,
+    0,
+  );
   assert.equal(
     (await f.call("GET", "/me", undefined, member.token)).status,
     401,
