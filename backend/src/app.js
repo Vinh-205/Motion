@@ -13,7 +13,7 @@ import {
   otpDigest,
   validOtp,
 } from "./security.js";
-import { responses } from "./schemas.js";
+import { responses, registerModels, requestModel } from "./schemas.js";
 
 const str = (maxLength, minLength = 1) => ({
   type: "string",
@@ -74,6 +74,7 @@ export async function buildApp(config, overrides = {}) {
     verify: { allowedIss: "motion-api", allowedAud: "motion-app" },
   });
   await app.register(swagger, {
+    refResolver: { buildLocalReference: (json) => json.$id },
     openapi: {
       openapi: "3.0.3",
       info: {
@@ -98,7 +99,15 @@ export async function buildApp(config, overrides = {}) {
       },
     },
   });
-  await app.register(swaggerUi, { routePrefix: "/docs" });
+  registerModels(app);
+  await app.register(swaggerUi, {
+    routePrefix: "/docs",
+    uiConfig: {
+      defaultModelsExpandDepth: 1,
+      defaultModelExpandDepth: 1,
+      persistAuthorization: false,
+    },
+  });
   app.setErrorHandler((error, request, reply) => {
     let status = error.statusCode || 500;
     if (
@@ -270,7 +279,7 @@ export async function buildApp(config, overrides = {}) {
         tags: [tag],
         summary,
         response: responses(method, url),
-        ...schema,
+        ...requestModel(app, method, url, schema),
       },
       preHandler: tag === "Auth" ? authLimiter : preHandler,
       handler,

@@ -461,6 +461,40 @@ test("safety circle full CRUD, overdue and ownership enforcement", async (t) => 
 test("OpenAPI contains all secured CRUD routes and unauthenticated requests are denied", async (t) => {
   const f = await fixture(t),
     doc = f.app.swagger();
+  const models = doc.components.schemas;
+  for (const name of [
+    "User",
+    "EmergencyContact",
+    "SafetyCheckIn",
+    "RegisterRequest",
+    "LoginRequest",
+    "AuthSessionResponse",
+  ])
+    assert.ok(models[name]);
+  assert.equal(models.User.properties.password, undefined);
+  assert.equal(models.LoginRequest.properties.password.writeOnly, true);
+  assert.equal(
+    doc.paths["/auth/register"].post.requestBody.content["application/json"]
+      .schema.$ref,
+    "#/components/schemas/RegisterRequest",
+  );
+  assert.equal(
+    doc.paths["/contacts"].get.responses["200"].content["application/json"]
+      .schema.$ref,
+    "#/components/schemas/ContactListResponse",
+  );
+  function checkReferences(value) {
+    if (!value || typeof value !== "object") return;
+    if (value.$ref) {
+      assert.ok(value.$ref.startsWith("#/components/schemas/"));
+      assert.ok(
+        models[value.$ref.split("/").at(-1)],
+        `Unresolved schema ${value.$ref}`,
+      );
+    }
+    for (const child of Object.values(value)) checkReferences(child);
+  }
+  checkReferences(doc);
   for (const path of [
     "/contacts",
     "/contacts/{id}",

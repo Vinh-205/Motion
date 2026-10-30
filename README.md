@@ -45,6 +45,8 @@ Domain riêng dự kiến cho đồ án: **`motion-api.vihx.online`**. **`api.vi
 
 ### Kiến trúc cuối kỳ
 
+Swagger UI tại `/docs/` có mục **Schemas** ở cuối trang, gồm 24 model request/response dùng chung (ví dụ `User`, `EmergencyContact`, `SafetyCheckIn`, `RegisterRequest`, `LoginRequest`, `AuthSessionResponse`). Endpoint tham chiếu model qua `$ref`; mở từng model để xem trường bắt buộc, kiểu dữ liệu và giới hạn nhập. Mật khẩu chỉ nằm trong request với `writeOnly`, không có trong model trả về `User`.
+
 ```mermaid
 flowchart TD
     Flutter["Flutter Motion"] -->|"HTTPS / Bearer JWT"| API["motion-api.vihx.online · Fastify API"]

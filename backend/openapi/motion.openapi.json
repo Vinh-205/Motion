@@ -13,7 +13,634 @@
         "bearerFormat": "JWT"
       }
     },
-    "schemas": {}
+    "schemas": {
+      "User": {
+        "title": "User",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role",
+          "verified",
+          "active",
+          "assignedStaffId",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "staff",
+              "member"
+            ]
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "assignedStaffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "integer",
+            "description": "Unix timestamp (milliseconds, UTC)"
+          }
+        }
+      },
+      "EmergencyContact": {
+        "title": "EmergencyContact",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "ownerId",
+          "name",
+          "phone",
+          "relationship",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "integer",
+            "description": "Unix timestamp (milliseconds, UTC)"
+          },
+          "updatedAt": {
+            "type": "integer",
+            "description": "Unix timestamp (milliseconds, UTC)"
+          }
+        }
+      },
+      "SafetyCheckIn": {
+        "title": "SafetyCheckIn",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "ownerId",
+          "title",
+          "dueAt",
+          "status",
+          "note",
+          "overdue",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "dueAt": {
+            "type": "integer",
+            "description": "Unix timestamp (milliseconds, UTC)"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "safe",
+              "needs_help",
+              "resolved"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "overdue": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "integer",
+            "description": "Unix timestamp (milliseconds, UTC)"
+          },
+          "updatedAt": {
+            "type": "integer",
+            "description": "Unix timestamp (milliseconds, UTC)"
+          }
+        }
+      },
+      "MessageResponse": {
+        "title": "MessageResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "OtpChallengeResponse": {
+        "title": "OtpChallengeResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "challengeId",
+          "expiresIn",
+          "message"
+        ],
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "example": 300
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthSessionResponse": {
+        "title": "AuthSessionResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "user"
+        ],
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Bearer token; expires after 12 hours; revoked by logout/reset/lock/role change"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "example": 43200
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "HealthResponse": {
+        "title": "HealthResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "service"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          }
+        }
+      },
+      "UserListResponse": {
+        "title": "UserListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        }
+      },
+      "ContactListResponse": {
+        "title": "ContactListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmergencyContact"
+            }
+          }
+        }
+      },
+      "CheckInListResponse": {
+        "title": "CheckInListResponse",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SafetyCheckIn"
+            }
+          }
+        }
+      },
+      "RegisterRequest": {
+        "title": "RegisterRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "name",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 128,
+            "format": "password",
+            "writeOnly": true
+          }
+        }
+      },
+      "VerifyEmailRequest": {
+        "title": "VerifyEmailRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "challengeId",
+          "code"
+        ],
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          }
+        }
+      },
+      "LoginRequest": {
+        "title": "LoginRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "format": "password",
+            "writeOnly": true
+          }
+        }
+      },
+      "VerifyLoginOtpRequest": {
+        "title": "VerifyLoginOtpRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "challengeId",
+          "code"
+        ],
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "title": "ForgotPasswordRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "title": "ResetPasswordRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "challengeId",
+          "code",
+          "password"
+        ],
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 128,
+            "format": "password",
+            "writeOnly": true
+          }
+        }
+      },
+      "UpdateProfileRequest": {
+        "title": "UpdateProfileRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
+      },
+      "DeleteAccountRequest": {
+        "title": "DeleteAccountRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "format": "password",
+            "writeOnly": true
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "title": "CreateUserRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "name",
+          "password",
+          "role"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 128,
+            "format": "password",
+            "writeOnly": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "staff",
+              "member"
+            ]
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "title": "UpdateUserRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "staff",
+              "member"
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "assignedStaffId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
+      "CreateContactRequest": {
+        "title": "CreateContactRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "phone"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "relationship": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 80
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateContactRequest": {
+        "title": "UpdateContactRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "relationship": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 80
+          }
+        }
+      },
+      "CreateCheckInRequest": {
+        "title": "CreateCheckInRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "dueAt"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "dueAt": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8640000000000000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "safe",
+              "needs_help",
+              "resolved"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 1000
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateCheckInRequest": {
+        "title": "UpdateCheckInRequest",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "dueAt": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8640000000000000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "safe",
+              "needs_help",
+              "resolved"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 1000
+          }
+        }
+      }
+    }
   },
   "paths": {
     "/health": {
@@ -28,21 +655,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "status",
-                    "service"
-                  ],
-                  "properties": {
-                    "status": {
-                      "type": "string"
-                    },
-                    "service": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
@@ -52,17 +665,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -72,17 +675,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -92,17 +685,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -112,17 +695,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -132,17 +705,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -152,17 +715,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -172,17 +725,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -192,17 +735,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -221,30 +754,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "email",
-                  "name",
-                  "password"
-                ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "maxLength": 254
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 10,
-                    "maxLength": 128
-                  }
-                }
+                "$ref": "#/components/schemas/RegisterRequest"
               }
             }
           }
@@ -255,27 +765,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "challengeId",
-                    "expiresIn",
-                    "message"
-                  ],
-                  "properties": {
-                    "challengeId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "expiresIn": {
-                      "type": "integer",
-                      "example": 300
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/OtpChallengeResponse"
                 }
               }
             }
@@ -285,17 +775,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -305,17 +785,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -325,17 +795,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -345,17 +805,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -365,17 +815,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -385,17 +825,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -405,17 +835,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -425,17 +845,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -454,22 +864,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "challengeId",
-                  "code"
-                ],
-                "properties": {
-                  "challengeId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "code": {
-                    "type": "string",
-                    "pattern": "^\\d{6}$"
-                  }
-                }
+                "$ref": "#/components/schemas/VerifyEmailRequest"
               }
             }
           }
@@ -480,17 +875,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -500,17 +885,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -520,17 +895,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -540,17 +905,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -560,17 +915,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -580,17 +925,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -600,17 +935,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -620,17 +945,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -640,17 +955,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -669,24 +974,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "email",
-                  "password"
-                ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "maxLength": 254
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 128
-                  }
-                }
+                "$ref": "#/components/schemas/LoginRequest"
               }
             }
           }
@@ -697,27 +985,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "challengeId",
-                    "expiresIn",
-                    "message"
-                  ],
-                  "properties": {
-                    "challengeId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "expiresIn": {
-                      "type": "integer",
-                      "example": 300
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/OtpChallengeResponse"
                 }
               }
             }
@@ -727,17 +995,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -747,17 +1005,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -767,17 +1015,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -787,17 +1025,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -807,17 +1035,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -827,17 +1045,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -847,17 +1055,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -867,17 +1065,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -896,22 +1084,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "challengeId",
-                  "code"
-                ],
-                "properties": {
-                  "challengeId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "code": {
-                    "type": "string",
-                    "pattern": "^\\d{6}$"
-                  }
-                }
+                "$ref": "#/components/schemas/VerifyLoginOtpRequest"
               }
             }
           }
@@ -922,73 +1095,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "accessToken",
-                    "expiresIn",
-                    "user"
-                  ],
-                  "properties": {
-                    "accessToken": {
-                      "type": "string",
-                      "description": "Bearer token; expires after 12 hours; revoked by logout/reset/lock/role change"
-                    },
-                    "expiresIn": {
-                      "type": "integer",
-                      "example": 43200
-                    },
-                    "user": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "required": [
-                        "id",
-                        "email",
-                        "name",
-                        "role",
-                        "verified",
-                        "active",
-                        "assignedStaffId",
-                        "createdAt"
-                      ],
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid"
-                        },
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "role": {
-                          "type": "string",
-                          "enum": [
-                            "admin",
-                            "staff",
-                            "member"
-                          ]
-                        },
-                        "verified": {
-                          "type": "boolean"
-                        },
-                        "active": {
-                          "type": "boolean"
-                        },
-                        "assignedStaffId": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "createdAt": {
-                          "type": "integer",
-                          "description": "Unix timestamp (milliseconds, UTC)"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthSessionResponse"
                 }
               }
             }
@@ -998,17 +1105,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1018,17 +1115,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1038,17 +1125,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1058,17 +1135,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1078,17 +1145,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1098,17 +1155,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1118,17 +1165,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1138,17 +1175,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1167,18 +1194,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "email"
-                ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "maxLength": 254
-                  }
-                }
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
               }
             }
           }
@@ -1189,27 +1205,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "challengeId",
-                    "expiresIn",
-                    "message"
-                  ],
-                  "properties": {
-                    "challengeId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "expiresIn": {
-                      "type": "integer",
-                      "example": 300
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/OtpChallengeResponse"
                 }
               }
             }
@@ -1219,17 +1215,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1239,17 +1225,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1259,17 +1235,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1279,17 +1245,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1299,17 +1255,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1319,17 +1265,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1339,17 +1275,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1359,17 +1285,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1388,28 +1304,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "challengeId",
-                  "code",
-                  "password"
-                ],
-                "properties": {
-                  "challengeId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "code": {
-                    "type": "string",
-                    "pattern": "^\\d{6}$"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 10,
-                    "maxLength": 128
-                  }
-                }
+                "$ref": "#/components/schemas/ResetPasswordRequest"
               }
             }
           }
@@ -1420,17 +1315,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1440,17 +1325,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1460,17 +1335,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1480,17 +1345,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1500,17 +1355,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1520,17 +1365,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1540,17 +1375,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1560,17 +1385,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1580,17 +1395,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1615,17 +1420,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1635,17 +1430,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1655,17 +1440,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1675,17 +1450,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1695,17 +1460,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1715,17 +1470,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1735,17 +1480,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1755,17 +1490,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1775,17 +1500,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1810,54 +1525,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "email",
-                    "name",
-                    "role",
-                    "verified",
-                    "active",
-                    "assignedStaffId",
-                    "createdAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "role": {
-                      "type": "string",
-                      "enum": [
-                        "admin",
-                        "staff",
-                        "member"
-                      ]
-                    },
-                    "verified": {
-                      "type": "boolean"
-                    },
-                    "active": {
-                      "type": "boolean"
-                    },
-                    "assignedStaffId": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }
@@ -1867,17 +1535,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1887,17 +1545,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1907,17 +1555,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1927,17 +1565,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1947,17 +1575,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1967,17 +1585,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -1987,17 +1595,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2007,17 +1605,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2034,18 +1622,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "name"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateProfileRequest"
               }
             }
           }
@@ -2061,54 +1638,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "email",
-                    "name",
-                    "role",
-                    "verified",
-                    "active",
-                    "assignedStaffId",
-                    "createdAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "role": {
-                      "type": "string",
-                      "enum": [
-                        "admin",
-                        "staff",
-                        "member"
-                      ]
-                    },
-                    "verified": {
-                      "type": "boolean"
-                    },
-                    "active": {
-                      "type": "boolean"
-                    },
-                    "assignedStaffId": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }
@@ -2118,17 +1648,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2138,17 +1658,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2158,17 +1668,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2178,17 +1678,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2198,17 +1688,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2218,17 +1698,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2238,17 +1708,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2258,17 +1718,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2285,18 +1735,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "password"
-                ],
-                "properties": {
-                  "password": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 128
-                  }
-                }
+                "$ref": "#/components/schemas/DeleteAccountRequest"
               }
             }
           }
@@ -2312,17 +1751,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2332,17 +1761,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2352,17 +1771,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2372,17 +1781,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2392,17 +1791,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2412,17 +1801,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2432,17 +1811,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2452,17 +1821,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2472,17 +1831,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2507,66 +1856,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "items"
-                  ],
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "required": [
-                          "id",
-                          "email",
-                          "name",
-                          "role",
-                          "verified",
-                          "active",
-                          "assignedStaffId",
-                          "createdAt"
-                        ],
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "email": {
-                            "type": "string",
-                            "format": "email"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "role": {
-                            "type": "string",
-                            "enum": [
-                              "admin",
-                              "staff",
-                              "member"
-                            ]
-                          },
-                          "verified": {
-                            "type": "boolean"
-                          },
-                          "active": {
-                            "type": "boolean"
-                          },
-                          "assignedStaffId": {
-                            "type": "string",
-                            "nullable": true
-                          },
-                          "createdAt": {
-                            "type": "integer",
-                            "description": "Unix timestamp (milliseconds, UTC)"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/UserListResponse"
                 }
               }
             }
@@ -2576,17 +1866,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2596,17 +1876,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2616,17 +1886,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2636,17 +1896,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2656,17 +1906,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2676,17 +1916,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2696,17 +1926,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2716,17 +1936,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2743,39 +1953,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "email",
-                  "name",
-                  "password",
-                  "role"
-                ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "maxLength": 254
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 10,
-                    "maxLength": 128
-                  },
-                  "role": {
-                    "type": "string",
-                    "enum": [
-                      "admin",
-                      "staff",
-                      "member"
-                    ]
-                  }
-                }
+                "$ref": "#/components/schemas/CreateUserRequest"
               }
             }
           }
@@ -2791,54 +1969,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "email",
-                    "name",
-                    "role",
-                    "verified",
-                    "active",
-                    "assignedStaffId",
-                    "createdAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "role": {
-                      "type": "string",
-                      "enum": [
-                        "admin",
-                        "staff",
-                        "member"
-                      ]
-                    },
-                    "verified": {
-                      "type": "boolean"
-                    },
-                    "active": {
-                      "type": "boolean"
-                    },
-                    "assignedStaffId": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }
@@ -2848,17 +1979,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2868,17 +1989,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2888,17 +1999,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2908,17 +2009,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2928,17 +2019,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2948,17 +2029,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2968,17 +2039,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -2988,17 +2049,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3034,54 +2085,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "email",
-                    "name",
-                    "role",
-                    "verified",
-                    "active",
-                    "assignedStaffId",
-                    "createdAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "role": {
-                      "type": "string",
-                      "enum": [
-                        "admin",
-                        "staff",
-                        "member"
-                      ]
-                    },
-                    "verified": {
-                      "type": "boolean"
-                    },
-                    "active": {
-                      "type": "boolean"
-                    },
-                    "assignedStaffId": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }
@@ -3091,17 +2095,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3111,17 +2105,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3131,17 +2115,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3151,17 +2125,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3171,17 +2135,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3191,17 +2145,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3211,17 +2155,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3231,17 +2165,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3258,32 +2182,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
-                  },
-                  "role": {
-                    "type": "string",
-                    "enum": [
-                      "admin",
-                      "staff",
-                      "member"
-                    ]
-                  },
-                  "active": {
-                    "type": "boolean"
-                  },
-                  "assignedStaffId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateUserRequest"
               }
             }
           }
@@ -3310,54 +2209,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "email",
-                    "name",
-                    "role",
-                    "verified",
-                    "active",
-                    "assignedStaffId",
-                    "createdAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "role": {
-                      "type": "string",
-                      "enum": [
-                        "admin",
-                        "staff",
-                        "member"
-                      ]
-                    },
-                    "verified": {
-                      "type": "boolean"
-                    },
-                    "active": {
-                      "type": "boolean"
-                    },
-                    "assignedStaffId": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }
@@ -3367,17 +2219,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3387,17 +2229,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3407,17 +2239,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3427,17 +2249,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3447,17 +2259,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3467,17 +2269,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3487,17 +2279,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3507,17 +2289,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3551,17 +2323,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3571,17 +2333,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3591,17 +2343,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3611,17 +2353,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3631,17 +2363,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3651,17 +2373,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3671,17 +2383,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3691,17 +2393,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3711,17 +2403,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3757,57 +2439,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "items"
-                  ],
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "required": [
-                          "id",
-                          "ownerId",
-                          "name",
-                          "phone",
-                          "relationship",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "ownerId": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "phone": {
-                            "type": "string"
-                          },
-                          "relationship": {
-                            "type": "string"
-                          },
-                          "createdAt": {
-                            "type": "integer",
-                            "description": "Unix timestamp (milliseconds, UTC)"
-                          },
-                          "updatedAt": {
-                            "type": "integer",
-                            "description": "Unix timestamp (milliseconds, UTC)"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/ContactListResponse"
                 }
               }
             }
@@ -3817,17 +2449,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3837,17 +2459,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3857,17 +2469,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3877,17 +2479,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3897,17 +2489,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3917,17 +2499,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3937,17 +2509,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3957,17 +2519,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -3984,33 +2536,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "name",
-                  "phone"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
-                  },
-                  "phone": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 30
-                  },
-                  "relationship": {
-                    "type": "string",
-                    "minLength": 0,
-                    "maxLength": 80
-                  },
-                  "ownerId": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
+                "$ref": "#/components/schemas/CreateContactRequest"
               }
             }
           }
@@ -4026,45 +2552,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "ownerId",
-                    "name",
-                    "phone",
-                    "relationship",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "ownerId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "phone": {
-                      "type": "string"
-                    },
-                    "relationship": {
-                      "type": "string"
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "updatedAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/EmergencyContact"
                 }
               }
             }
@@ -4074,17 +2562,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4094,17 +2572,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4114,17 +2582,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4134,17 +2592,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4154,17 +2602,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4174,17 +2612,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4194,17 +2622,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4214,17 +2632,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4260,45 +2668,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "ownerId",
-                    "name",
-                    "phone",
-                    "relationship",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "ownerId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "phone": {
-                      "type": "string"
-                    },
-                    "relationship": {
-                      "type": "string"
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "updatedAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/EmergencyContact"
                 }
               }
             }
@@ -4308,17 +2678,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4328,17 +2688,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4348,17 +2698,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4368,17 +2708,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4388,17 +2718,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4408,17 +2728,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4428,17 +2738,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4448,17 +2748,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4492,17 +2782,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4512,17 +2792,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4532,17 +2802,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4552,17 +2812,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4572,17 +2822,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4592,17 +2832,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4612,17 +2842,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4632,17 +2852,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4652,17 +2862,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4679,26 +2879,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 80
-                  },
-                  "phone": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 30
-                  },
-                  "relationship": {
-                    "type": "string",
-                    "minLength": 0,
-                    "maxLength": 80
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateContactRequest"
               }
             }
           }
@@ -4725,45 +2906,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "ownerId",
-                    "name",
-                    "phone",
-                    "relationship",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "ownerId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "phone": {
-                      "type": "string"
-                    },
-                    "relationship": {
-                      "type": "string"
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "updatedAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/EmergencyContact"
                 }
               }
             }
@@ -4773,17 +2916,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4793,17 +2926,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4813,17 +2936,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4833,17 +2946,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4853,17 +2956,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4873,17 +2966,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4893,17 +2976,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4913,17 +2986,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -4959,72 +3022,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "items"
-                  ],
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "required": [
-                          "id",
-                          "ownerId",
-                          "title",
-                          "dueAt",
-                          "status",
-                          "note",
-                          "overdue",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "ownerId": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "title": {
-                            "type": "string"
-                          },
-                          "dueAt": {
-                            "type": "integer",
-                            "description": "Unix timestamp (milliseconds, UTC)"
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "pending",
-                              "safe",
-                              "needs_help",
-                              "resolved"
-                            ]
-                          },
-                          "note": {
-                            "type": "string"
-                          },
-                          "overdue": {
-                            "type": "boolean"
-                          },
-                          "createdAt": {
-                            "type": "integer",
-                            "description": "Unix timestamp (milliseconds, UTC)"
-                          },
-                          "updatedAt": {
-                            "type": "integer",
-                            "description": "Unix timestamp (milliseconds, UTC)"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/CheckInListResponse"
                 }
               }
             }
@@ -5034,17 +3032,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5054,17 +3042,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5074,17 +3052,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5094,17 +3062,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5114,17 +3072,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5134,17 +3082,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5154,17 +3092,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5174,17 +3102,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5201,42 +3119,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "title",
-                  "dueAt"
-                ],
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 120
-                  },
-                  "dueAt": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 8640000000000000
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "pending",
-                      "safe",
-                      "needs_help",
-                      "resolved"
-                    ]
-                  },
-                  "note": {
-                    "type": "string",
-                    "minLength": 0,
-                    "maxLength": 1000
-                  },
-                  "ownerId": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
+                "$ref": "#/components/schemas/CreateCheckInRequest"
               }
             }
           }
@@ -5252,60 +3135,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "ownerId",
-                    "title",
-                    "dueAt",
-                    "status",
-                    "note",
-                    "overdue",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "ownerId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "dueAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "pending",
-                        "safe",
-                        "needs_help",
-                        "resolved"
-                      ]
-                    },
-                    "note": {
-                      "type": "string"
-                    },
-                    "overdue": {
-                      "type": "boolean"
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "updatedAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/SafetyCheckIn"
                 }
               }
             }
@@ -5315,17 +3145,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5335,17 +3155,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5355,17 +3165,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5375,17 +3175,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5395,17 +3185,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5415,17 +3195,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5435,17 +3205,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5455,17 +3215,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5501,60 +3251,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "ownerId",
-                    "title",
-                    "dueAt",
-                    "status",
-                    "note",
-                    "overdue",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "ownerId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "dueAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "pending",
-                        "safe",
-                        "needs_help",
-                        "resolved"
-                      ]
-                    },
-                    "note": {
-                      "type": "string"
-                    },
-                    "overdue": {
-                      "type": "boolean"
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "updatedAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/SafetyCheckIn"
                 }
               }
             }
@@ -5564,17 +3261,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5584,17 +3271,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5604,17 +3281,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5624,17 +3291,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5644,17 +3301,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5664,17 +3311,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5684,17 +3321,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5704,17 +3331,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5748,17 +3365,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5768,17 +3375,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5788,17 +3385,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5808,17 +3395,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5828,17 +3405,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5848,17 +3415,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5868,17 +3425,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5888,17 +3435,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5908,17 +3445,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -5935,35 +3462,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [],
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 120
-                  },
-                  "dueAt": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 8640000000000000
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "pending",
-                      "safe",
-                      "needs_help",
-                      "resolved"
-                    ]
-                  },
-                  "note": {
-                    "type": "string",
-                    "minLength": 0,
-                    "maxLength": 1000
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateCheckInRequest"
               }
             }
           }
@@ -5990,60 +3489,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Thành công",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "id",
-                    "ownerId",
-                    "title",
-                    "dueAt",
-                    "status",
-                    "note",
-                    "overdue",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "ownerId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "dueAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "pending",
-                        "safe",
-                        "needs_help",
-                        "resolved"
-                      ]
-                    },
-                    "note": {
-                      "type": "string"
-                    },
-                    "overdue": {
-                      "type": "boolean"
-                    },
-                    "createdAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    },
-                    "updatedAt": {
-                      "type": "integer",
-                      "description": "Unix timestamp (milliseconds, UTC)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/SafetyCheckIn"
                 }
               }
             }
@@ -6053,17 +3499,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu không hợp lệ hoặc OTP hết hạn/sai/đã dùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -6073,17 +3509,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Chưa đăng nhập, phiên hết hạn/bị thu hồi hoặc sai thông tin đăng nhập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -6093,17 +3519,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không đủ quyền truy cập",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -6113,17 +3529,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Không tìm thấy hoặc không có quyền sở hữu bản ghi",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -6133,17 +3539,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dữ liệu trùng lặp/xung đột hoặc quản trị viên cuối cùng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -6153,17 +3549,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Vượt giới hạn yêu cầu; đợi trước khi thử lại",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -6173,17 +3559,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Lỗi máy chủ",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -6193,17 +3569,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "Dịch vụ gửi email chưa khả dụng",
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "message"
-                  ],
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
