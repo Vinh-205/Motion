@@ -177,92 +177,107 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
     return text.contains(query.trim().toLowerCase());
   }).toList();
 
-  Widget _userCard(Map<String, dynamic> user) => SurfacePanel(
-    child: Column(
+  static String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    if (parts.isEmpty) return '?';
+    final first = parts.first.characters.first;
+    final last = parts.length > 1 ? parts.last.characters.first : '';
+    return (first + last).toUpperCase();
+  }
+
+  Widget _userCard(Map<String, dynamic> user) => Container(
+    padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
+    decoration: BoxDecoration(
+      color: context.colors.surface,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: context.colors.line.withValues(alpha: 0.65)),
+    ),
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: context.colors.lime.withValues(alpha: .10),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: MorphIcon(
-                user['role'] == 'admin' ? AppGlyph.shieldCheck : AppGlyph.user,
-                color: context.colors.lime,
-                size: 23,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user['name'] as String,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user['email'] as String,
-                    style: TextStyle(color: context.colors.muted, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            if (widget.api.role == 'admin')
-              PopupMenuButton<String>(
-                tooltip: 'Quản lý tài khoản',
-                icon: const MorphIcon(AppGlyph.sliders, size: 21),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Sửa / phân quyền')),
-                  PopupMenuItem(value: 'delete', child: Text('Xóa tài khoản')),
-                ],
-                onSelected: (action) async {
-                  if (action == 'edit') {
-                    await _editUser(user);
-                    return;
-                  }
-                  if (await confirmCloudDelete(
-                    context,
-                    'Xóa ${user['name']} và toàn bộ dữ liệu đám mây?',
-                  )) {
-                    await _run(() async {
-                      await widget.api.request(
-                        'DELETE',
-                        '/users/${user['id']}',
-                      );
-                    });
-                  }
-                },
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _RolePill(
-              label: roleLabel(user['role'] as String),
+        Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: context.colors.lime.withValues(alpha: .12),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            _initials(user['name'] as String),
+            textScaler: TextScaler.noScaling,
+            style: TextStyle(
               color: context.colors.lime,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
             ),
-            _RolePill(
-              label: user['active'] == true ? 'Đang hoạt động' : 'Đã khóa',
-              color: user['active'] == true
-                  ? context.colors.muted
-                  : context.colors.red,
-            ),
-            if (user['verified'] != true)
-              _RolePill(
-                label: 'Chưa xác thực email',
-                color: context.colors.orange,
-              ),
-          ],
+          ),
         ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user['name'] as String,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                user['email'] as String,
+                style: TextStyle(color: context.colors.muted, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _RolePill(
+                    label: roleLabel(user['role'] as String),
+                    color: context.colors.lime,
+                  ),
+                  _RolePill(
+                    label: user['active'] == true ? 'Đang hoạt động' : 'Đã khóa',
+                    color: user['active'] == true
+                        ? context.colors.muted
+                        : context.colors.red,
+                  ),
+                  if (user['verified'] != true)
+                    _RolePill(
+                      label: 'Chưa xác thực email',
+                      color: context.colors.orange,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (widget.api.role == 'admin')
+          PopupMenuButton<String>(
+            tooltip: 'Quản lý tài khoản',
+            icon: const MorphIcon(AppGlyph.sliders, size: 20),
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'edit', child: Text('Sửa / phân quyền')),
+              PopupMenuItem(value: 'delete', child: Text('Xóa tài khoản')),
+            ],
+            onSelected: (action) async {
+              if (action == 'edit') {
+                await _editUser(user);
+                return;
+              }
+              if (await confirmCloudDelete(
+                context,
+                'Xóa ${user['name']} và toàn bộ dữ liệu đám mây?',
+              )) {
+                await _run(() async {
+                  await widget.api.request('DELETE', '/users/${user['id']}');
+                });
+              }
+            },
+          ),
       ],
     ),
   );
@@ -337,78 +352,77 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                     ),
                   ),
                 if (api.role != 'member') ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    api.role == 'admin'
-                        ? 'Tài khoản & phân quyền'
-                        : 'Người được phân công',
-                    style: Theme.of(context).textTheme.titleLarge,
+                  const SizedBox(height: 12),
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      Text(
+                        api.role == 'admin'
+                            ? 'Tài khoản & phân quyền'
+                            : 'Người được phân công',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      if (api.role == 'admin')
+                        FilledButton.icon(
+                          onPressed: busy ? null : _editUser,
+                          icon: const MorphIcon(AppGlyph.user, size: 16),
+                          label: const Text('TẠO TÀI KHOẢN'),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     api.role == 'admin'
                         ? 'Cấp đúng quyền. Phân công đúng người.'
                         : 'Chỉ những người được giao cho bạn xuất hiện tại đây.',
-                    style: TextStyle(color: context.colors.muted),
+                    style: TextStyle(color: context.colors.muted, fontSize: 12),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   TextField(
                     key: const Key('accountSearch'),
                     onChanged: (value) => setState(() => query = value),
                     decoration: const InputDecoration(
                       labelText: 'Tìm theo tên hoặc email',
+                      isDense: true,
                       prefixIcon: Padding(
-                        padding: EdgeInsets.all(14),
-                        child: MorphIcon(AppGlyph.users, size: 20),
+                        padding: EdgeInsets.all(12),
+                        child: MorphIcon(AppGlyph.users, size: 18),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  if (api.role == 'admin')
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
+                  if (api.role == 'admin') ...[
+                    const SizedBox(height: 10),
+                    Wrap(
                       key: const Key('roleFilter'),
-                      initialValue: roleFilter,
-                      decoration: const InputDecoration(
-                        labelText: 'Lọc vai trò',
-                        isDense: true,
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'all',
-                          child: Text('Tất cả vai trò'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'member',
-                          child: Text('Người dùng'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'staff',
-                          child: Text('Nhân viên'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'admin',
-                          child: Text('Quản trị'),
-                        ),
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final (value, label) in const [
+                          ('all', 'Tất cả'),
+                          ('member', 'Người dùng'),
+                          ('staff', 'Nhân viên'),
+                          ('admin', 'Quản trị'),
+                        ])
+                          ChoiceChip(
+                            label: Text(
+                              '$label · ${value == 'all' ? users.length : users.where((u) => u['role'] == value).length}',
+                            ),
+                            selected: roleFilter == value,
+                            showCheckmark: false,
+                            visualDensity: VisualDensity.compact,
+                            onSelected: (_) =>
+                                setState(() => roleFilter = value),
+                          ),
                       ],
-                      onChanged: (value) =>
-                          setState(() => roleFilter = value ?? 'all'),
                     ),
-                  if (api.role == 'admin')
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: FilledButton(
-                          onPressed: busy ? null : _editUser,
-                          child: const Text('TẠO TÀI KHOẢN'),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 8),
+                  ],
+                  const SizedBox(height: 14),
                   for (final user in visibleUsers)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: _userCard(user),
                     ),
                   if (!busy && visibleUsers.isEmpty)
