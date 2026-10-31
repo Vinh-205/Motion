@@ -107,3 +107,7 @@ Vị trí trong SMS vẫn lấy từ lần đọc gần nhất. Nếu dịch v�
 | API và tài liệu | API HTTPS trên Render, Neon lưu tài khoản, Resend gửi OTP, DNS Cloudflare; Swagger/Schemas, README cài đặt/sử dụng/nơi lưu dữ liệu và Mermaid đồng bộ source | [Swagger](https://motion-api.vihx.online/docs), [OpenAPI trong repo](backend/openapi/motion.openapi.json), [Mermaid](docs/diagrams) |
 
 **Đã kiểm chứng:** 101 Flutter tests, 22 Android unit tests, 27 backend tests, 23 PostgreSQL-compatible tests; integration máy ảo xác nhận đếm ngược chạy nền khi khóa, mở thẻ bằng thông báo và dữ liệu thẻ lưu mã hóa. SMS/gọi trong integration là dry-run. Chưa công bố độ chính xác phát hiện ngã thực tế; cần thử lại SMS/cuộc gọi/cảm biến, pin và khóa màn hình trên điện thoại đích. Google OAuth thật chưa được xác nhận. APK này là bản test, không phải bản đã phát hành lên Play Store/App Store.
+
+### Theo dõi 1.1.4: sửa vùng xám
+
+mục chẩn đoán có `Material` riêng và `PageStorageKey` riêng; không đọc nhầm số vị trí cuộn thành trạng thái bool của ExpansionTile. Đã thêm kiểm thử cuộn xuống/mở chẩn đoán.

@@ -4,7 +4,6 @@
 
 **Phiên bản: 1.1.5+11** (source và APK khớp nhau) · [Nhật ký thay đổi](CHANGELOG.md) · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
 
-
 ## Tải APK để tham gia test (không cần máy tính)
 
 Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.1.5 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.1.5-test.11/Motion-1.1.5-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
@@ -28,8 +27,6 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 ```text
 2738ecc53515baed164bf430c368d4689e5eefa03ba33bbb7638e883666185bd
 ```
-
-
 
 **Xem nhanh:** [Bố cục](#bố-cục-và-sử-dụng-bản-mới) · [Đồ án cuối kỳ / backend](#đồ-án-cuối-kỳ--tài-khoản-backend-và-thẻ-khẩn-cấp) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Chạy từ source](#cài-môi-trường-phát-triển-và-chạy-source) · [Ghi chú kỹ thuật](#ghi-chú-kỹ-thuật).
 
@@ -83,8 +80,6 @@ Android quyết định có cho mở toàn màn hình hay chỉ hiện thông b�
 **Cách chủ dự án tự đối chiếu:** vào [Neon Console](https://console.neon.tech/) → project Motion → SQL Editor, chạy `SELECT id,email,name,role,active FROM users;` và `SELECT id,user_id,expires_at FROM sessions;`. Kiểm tra mật khẩu bằng `SELECT id, (password LIKE 'scrypt:%') AS hashed FROM users;` để xem cờ hash, không xuất hash/mật khẩu ra README. Dùng Swagger đăng nhập rồi gọi `/me` để đối chiếu tên/email/vai trò; không đăng ảnh token, OTP, database URL hoặc dữ liệu sức khỏe thật lên GitHub. API public không có nghĩa database public; chỉ chủ tài khoản Neon/Render và người có quyền ứng dụng tương ứng được xem dữ liệu.
 
 Minh chứng kiểm thử cơ chế thẻ: [Flutter CRUD/cache session](test/emergency_card_test.dart), [chốt đọc khi khóa](android/app/src/test/kotlin/com/example/cam_bien_te_nga/EmergencyCardPolicyTest.kt), [integration Android không gửi/gọi thật](integration_test/device_safety_test.dart). Chạy `python tool/test_background_sos.py --flutter <flutter.bat> --lock` trên máy ảo test chưa bật SOS thật, không có PIN cần nhập. Runner khóa trong countdown, kiểm tra màn hình thẻ native và mở khóa để khôi phục dữ liệu thử. Không dùng script này trên điện thoại đang giám sát thật.
-
-**Sửa vùng xám ở Theo dõi 1.1.4:** mục chẩn đoán có `Material` riêng và `PageStorageKey` riêng; không đọc nhầm số vị trí cuộn thành trạng thái bool của ExpansionTile. Đã thêm kiểm thử cuộn xuống/mở chẩn đoán.
 
 Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay trong README này. Người test chỉ cần điện thoại Android; không cần tải source hay cài công cụ lập trình.
 
@@ -325,6 +320,8 @@ Chọn thời gian xác nhận phù hợp (ví dụ 30 giây), độ nhạy và 
 Từ **Theo dõi**, mở **Bắt đầu giám sát**, kiểm tra các mục thiết lập và nhấn bắt đầu. Cho phép các quyền cần thiết; các quyền mở màn hình cảnh báo và cài đặt pin cần làm theo hướng dẫn riêng trên thiết bị.
 
 Sau khi bật cả Phát hiện té ngã và Giám sát khi rời app, có thể về Home hoặc khóa màn hình. Kiểm tra thông báo giám sát còn hiện. Không force-stop app. Sau khi khởi động lại máy, giám sát nền tự bật lại nếu trước đó đã bật SOS thật và giám sát nền; vẫn nên kiểm tra thông báo giám sát còn hiện. Muốn ngừng phát hiện khi rời giao diện, tắt **Giám sát khi rời app**; khi mở app, phát hiện vẫn hoạt động nếu **Phát hiện té ngã** đang bật. Muốn dừng toàn bộ phát hiện tự động, tắt **Phát hiện té ngã**. Cảnh báo đang đếm ngược vẫn cần xử lý bằng TÔI ỔN hoặc gửi trợ giúp.
+
+**Lắc mạnh để gọi SOS (tùy chọn):** Cài đặt → bật **Lắc mạnh để gọi SOS** (mặc định tắt, cần **Phát hiện té ngã** đang bật). Lắc điện thoại mạnh qua lại khoảng 2 giây sẽ mở cảnh báo có chuông và đếm ngược như khi phát hiện ngã; bấm **TÔI ỔN** để hủy. Chạy bộ, nhảy hoặc đi bộ không kích hoạt; sau mỗi lần có 10 giây nghỉ. Báo trước cho người nhận khi thử.
 
 ### Bước 5 — Xử lý khi có cảnh báo
 
@@ -633,7 +630,6 @@ flutter pub get
 
 Origin phải trỏ đến `https://github.com/Vinh-205/Motion.git`. Chỉ pull khi thay đổi cục bộ đã được lưu/commit phù hợp. Giữ khóa ký, mật khẩu, SDK riêng, cache và build ngoài Git.
 
-
 ## Chức năng và cách SOS hoạt động
 
 - Phát hiện bằng dịch vụ Android; giám sát khi rời app là tùy chọn độc lập, không tắt phát hiện khi app mở. Chưa thiết lập thì hiển thị **Chưa bật SOS**, không tạo SOS giả. Bản release không có nút mô phỏng.
@@ -665,6 +661,7 @@ Origin phải trỏ đến `https://github.com/Vinh-205/Motion.git`. Chỉ pull 
 | Cảm biến, countdown, SMS nhiều người, gọi đúng số đã chốt | Có kiểm thử logic/native dry-run; không chạm API gửi/gọi thật trong dry-run |
 | SMS và vị trí thật | Trước đây có máy gửi thành công; đợt test 27/10/2026 báo có máy không gửi. Bản 1.0.2 sửa luồng quyền và chẩn đoán lỗi; cần xác nhận lại trên máy bị lỗi |
 | Cuộc gọi thật | Người dùng báo đã có cuộc gọi đi; kết nối/loa/SIM vẫn cần kiểm chứng trên từng máy |
+| Lắc mạnh gọi SOS, tự bật lại giám sát sau reboot, báo ngã khi thả rơi và nảy | Có unit test và mô phỏng; chưa thử trên điện thoại thật |
 | Phát hiện té ngã thực tế | Chưa đo tỷ lệ bỏ sót/báo giả trên tập dữ liệu thực tế |
 | Giám sát dài hạn/khóa máy | Cần thử theo thiết bị; force-stop, khởi động lại, thu hồi quyền, lỗi SIM/sóng và tiết kiệm pin có thể làm gián đoạn |
 | Phát hành cửa hàng | Chưa tải lên hoặc được Google Play/App Store duyệt; GitHub Releases là kênh phân phối bản test |
@@ -771,7 +768,6 @@ https://app.lottiefiles.com/share/077eef8e-eac1-4cf5-82a6-e0f0020d1a9d
 https://app.lottiefiles.com/share/c5f26bb7-5c30-4314-a49e-fb4aa0e8b91d
 
 File JSON nguồn không có thông tin tác giả/giấy phép; tài liệu này ghi nhận nguồn do người dùng cung cấp, không gán giấy phép MIT của thư viện phát Lottie cho animation nguồn. Hai file gốc trong Downloads được giữ nguyên.
-
 
 ### Cấu trúc source
 
