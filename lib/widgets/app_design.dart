@@ -174,39 +174,61 @@ class SurfacePanel extends StatelessWidget {
   );
 }
 
+/// Tiêu đề màn hình ngắn gọn, cùng phong cách màn Quản trị Motion.
 class PageHeading extends StatelessWidget {
   const PageHeading({
     super.key,
-    required this.index,
+    this.index = '',
     required this.title,
     required this.description,
   });
   final String index, title, description;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 26, top: 6),
+    padding: const EdgeInsets.only(bottom: 18, top: 4),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          index,
-          style: TextStyle(
-            fontSize: 10,
-            letterSpacing: 2.3,
-            color: context.colors.lime,
-            fontWeight: FontWeight.w700,
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: TextStyle(color: context.colors.muted, height: 1.45),
           ),
-        ),
-        const SizedBox(height: 14),
-        Text(title, style: Theme.of(context).textTheme.headlineLarge),
-        const SizedBox(height: 10),
-        Text(
-          description,
-          style: TextStyle(color: context.colors.muted, height: 1.5),
-        ),
+        ],
       ],
     ),
   );
+}
+
+/// Đổi nhãn viết HOA cũ sang dạng câu cho dễ đọc, giữ nguyên các từ viết tắt.
+String sentenceCase(String text) {
+  if (text != text.toUpperCase()) return text;
+  const keep = {'SOS', 'SIM', 'SMS', 'OTP', 'GPS', 'API', 'XYZ'};
+  final words = text.split(' ');
+  final out = <String>[];
+  for (var i = 0; i < words.length; i++) {
+    final word = words[i];
+    if (keep.contains(word)) {
+      out.add(word);
+    } else if (word == 'MOTION') {
+      out.add('Motion');
+    } else {
+      final lower = word.toLowerCase();
+      out.add(
+        i == 0 && lower.isNotEmpty
+            ? lower[0].toUpperCase() + lower.substring(1)
+            : lower,
+      );
+    }
+  }
+  return out.join(' ');
 }
 
 class SectionLabel extends StatelessWidget {
@@ -215,24 +237,23 @@ class SectionLabel extends StatelessWidget {
   final String? trailing;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 26, bottom: 14),
+    padding: const EdgeInsets.only(top: 26, bottom: 12),
     child: Row(
       children: [
         Expanded(
           child: Text(
-            label,
+            sentenceCase(label),
             style: TextStyle(
-              fontSize: 11,
-              letterSpacing: 1.7,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: context.colors.muted,
+              color: context.colors.ink,
             ),
           ),
         ),
         if (trailing != null)
           Text(
             trailing!,
-            style: TextStyle(color: context.colors.lime, fontSize: 11),
+            style: TextStyle(color: context.colors.muted, fontSize: 11),
           ),
       ],
     ),

@@ -101,8 +101,7 @@ class _SmsSetupScreenState extends State<SmsSetupScreen> {
                   padding: const EdgeInsets.all(24),
                   children: [
                     const PageHeading(
-                      index: 'SOS / TỰ ĐỘNG QUA SIM',
-                      title: 'Không cần nói.\nVẫn báo người thân.',
+                      title: 'Thiết lập SOS qua SIM',
                       description: 'Cảnh báo được gửi bằng SMS từ SIM mặc định trên điện thoại Android.',
                     ),
                     SurfacePanel(

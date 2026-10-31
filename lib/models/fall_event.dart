@@ -1,4 +1,4 @@
-enum EventSource { sensor, demo, manual }
+enum EventSource { sensor, demo, manual, shake }
 
 enum EventOutcome { safe, sos, cancelled }
 
@@ -40,6 +40,8 @@ class FallEvent {
     at: DateTime.fromMillisecondsSinceEpoch((value['at'] as num).toInt()),
     source: value['source'] == 'manual'
         ? EventSource.manual
+        : value['source'] == 'shake'
+        ? EventSource.shake
         : EventSource.sensor,
     outcome: value['outcome'] == 'safe'
         ? EventOutcome.safe
@@ -74,6 +76,7 @@ class FallEvent {
     EventSource.sensor => 'Chuỗi chuyển động nghi ngờ',
     EventSource.demo => 'Mô phỏng té ngã',
     EventSource.manual => 'SOS chủ động',
+    EventSource.shake => 'Lắc mạnh gọi SOS',
   };
   String get outcomeLabel {
     if (outcome == EventOutcome.safe) return 'Người dùng xác nhận an toàn';

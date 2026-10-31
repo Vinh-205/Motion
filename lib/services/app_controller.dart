@@ -11,6 +11,7 @@ import '../models/emergency_contact.dart';
 import 'device_safety_bridge.dart';
 import 'fall_detector.dart';
 import 'sensor_service.dart';
+import 'shake_detector.dart';
 import 'sos_service.dart';
 
 class AppController extends ChangeNotifier {
@@ -28,6 +29,7 @@ class AppController extends ChangeNotifier {
   final bool allowSimulation;
   bool get canSimulate => !kReleaseMode && allowSimulation;
   final detector = FallDetector();
+  final shakeDetector = ShakeDetector();
   final sosService = SosService();
   final _events = <FallEvent>[];
   List<FallEvent> _deviceEvents = [];
@@ -66,6 +68,7 @@ class AppController extends ChangeNotifier {
   double sensorSampleHz = 0;
   double impactThreshold = 22;
   bool backgroundEnabled = true;
+  bool shakeSosEnabled = false;
   String detectionDetail = '', lastDetectionRejection = '';
   bool get backgroundMonitoring =>
       realSmsEnabled && monitoring && backgroundEnabled;
@@ -138,7 +141,17 @@ class AppController extends ChangeNotifier {
         rotation: sensors.rotation?.magnitude ?? 0,
         gyroFresh: gyroFresh,
       );
-      if (detector.state == FallState.fallSuspected) {
+      final acc = sensors.acceleration!;
+      if (shakeSosEnabled &&
+          shakeDetector.update(
+            at: _elapsed.elapsed,
+            x: acc.x,
+            y: acc.y,
+            z: acc.z,
+          )) {
+        detector.reset();
+        _beginAlert(EventSource.shake);
+      } else if (detector.state == FallState.fallSuspected) {
         _beginAlert(EventSource.sensor);
       }
     }
@@ -281,9 +294,14 @@ class AppController extends ChangeNotifier {
         orElse: () => sensitivity,
       );
       monitoring = state['monitoring'] as bool? ?? monitoring;
+      shakeSosEnabled = state['shakeSosEnabled'] == true;
       if (!_demoActive) {
         _nativeAlert = state['pending'] == true;
-        pendingSource = _nativeAlert ? EventSource.sensor : null;
+        pendingSource = !_nativeAlert
+            ? null
+            : state['source'] == 'shake'
+            ? EventSource.shake
+            : EventSource.sensor;
         final remaining = (state['remainingMilliseconds'] as num?)?.toInt();
         _deadline = _nativeAlert
             ? remaining != null
@@ -384,6 +402,7 @@ class AppController extends ChangeNotifier {
   Map<String, dynamic> get _configuration => {
     'monitoring': monitoring,
     'backgroundEnabled': backgroundEnabled,
+    'shakeSosEnabled': shakeSosEnabled,
     'countdownSeconds': countdownSeconds,
     'sensitivity': sensitivity.name,
   };
@@ -521,6 +540,8 @@ class AppController extends ChangeNotifier {
             ? 'Người dùng chạy mô phỏng té ngã.'
             : pendingSource == EventSource.manual
             ? 'Người dùng chủ động nhấn SOS.'
+            : pendingSource == EventSource.shake
+            ? 'Người dùng lắc mạnh điện thoại để gọi SOS.'
             : 'Chuỗi bất thường → va chạm → xoay → ít chuyển động ngắn (0,6–1,5 giây tùy mức).',
         recipientName: contactName,
         recipientPhone: contactPhone,
@@ -600,6 +621,13 @@ class AppController extends ChangeNotifier {
 
   void setCountdown(int value) {
     countdownSeconds = value.clamp(15, 30);
+    if (realSmsEnabled) unawaited(_nativeCommand('configure', _configuration));
+    notifyListeners();
+  }
+
+  void setShakeSos(bool value) {
+    shakeSosEnabled = value;
+    shakeDetector.reset();
     if (realSmsEnabled) unawaited(_nativeCommand('configure', _configuration));
     notifyListeners();
   }

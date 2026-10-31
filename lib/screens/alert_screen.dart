@@ -79,7 +79,11 @@ class AlertScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    sos ? 'SOS ĐƯỢC KÍCH HOẠT' : 'NGHI NGỜ TÉ NGÃ',
+                    sos
+                        ? 'SOS ĐƯỢC KÍCH HOẠT'
+                        : c.pendingSource == EventSource.shake
+                        ? 'ĐÃ NHẬN LẮC SOS'
+                        : 'NGHI NGỜ TÉ NGÃ',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 25,

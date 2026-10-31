@@ -228,6 +228,7 @@ class MainActivity : FlutterActivity() {
         call.argument<String>("sensitivity")?.let { check(it in listOf("low", "medium", "high")); editor.putString("sensitivity", it) }
         call.argument<Boolean>("monitoring")?.let { editor.putBoolean("monitoring", it) }
         call.argument<Boolean>("backgroundEnabled")?.let { editor.putBoolean("backgroundEnabled", it) }
+        call.argument<Boolean>("shakeSosEnabled")?.let { editor.putBoolean("shakeSosEnabled", it) }
         call.argument<String>("ownerName")?.let { editor.putString("ownerName", it.trim().take(80)) }
         editor.apply()
     }

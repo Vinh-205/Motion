@@ -44,6 +44,8 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     }
     val mainHandler = Handler(Looper.getMainLooper())
     val detector = NativeFallDetector()
+    private val shake = ShakeDetector()
+    private var shakeEnabled = false
     var running = false
         private set
     var dryRun = false
@@ -172,6 +174,8 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     fun configure() {
         detector.reset()
         detector.sensitivity = p.getString("sensitivity", "medium") ?: "medium"
+        shake.reset()
+        shakeEnabled = p.getBoolean("shakeSosEnabled", false)
         sensors.unregisterListener(this)
         accelerationAt = SystemClock.elapsedRealtime()
         monitoringStartedAt = accelerationAt
@@ -239,19 +243,24 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
         if (hasRotation && (rotationAt == 0L || kotlin.math.abs(now - rotationAt) > 250)) { detector.reset(); return }
         sensorError = ""
         if (dryRun || SystemClock.elapsedRealtime() < demoUntil || SystemClock.elapsedRealtime() < cooldownUntil || p.getLong("deadline", 0) > 0 || p.getBoolean("sosActive", false)) return
+        if (shakeEnabled && shake.update(now, values[0], values[1], values[2])) {
+            detector.reset()
+            beginAlert("shake", "Người dùng lắc mạnh điện thoại để gọi SOS.")
+            return
+        }
         if (detector.update(now, magnitude, rotationMagnitude, true, delta)) beginAlert()
     }
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
-    fun beginAlert() {
+    fun beginAlert(source: String = "sensor", reason: String? = null) {
         if (p.getLong("deadline", 0) > 0 || p.getBoolean("sosActive", false)) return
         val now = System.currentTimeMillis()
         val seconds = p.getInt("countdownSeconds", 30).coerceIn(15, 30)
-        p.edit().putString("currentId", UUID.randomUUID().toString()).putString("source", "sensor")
+        p.edit().putString("currentId", UUID.randomUUID().toString()).putString("source", source)
             .putLong("eventAt", now).putLong("deadline", now + seconds * 1000L)
             .putString("eventPhone", p.getString("contactPhone", "")).putString("eventContactName", p.getString("contactName", "")).putString("smsStatus", "")
             .putString("sosMessage", "").putInt("eventCountdown", seconds).putBoolean("eventDryRun", dryRun).apply()
         monotonicDeadline = SystemClock.elapsedRealtime() + seconds * 1000L
-        p.edit().putString("eventDetectionReason", if (dryRun) "Kiểm thử dry-run; không suy luận từ cảm biến." else detector.triggerReason).apply()
+        p.edit().putString("eventDetectionReason", if (dryRun) "Kiểm thử dry-run; không suy luận từ cảm biến." else reason ?: detector.triggerReason).apply()
         captureRecipients()
         captureEventMetadata()
         startAlarm(); updateNotification()
@@ -277,7 +286,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     }
     fun confirmSafe() {
         if (p.getLong("deadline", 0) == 0L) return
-        SafetyStore.record(this, mapOf("id" to p.getString("currentId", ""), "at" to p.getLong("eventAt", 0), "source" to "sensor", "outcome" to "safe", "smsStatus" to "", "detail" to "Người dùng xác nhận an toàn; không gửi SMS."))
+        SafetyStore.record(this, mapOf("id" to p.getString("currentId", ""), "at" to p.getLong("eventAt", 0), "source" to p.getString("source", "sensor"), "outcome" to "safe", "smsStatus" to "", "detail" to "Người dùng xác nhận an toàn; không gửi SMS."))
         p.edit().putLong("deadline", 0).putBoolean("sosActive", false).putString("smsStatus", "").apply()
         stopAlarm(); detector.reset(); cooldownUntil = SystemClock.elapsedRealtime() + 8000; updateNotification()
     }
@@ -318,7 +327,10 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
         fun ascii(value: String) = Normalizer.normalize(value, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").replace('đ', 'd').replace('Đ', 'D')
         fun time(at: Long) = SimpleDateFormat("dd/MM/yyyy HH:mm:ss Z", Locale.US).format(Date(at))
         val owner = ascii(p.getString("ownerName", "")!!.trim()).ifEmpty { "Chu dien thoai" }.take(80)
-        val description = if (p.getString("source", "sensor") == "manual") "$owner chu dong yeu cau tro giup" else "$owner co chuyen dong nghi ngo te nga; chua xac nhan sau ${p.getInt("eventCountdown", 30)} giay"
+        val source = p.getString("source", "sensor")
+        val description = if (source == "manual") "$owner chu dong yeu cau tro giup"
+            else if (source == "shake") "$owner da lac manh dien thoai de goi SOS; chua xac nhan an toan sau ${p.getInt("eventCountdown", 30)} giay"
+            else "$owner co chuyen dong nghi ngo te nga; chua xac nhan sau ${p.getInt("eventCountdown", 30)} giay"
         val location = lastLocation
         val where = if (location == null) "Khong lay duoc vi tri; vui long lien he va kiem tra ngay." else "Vi tri gan nhat (${time(location.time)}, sai so ~${location.accuracy.toInt()}m): https://maps.google.com/?q=${location.latitude},${location.longitude}. Vui long kiem tra ngay."
         return "MOTION SOS: $description luc ${time(p.getLong("eventAt", System.currentTimeMillis()))}. $where"
@@ -443,7 +455,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     }
     fun disable() {
         if (p.getLong("deadline", 0) > 0) {
-            SafetyStore.record(this, mapOf("id" to p.getString("currentId", ""), "at" to p.getLong("eventAt", 0), "source" to "sensor", "outcome" to "cancelled", "smsStatus" to "", "detail" to "Đã hủy cảnh báo do tắt dịch vụ hoặc thiếu quyền SMS. Chưa gửi SMS."))
+            SafetyStore.record(this, mapOf("id" to p.getString("currentId", ""), "at" to p.getLong("eventAt", 0), "source" to p.getString("source", "sensor"), "outcome" to "cancelled", "smsStatus" to "", "detail" to "Đã hủy cảnh báo do tắt dịch vụ hoặc thiếu quyền SMS. Chưa gửi SMS."))
         }
         p.edit().putBoolean("sosActive", false).putString("currentId", "").putString("smsStatus", "").putString("sosMessage", "").apply()
         p.edit().putBoolean("enabled", false).putLong("deadline", 0).apply()

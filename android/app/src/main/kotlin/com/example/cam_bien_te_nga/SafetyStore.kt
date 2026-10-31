@@ -104,6 +104,7 @@ object SafetyStore {
             "contactName" to p.getString("contactName", ""), "contactPhone" to p.getString("contactPhone", ""),
             "contacts" to contacts(context),
             "autoCallEnabled" to p.getBoolean("autoCallEnabled", false),
+            "shakeSosEnabled" to p.getBoolean("shakeSosEnabled", false),
             "callPermission" to (context.checkSelfPermission(android.Manifest.permission.CALL_PHONE) == android.content.pm.PackageManager.PERMISSION_GRANTED),
             "callStatus" to p.getString("callStatus", ""), "callDetail" to p.getString("callDetail", ""),
             "pending" to (deadline > 0), "deadline" to deadline, "eventAt" to p.getLong("eventAt", 0),
