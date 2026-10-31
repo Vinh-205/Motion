@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/motion_api.dart';
 import '../services/app_controller.dart';
 import '../widgets/motion_brand.dart';
+import '../widgets/typewriter_text.dart';
 import 'cloud_dashboard_screen.dart';
 
 enum _AuthMode { login, register, forgot }
@@ -155,13 +156,22 @@ class _AccountScreenState extends State<AccountScreen> {
               padding: const EdgeInsets.all(24),
               children: [
                 const Align(
-                  alignment: Alignment.centerLeft,
-                  child: MotionBrand(size: 56),
+                  alignment: Alignment.center,
+                  child: MotionBrand(size: 72),
                 ),
                 const SizedBox(height: 24),
-                Text(title, style: Theme.of(context).textTheme.headlineLarge),
+                TypewriterText(
+                  title,
+                  key: ValueKey(title),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
                 const SizedBox(height: 12),
-                Text(
+                TypewriterText(
+                  key: ValueKey('sub-$title-${_challenge != null}'),
+                  textAlign: TextAlign.center,
+                  delay: Duration(milliseconds: 35 * title.length),
+                  charDuration: const Duration(milliseconds: 12),
                   _challenge != null
                       ? 'Mã có hiệu lực 5 phút. Kiểm tra hộp thư đến và thư rác của ${_email.text.trim()}.'
                       : 'Quản lý liên hệ đám mây và Vòng an toàn. Giám sát và SOS qua SIM vẫn dùng độc lập trên điện thoại.',
