@@ -30,6 +30,10 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.ensureVisible(
+        find.byKey(const PageStorageKey('detectionDiagnostics')),
+      );
+      await tester.pump();
       await tester.tap(find.byKey(const PageStorageKey('detectionDiagnostics')));
       await tester.pump(const Duration(milliseconds: 400));
       expect(tester.takeException(), isNull);

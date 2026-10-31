@@ -1,15 +1,17 @@
 # Motion
 
-**Source hiện tại: 1.1.4+10** · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
+Ứng dụng Flutter giám sát dấu hiệu té ngã, cảnh báo xác nhận và hỗ trợ SOS trên Android. Nhóm dự kiến **50–100 người test**.
+
+**Phiên bản: 1.1.5+11** (source và APK khớp nhau) · [Nhật ký thay đổi](CHANGELOG.md) · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
 
 
 ## Tải APK để tham gia test (không cần máy tính)
 
-Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.1.4 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.1.4-test.10/Motion-1.1.4-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
+Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.1.5 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.1.5-test.11/Motion-1.1.5-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
 
-[<img src="docs/images/motion-apk-qr.png" alt="QR tải APK Motion 1.1.4" width="300">](https://github.com/Vinh-205/Motion/releases/download/v1.1.4-test.10/Motion-1.1.4-android.apk)
+[<img src="docs/images/motion-apk-qr.png" alt="QR tải APK Motion 1.1.5" width="300">](https://github.com/Vinh-205/Motion/releases/download/v1.1.5-test.11/Motion-1.1.5-android.apk)
 
-1. Tải tệp `Motion-1.1.4-android.apk` (khoảng 55 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.
+1. Tải tệp `Motion-1.1.5-android.apk` (khoảng 55 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.
 2. Mở tệp đã tải → nếu Android yêu cầu, cho phép **Cài ứng dụng không rõ nguồn gốc / Cho phép từ nguồn này** cho trình duyệt hoặc ứng dụng quản lý tệp đang mở APK → nhấn **Cài đặt**. Có thể tắt lại quyền cài từ nguồn này sau khi cài xong.
 3. Mở Motion và làm theo **[Hướng dẫn sử dụng bên dưới](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt)**. Người test không cần cài Flutter, Android Studio hay bật USB debugging.
 
@@ -17,119 +19,29 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 
 Đây là bản phát hành thử dành cho nhóm dự kiến 50–100 người. Mỗi người đăng ký/đăng nhập bằng tài khoản riêng; mỗi máy tự cấu hình liên hệ, SIM và thẻ khẩn cấp. Chưa có hệ thống thu thập phản hồi tự động. Không tự dùng số của người tổ chức làm người nhận SOS cho cả nhóm. Thống nhất trước với người nhận khi thử SMS hoặc cuộc gọi thật vì có thể phát sinh cước.
 
-[Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.1.4-test.10). QR đã cập nhật để tải đúng bản **1.1.4+10**. File cũ trong Downloads không tự đổi; hãy tải lại và kiểm tra phiên bản sau khi cài.
+[Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.1.5-test.11). QR đã cập nhật để tải đúng bản **1.1.5+11**. File cũ trong Downloads không tự đổi; hãy tải lại và kiểm tra phiên bản sau khi cài.
 
-**Kiểm tra đúng bản:** tên tệp `Motion-1.1.4-android.apk`, dung lượng **57.569.941 byte**, Android App info hiển thị **1.1.4** (`versionCode=10`). Cài đè bản release cùng chữ ký để giữ dữ liệu; không cần gỡ app trước. Push source lên GitHub không tự cập nhật ứng dụng đã cài trên điện thoại.
+**Kiểm tra đúng bản:** tên tệp `Motion-1.1.5-android.apk`, dung lượng **57.586.481 byte**, Android App info hiển thị **1.1.5** (`versionCode=11`). Cài đè bản release cùng chữ ký để giữ dữ liệu; không cần gỡ app trước. Push source lên GitHub không tự cập nhật ứng dụng đã cài trên điện thoại.
 
-[Tệp SHA-256](https://github.com/Vinh-205/Motion/releases/download/v1.1.4-test.10/Motion-1.1.4-android.apk.sha256):
+[Tệp SHA-256](https://github.com/Vinh-205/Motion/releases/download/v1.1.5-test.11/Motion-1.1.5-android.apk.sha256):
 
 ```text
-fab1c0e311be902bacbb2e659007c89c10e214a0734e96ceadfdc9e4178e4884
+2738ecc53515baed164bf430c368d4689e5eefa03ba33bbb7638e883666185bd
 ```
 
-### Cập nhật cảm biến phản ứng nhanh (30/10/2026, sau 1.1.4+10)
-
-Người test phản ánh cảm biến nhận ra cú ngã quá chậm. Nguyên nhân nằm ở thuật toán: sau khi ghi nhận va chạm, ứng dụng còn bắt máy nằm yên đủ 3 giây và chờ thêm tối đa 1,5 giây để thấy bằng chứng xoay, rồi mới mở cảnh báo. Tốc độ lấy mẫu vốn đã là 100 Hz và chuông báo động bật ngay khi detector kết luận, nên bản này chỉ chỉnh thuật toán, không đổi luồng SOS.
-
-| Thông số | Trước | Sau (Thấp / Trung bình / Cao) |
-| --- | --- | --- |
-| Thời gian yên sau va chạm | 3 giây | 1,5 / 1 / 0,6 giây |
-| Chờ bằng chứng xoay sau va chạm | 1,5 giây | 0,8 giây |
-| Ngưỡng va chạm | 26 / 22 / 18 m/s² | 24 / 19 / 15 m/s² |
-| Góc xoay tích lũy cần có | 0,90 / 0,65 / 0,45 rad | 0,70 / 0,50 / 0,35 rad |
-| Độ lệch gia tốc để bắt đầu nghi ngờ | 5 / 4 / 3 m/s² | 4 / 3,5 / 2,5 m/s² |
-
-Thay đổi nằm ở [FallDetector](lib/services/fall_detector.dart), [DetectionConfig](lib/models/detection_config.dart) và [NativeFallDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/NativeFallDetector.kt); hai bản Dart và Kotlin được giữ giống nhau. Trên chuỗi dữ liệu mô phỏng 100 Hz, độ trễ từ lúc va chạm đến lúc báo động của cú ngã mạnh giảm từ khoảng 3,2 giây xuống 1,7 / 1,2 / 0,8 giây. Một số cú ngã vừa và nhẹ mà bản trước bỏ sót nay cũng được bắt, nhất là ở mức Cao. Các tình huống đời thường mô phỏng (đi bộ, chạy, ngồi phịch xuống ghế, ném điện thoại lên giường, nhảy dây, va nhẹ vào túi) không tạo báo nhầm ở cả ba mức. Đây là số liệu mô phỏng, không phải độ chính xác thực tế; ngưỡng thấp hơn đồng nghĩa dễ báo nhầm hơn trên máy thật, nên cần thử đi lại, ngồi xuống và bỏ điện thoại vào túi trước khi tin dùng. Nếu báo nhầm nhiều, tăng lại thời gian yên trong `DetectionConfig.forSensitivity` và hằng số tương ứng trong `NativeFallDetector.kt`. Thời gian đếm ngược 15–30 giây trước khi gửi SMS không đổi, vì đó là cơ hội để bấm TÔI ỔN khi báo nhầm.
-
-**Kiểm thử đã chạy cho thay đổi này:** 15 test JUnit của detector Kotlin đạt; 27 test backend đạt. Các test Dart tương ứng (`fall_detector_test`, `gait_and_fall_test`, `detector_field_regression_test`) đã được sửa theo mốc thời gian mới nhưng **chưa được chạy lại**; hãy chạy `flutter test` trước khi phát hành. Chưa thử trên điện thoại thật.
-
-**APK build ngày 30/10/2026 (`build/app/outputs/flutter-apk/app-release.apk`):** 57.569.961 byte, SHA-256 `c7cfc3cf776718b22226909545535cadc664b020f89c3bcd59cb4471627f114a`, vẫn mang phiên bản 1.1.4 (`versionCode=10`). Tệp này được build trên máy không có `android/key.properties`, nên nhiều khả năng đã ký bằng khoá debug: không cài đè được lên bản release chính thức (sẽ báo xung đột chữ ký) và chưa được đưa lên GitHub Releases. Liên kết và mã SHA-256 ở đầu tài liệu vẫn là của bản 1.1.4-test.10 cũ. Để phát hành bản có cảm biến mới, người giữ khoá ký cần build lại với `key.properties`, tăng phiên bản (ví dụ 1.1.5+11), tải APK lên Releases rồi cập nhật liên kết, kích thước và SHA-256 ở đầu README.
-
-### Sửa Đăng xuất, gộp thẻ khẩn cấp, làm mới màn xem thẻ (31/10/2026)
-
-- **Đăng xuất không hoạt động:** app gửi `POST /auth/logout` kèm `Content-Type: application/json` nhưng thân rỗng. Fastify trả 400 "Body cannot be empty…", app giữ phiên nên bấm không có tác dụng. Nút Xóa tài khoản cũng gặp đúng lỗi này. [MotionApi](lib/services/motion_api.dart) giờ chỉ khai báo JSON khi có dữ liệu gửi đi. Nếu máy chủ báo phiên đã hết hạn (401), app vẫn đăng xuất trên máy. Có 2 test mới trong `test/cloud_account_test.dart`.
-- **Thẻ thông tin khẩn cấp** chỉ còn một lối vào trong **Cài đặt**; đã bỏ nút trùng trong màn tài khoản/Quản trị. Nút trên màn cảnh báo SOS vẫn giữ để người hỗ trợ mở thẻ khi khẩn cấp.
-- **Màn xem thẻ** ([EmergencyCardActivity](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardActivity.kt)) được thiết kế lại:
-  - Chừa chỗ cho thanh trạng thái và lỗ camera trên Android 15+, nên tiêu đề không còn bị che.
-  - Có nhãn "THẺ KHẨN CẤP", tên lớn, 3 ô Nhóm máu / Chiều cao / Cân nặng.
-  - Thông tin chia thành thẻ y tế và thẻ liên hệ; mục bỏ trống ghi "Chưa cung cấp".
-  - Màu theo chế độ sáng/tối của máy.
-  - Vẫn chỉ đọc, chặn chụp màn hình, không có nút gọi.
-
-### Lắc mạnh để gọi SOS (31/10/2026)
-
-**Lắc mạnh để gọi SOS.** Đây là công tắc mới trong **Cài đặt**, mặc định tắt. Khi bật, lắc điện thoại thật mạnh qua lại khoảng 2 giây sẽ mở màn hình **ĐÃ NHẬN LẮC SOS** với chuông và đếm ngược giống khi phát hiện ngã. Không bấm TÔI ỔN thì SOS được gửi. Tin nhắn ghi rõ người dùng đã lắc điện thoại để gọi SOS, còn lịch sử ghi nguồn "Lắc mạnh gọi SOS". Tính năng chỉ hoạt động khi công tắc Phát hiện té ngã đang bật, vì cần cảm biến đang chạy.
-
-Để tránh gửi nhầm khi chạy bộ hay nhảy, [ShakeDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/ShakeDetector.kt) trừ trọng lực rồi chỉ đếm các cú gia tốc mạnh (từ khoảng 1,8 g) **đổi chiều qua lại trên cùng một trục**. Cần 6 cú như vậy trong 2 giây. Chạy bộ, nhảy hay té ngã chỉ tạo đỉnh mạnh một chiều nên không kích hoạt. Sau mỗi lần kích hoạt có 10 giây nghỉ. Bản Dart [shake_detector.dart](lib/services/shake_detector.dart) dùng cho chế độ mô phỏng.
-
-**Giao diện:** bố cục gọn kiểu màn Quản trị Motion đã được thử rồi khôi phục về giao diện cũ theo yêu cầu. Công tắc **Lắc mạnh để gọi SOS** nằm trong Cài đặt, ngay dưới **Giám sát khi rời app**.
-
-**Kiểm thử:** 7 test JUnit mới cho ShakeDetector đạt. Lắc mạnh thì kích hoạt trong vòng 2 giây và tôn trọng 10 giây nghỉ. Lắc nhẹ, chạy, nhảy dây, đi bộ hay rơi rồi nảy thì không kích hoạt. Test Dart tương ứng nằm ở `test/shake_detector_test.dart`. `test/widget_test.dart` đã được cập nhật theo ngưỡng mức Cao mới (15 m/s²). Phần giao diện và Dart chưa được biên dịch ở môi trường sửa; hãy chạy `flutter analyze` và `flutter test` trước khi build.
-
-### Sửa lỗi thả rơi báo chậm hoặc không báo (31/10/2026)
-
-Khi thử thật, thả điện thoại rơi thì 5–10 giây sau mới có cảnh báo, có lúc không báo. Nguyên nhân là **cú nảy sau khi chạm sàn**. Điện thoại thường nảy lên 1–3 lần. Detector cũ coi mọi va chạm mạnh xảy ra hơn 300 ms sau cú chạm đầu là "va chạm lặp lại", giống khi đang đi hay nhảy, nên huỷ luôn cú ngã thật. Các cú nảy sau đó lại bị loại vì không có pha rơi. Kết quả là phải chờ một chuỗi tình cờ khác, hoặc không bao giờ báo.
-
-Đã sửa ở cả [NativeFallDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/NativeFallDetector.kt) và [FallDetector](lib/services/fall_detector.dart):
-
-- Trong 1,5 giây sau cú chạm đầu, các va chạm **yếu hơn rõ rệt** (dưới 85% cú đầu, tối đa 3 lần) được coi là nảy hoặc lăn của cùng một cú ngã, không huỷ chuỗi.
-- Để rung lắc mạnh hay nhảy dây không bị coi là "nảy", một va chạm chỉ được tính là cú ngã khi nó **nổi bật hẳn**. Nếu 2 giây trước đó đã có từ 2 đỉnh mạnh tương đương trở lên (đang lắc, nhảy, chạy), nó bị loại. Cú ngã khi đang chạy vẫn được tính vì va chạm mạnh hơn hẳn các bước chạy.
-
-| Mô phỏng 100 Hz | Trước (Thấp / TB / Cao) | Sau (Thấp / TB / Cao) |
-| --- | --- | --- |
-| Rơi lên nệm, 1 lần chạm | 1,9 / 1,4 / 1,0 s | 1,9 / 1,4 / 1,0 s |
-| Rơi sàn, nảy 1 lần | không báo / không báo / 1,4 s | 2,3 / 1,8 / 1,4 s |
-| Rơi sàn, nảy 2 lần | không báo cả 3 mức | 2,6 / 2,1 / 1,7 s |
-| Rơi sàn, nảy 3 lần | không báo / không báo / 2,0 s | 2,9 / 2,4 / 2,0 s |
-| Đang chạy thì ngã | — | 2,3 / 1,8 / 1,4 s |
-
-Các trường hợp không phải ngã đều không báo ở cả ba mức: đi bộ rồi chạy rồi đứng yên, nhảy dây 20 giây, lắc mạnh 3 giây rồi đặt lên bàn hoặc cầm trên tay, ngồi phịch xuống ghế, đặt mạnh điện thoại xuống bàn. **Rung lắc mạnh được cố ý không coi là té ngã.** Muốn gửi SOS khi gặp nguy mà không ngã, dùng nút SOS thủ công.
-
-**Kiểm thử:** 20 test JUnit Kotlin đạt, gồm 2 test mới cho "rơi rồi nảy vẫn báo" và "lắc mạnh rồi đặt xuống không báo". Hai test này đều trượt trên code cũ. Test Dart tương ứng đã được thêm vào `test/fall_detector_test.dart` nhưng chưa chạy được ở môi trường sửa; hãy chạy `flutter test`. Số liệu trên là mô phỏng, cần thử lại trên điện thoại thật.
-
-### Sửa chế độ giám sát nền (31/10/2026)
-
-Chế độ nền có thể tự tắt mà người dùng không hay biết. Khi điện thoại (nhất là Xiaomi, Oppo, Samsung) giết app đang chạy nền hoặc người dùng vuốt app khỏi danh sách đa nhiệm, Android tự khởi động lại dịch vụ giám sát. Lúc đó app không hiển thị, nhưng code vẫn xin chạy nền với loại "vị trí". Từ Android 14 (app đang build cho Android 16), hệ thống từ chối yêu cầu này. Code bắt lỗi rồi tắt hẳn SOS, nên thông báo biến mất và cảm biến ngừng chạy.
-
-Đã sửa trong [SafetyService](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SafetyService.kt):
-
-- Khi dịch vụ được khởi động lúc app ở nền, nó chạy với loại "health" để cảm biến tiếp tục giám sát. Khi người dùng mở lại app thì mới bổ sung loại "vị trí". Nếu không xin được vị trí, dịch vụ vẫn chạy thay vì tắt SOS.
-- Thêm [BootReceiver](android/app/src/main/kotlin/com/example/cam_bien_te_nga/BootReceiver.kt): sau khi khởi động lại điện thoại hoặc cài bản cập nhật, giám sát nền tự bật lại. Điều này chỉ xảy ra khi trước đó người dùng đã bật SOS thật và giám sát nền ([MonitoringPolicy](android/app/src/main/kotlin/com/example/cam_bien_te_nga/MonitoringPolicy.kt)).
-- Màn **Bắt đầu giám sát** có thêm nút **CHO PHÉP CHẠY NỀN KHÔNG GIỚI HẠN PIN**. Nút này mở thẳng hộp thoại của Android; máy nào không có hộp thoại đó thì mở trang cài đặt pin.
-
-Vị trí trong SMS vẫn lấy từ lần đọc gần nhất. Nếu dịch vụ khởi động lại khi app ở nền, phải mở app một lần thì vị trí mới được cập nhật liên tục trở lại. Một số hãng còn có cài đặt "tự khởi chạy" hoặc "khoá app trong đa nhiệm" riêng, cần bật tay.
-
-**Kiểm thử:** 18 test JUnit thuần Kotlin đạt, gồm test mới cho điều kiện tự bật lại sau khi khởi động máy. Phần mã dùng API Android (`SafetyService`, `BootReceiver`, `MainActivity`) và giao diện Dart chưa được biên dịch trong môi trường sửa. Cần build lại APK, rồi thử trên máy thật: bật giám sát nền, vuốt app khỏi đa nhiệm, khoá màn hình vài phút, khởi động lại máy, và xem thông báo Motion còn hiện hay không.
-
-### Tổng hợp thay đổi đã có trong source và APK 1.1.4+10
-
-| Nhóm | Nội dung đã thực hiện | Mã nguồn / hướng dẫn |
-| --- | --- | --- |
-| Đăng ký, đăng nhập, quên mật khẩu | Email + mật khẩu + Email OTP; Google OAuth2/OIDC với PKCE và liên kết tài khoản tường minh; Google thật còn cần cấu hình provider | [MotionApi](lib/services/motion_api.dart), [backend auth](backend/src/app.js), phần tài khoản bên dưới |
-| Ghi nhớ đăng nhập | Khôi phục token/cache hồ sơ từ secure storage, không nháy màn đăng nhập khi đang khôi phục; phiên mới tối đa 30 ngày; xử lý offline và xóa khi API trả 401 | [SessionGate](lib/screens/session_gate.dart), [test khôi phục phiên](test/emergency_card_test.dart) |
-| Vai trò và CRUD | Admin quản lý tài khoản, khóa/mở khóa, phân quyền/phân công; nhân viên chỉ thấy người được giao; backend kiểm tra quyền/chủ sở hữu, bảo vệ admin cuối cùng | [Dashboard](lib/screens/cloud_dashboard_screen.dart), [API + kiểm thử](backend/test/api.test.js) |
-| Dọn giao diện quản trị | Bỏ nút lịch hẹn/liên hệ trên tài khoản và Vòng an toàn khỏi giao diện; tìm kiếm tên/email, ô lọc vai trò gọn | [CloudDashboardScreen](lib/screens/cloud_dashboard_screen.dart) |
-| Thẻ khẩn cấp | Thêm/xem/sửa/xóa tên, bệnh nền, dị ứng, thuốc, nhóm máu tự khai, chiều cao/cân nặng và liên hệ; một thẻ cho người mang điện thoại, không tự đổi theo tài khoản | [Form thẻ](lib/screens/emergency_card_screen.dart) |
-| Thẻ ngoại tuyến và màn hình khóa | Mã hóa AES-GCM/Keystore, không gửi thông tin thẻ lên API; mặc định tắt chia sẻ; đọc qua thông báo SOS khi đã đồng ý và SOS đang hoạt động; Activity riêng không mở sang tài khoản | [Lưu mã hóa](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardStore.kt), [màn hình chỉ đọc](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardActivity.kt) |
-| Bố cục ứng dụng | Tài khoản ở Cài đặt, sáng/tối trên cùng bên phải; nhãn SOS cập nhật theo trạng thái; bắt đầu giám sát nền chỉ ở Theo dõi; logo thống nhất, thanh điều hướng kính mờ, Morphicons/Lottie | [Header](lib/widgets/motion_header.dart), [navigation](lib/widgets/liquid_navigation.dart), [startup](lib/widgets/startup_animation.dart) |
-| Cảm biến | Xử lý va chạm ngay mẫu đầu; ngưỡng Thấp/Vừa/Cao 24/19/15 m/s², có thích nghi theo dao động; kiểm tra giảm gia tốc/xoay/ít chuyển động, loại va chạm lặp và dữ liệu cũ; đồng bộ Dart/Android | [FallDetector](lib/services/fall_detector.dart), [NativeFallDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/NativeFallDetector.kt) |
-| Giám sát nền và SOS | Công tắc phát hiện và nền tách riêng; native foreground service xử lý cảm biến/đếm ngược/chuông, SMS nhiều liên hệ và cuộc gọi một số ưu tiên; quyền SMS/gọi/thông báo và kiểm tra full-screen/pin | [SafetyService](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SafetyService.kt), hướng dẫn sử dụng bên dưới |
-| Âm thanh, liên hệ, lịch sử | Chuông SOS Motion mặc định, chọn/nghe thử âm; nhập/chọn danh bạ, nhiều người nhận, số gọi ưu tiên; nút 113/114/115 mở trình quay số; lưu trạng thái SMS/gọi và nguyên nhân kích hoạt riêng | [Các màn hình](lib/screens), [Emergency services](lib/widgets/emergency_services.dart) |
-| Sửa vùng xám Theo dõi | Tách PageStorageKey của chẩn đoán khỏi vị trí cuộn, thêm Material cho ExpansionTile; có regression test cuộn/mở mục cuối trang | [MonitorScreen](lib/screens/monitor_screen.dart), [test](test/emergency_card_test.dart) |
-| API và tài liệu | API HTTPS trên Render, Neon lưu tài khoản, Resend gửi OTP, DNS Cloudflare; Swagger/Schemas, README cài đặt/sử dụng/nơi lưu dữ liệu và Mermaid đồng bộ source | [Swagger](https://motion-api.vihx.online/docs), [OpenAPI trong repo](backend/openapi/motion.openapi.json), [Mermaid](docs/diagrams) |
-
-**Đã kiểm chứng:** 101 Flutter tests, 22 Android unit tests, 27 backend tests, 23 PostgreSQL-compatible tests; integration máy ảo xác nhận đếm ngược chạy nền khi khóa, mở thẻ bằng thông báo và dữ liệu thẻ lưu mã hóa. SMS/gọi trong integration là dry-run. Chưa công bố độ chính xác phát hiện ngã thực tế; cần thử lại SMS/cuộc gọi/cảm biến, pin và khóa màn hình trên điện thoại đích. Google OAuth thật chưa được xác nhận. APK này là bản test, không phải bản đã phát hành lên Play Store/App Store.
 
 
-### Bố cục và sử dụng bản mới
+**Xem nhanh:** [Bố cục](#bố-cục-và-sử-dụng-bản-mới) · [Đồ án cuối kỳ / backend](#đồ-án-cuối-kỳ--tài-khoản-backend-và-thẻ-khẩn-cấp) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Chạy từ source](#cài-môi-trường-phát-triển-và-chạy-source) · [Ghi chú kỹ thuật](#ghi-chú-kỹ-thuật).
+
+## Bố cục và sử dụng bản mới
 
 - **Theo dõi:** bắt đầu giám sát nền, xem số đo và lý do bộ phát hiện đang chờ. Nút bắt đầu không lặp trong Cài đặt.
 - **Lịch sử:** xem thời điểm, nguyên nhân cảnh báo và kết quả gửi SOS.
 - **Liên hệ:** thêm/sửa/xóa người nhận, chọn số gọi ưu tiên. Danh sách này lưu trên từng điện thoại; dữ liệu liên hệ cloud cũ không tự thay người nhận SOS.
-- **Cài đặt:** tài khoản và quyền truy cập, độ nhạy, thời gian xác nhận, chuông SOS và công tắc giám sát. Sáng/tối nằm trên cùng bên phải; logo trong app thống nhất với launcher. Thanh điều hướng dùng kính mờ, lớp màu trong và chuyển động chọn tab.
+- **Cài đặt:** tài khoản và quyền truy cập, độ nhạy, thời gian xác nhận, chuông SOS, công tắc giám sát và **Lắc mạnh để gọi SOS** (mặc định tắt; cần Phát hiện té ngã đang bật). Sáng/tối nằm trên cùng bên phải; logo trong app thống nhất với launcher. Thanh điều hướng dùng kính mờ, lớp màu trong và chuyển động chọn tab.
 - Nhãn **ĐÃ BẬT SOS** cập nhật khi SOS qua SIM đã được thiết lập và giám sát đang bật; đây là trạng thái cấu hình, không bảo đảm SIM đã gửi thành công. Tắt riêng giám sát nền vẫn giữ giám sát khi app đang mở.
-- **Admin:** quản lý tài khoản, vai trò và phân công. **Nhân viên:** chỉ hỗ trợ người được phân công. **Người dùng:** hồ sơ và thẻ của người mang máy. Dashboard có tìm kiếm; admin có ô lọc vai trò gọn, không còn nút lịch hẹn/liên hệ trên thẻ tài khoản.
-- **Thẻ thông tin khẩn cấp:** tạo/sửa/xem/xóa tại Cài đặt. Thay thế Vòng an toàn; xem hướng dẫn và nơi lưu dữ liệu bên dưới.
+- **Admin:** quản lý tài khoản, vai trò và phân công. **Nhân viên:** chỉ hỗ trợ người được phân công. **Người dùng:** hồ sơ và thẻ của người mang máy. Dashboard có tìm kiếm; admin lọc vai trò bằng chip kèm số lượng, không còn nút lịch hẹn/liên hệ trên thẻ tài khoản.
+- **Thẻ thông tin khẩn cấp:** một lối vào duy nhất để tạo/sửa/xem/xóa tại Cài đặt; màn cảnh báo SOS vẫn có nút mở thẻ cho người hỗ trợ. Thay thế Vòng an toàn; xem hướng dẫn và nơi lưu dữ liệu bên dưới.
 
 ### Frontend, backend và cách nhóm chạy
 
@@ -152,7 +64,7 @@ Nhóm cài Flutter/Android SDK, clone repo, chạy `flutter pub get`, rồi `flu
 5. Chạm thông báo/nút thẻ: mở Activity riêng chỉ đọc, không cần mạng. Khi khóa, chỉ cho đọc nếu đã đồng ý, có tên và SOS đang hoạt động; nếu chưa đủ điều kiện cần mở khóa. Thẻ không có lối chuyển đến tài khoản/quản trị, sửa dữ liệu hay tự gọi thêm. Nút đóng không tắt SOS.
 6. Muốn ngừng chia sẻ: tắt tùy chọn rồi lưu; muốn xóa: **XÓA THẺ** và xác nhận. Thẻ dành cho **một người mang điện thoại**, độc lập tài khoản; đăng xuất/đổi tài khoản không xóa thẻ. Khi chuyển máy cho người khác phải sửa/xóa thẻ. Gỡ app/xóa dữ liệu làm mất thẻ; hiện không sao lưu/đồng bộ thẻ lên cloud.
 
-Android quyết định có cho mở toàn màn hình hay chỉ hiện thông báo; cuộc gọi có thể đưa giao diện điện thoại lên trước. Không cam kết tự bật giao diện trong mọi trạng thái khóa, DND, tiết kiệm pin, force-stop hoặc sau khởi động lại. Sau reboot cần mở app và kiểm tra giám sát. SMS cần SIM/sóng/dịch vụ và quyền; gọi cần được bật riêng. Dịch vụ nền đã có foreground notification + wake lock; đây không phải bảo đảm hệ điều hành không bao giờ dừng app. [Quyền thông báo Android](https://developer.android.com/develop/ui/views/notifications/notification-permission), [API hiển thị Activity khi khóa](https://developer.android.com/reference/android/app/Activity#setShowWhenLocked(boolean)).
+Android quyết định có cho mở toàn màn hình hay chỉ hiện thông báo; cuộc gọi có thể đưa giao diện điện thoại lên trước. Không cam kết tự bật giao diện trong mọi trạng thái khóa, DND, tiết kiệm pin, force-stop hoặc sau khởi động lại. Sau reboot, giám sát nền tự bật lại theo điều kiện ở trên; vẫn cần kiểm tra thông báo và cài đặt tự khởi chạy của hãng. SMS cần SIM/sóng/dịch vụ và quyền; gọi cần được bật riêng. Dịch vụ nền đã có foreground notification + wake lock; đây không phải bảo đảm hệ điều hành không bao giờ dừng app. [Quyền thông báo Android](https://developer.android.com/develop/ui/views/notifications/notification-permission), [API hiển thị Activity khi khóa](https://developer.android.com/reference/android/app/Activity#setShowWhenLocked(boolean)).
 
 ### Dữ liệu lưu ở đâu? Minh chứng mã nguồn và cách kiểm tra
 
@@ -174,19 +86,11 @@ Minh chứng kiểm thử cơ chế thẻ: [Flutter CRUD/cache session](test/eme
 
 **Sửa vùng xám ở Theo dõi 1.1.4:** mục chẩn đoán có `Material` riêng và `PageStorageKey` riêng; không đọc nhầm số vị trí cuộn thành trạng thái bool của ExpansionTile. Đã thêm kiểm thử cuộn xuống/mở chẩn đoán.
 
-**Thay đổi cảm biến 1.1.3:** xử lý cả va chạm xuất hiện ở mẫu bất thường đầu tiên; ba mức có ngưỡng va chạm 26 / 22 / 18 m/s². Chuỗi bước chân/va chạm lặp được loại trước khi kiểm tra nằm yên; một sự kiện mới mạnh hơn vẫn được xét. Đây là thuật toán thử nghiệm trên dữ liệu tổng hợp, cần kiểm chứng lại trên điện thoại thật; rung mạnh không đồng nghĩa chắc chắn té ngã.
-
-Nếu đã có hai đỉnh va chạm cách nhau ít nhất 200 ms trong 2 giây, đỉnh tiếp theo phải lớn hơn 1,2 lần đỉnh cũ mới được xét như sự kiện mới. Chốt này giảm cộng dồn bước chân nhưng có thể bỏ sót sự cố tương tự hoạt động trước đó. Không tự nhân số đo cảm biến để tạo cảm giác nhạy hơn.
-
-Ứng dụng Flutter giám sát dấu hiệu té ngã, cảnh báo xác nhận và hỗ trợ SOS trên Android. **Phiên bản test: 1.1.4+10** · Nhóm dự kiến **50–100 người test**.
-
 Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay trong README này. Người test chỉ cần điện thoại Android; không cần tải source hay cài công cụ lập trình.
-
-**Xem nhanh:** [Đồ án cuối kỳ / backend](#đồ-án-cuối-kỳ--tài-khoản-backend-và-thẻ-khẩn-cấp) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt).
 
 ## Đồ án cuối kỳ — tài khoản, backend và thẻ khẩn cấp
 
-**Trạng thái:** source **1.1.4+10** bổ sung đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.1.4+10 trong link tải/QR ở đầu README đã chứa các thay đổi frontend và Android native mới nhất; API đã cập nhật thời hạn phiên mới 30 ngày. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
+**Trạng thái:** source **1.1.5+11** có đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.1.5+11 trong link tải/QR ở đầu README được build từ source hiện tại; API đã cập nhật thời hạn phiên mới 30 ngày. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
 
 Domain riêng đang dùng cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Phương án miễn phí: **Render chạy Node.js + Neon lưu PostgreSQL + Resend gửi Email OTP qua HTTPS**; Cloudflare quản lý DNS. Không cần thuê VPS khi dùng phương án này. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
 
@@ -320,7 +224,7 @@ Không đặt SQLite lên Render Free: file cục bộ có thể bị mất khi 
 - Render Free có thể ngủ khi không hoạt động; lần gọi đầu có thể chậm. Flutter đợi kết nối tối đa 90 giây, không tự lặp yêu cầu gửi OTP. Mở `/health` trước buổi báo cáo để kiểm tra API đang chạy; không dùng bot ping nhằm né giới hạn dịch vụ.
 - Theo [Resend Free](https://resend.com/blog/new-free-tier), hạn mức được công bố là 3.000 email/tháng, 100 email/ngày; kiểm tra lại Usage/Pricing khi triển khai. Mỗi người đăng ký + đăng nhập lần đầu cần ít nhất **2 email**, nên **50 người mới/ngày đã dùng hết 100 email**, chưa tính quên mật khẩu/gửi lại. Muốn 100 người test cùng ngày cần đổi lịch hoặc tự chọn gói phù hợp; source không tự nâng gói hay trả phí.
 - Neon Free cũng có hạn mức; kiểm tra [gói Neon hiện tại](https://neon.com/pricing). Giữ Free, theo dõi compute/storage; không coi gói miễn phí là hệ thống khẩn cấp có cam kết hoạt động liên tục.
-- Thử đăng ký/OTP thật trên email ngoài email chủ Resend, login cả ba vai trò, CRUD bằng hai điện thoại và restart/redeploy Render để xác nhận dữ liệu còn. Đây là bước nghiệm thu trên điện thoại thật trước phát hành chính thức; APK/QR hiện là bản test 1.1.4+10.
+- Thử đăng ký/OTP thật trên email ngoài email chủ Resend, login cả ba vai trò, CRUD bằng hai điện thoại và restart/redeploy Render để xác nhận dữ liệu còn. Đây là bước nghiệm thu trên điện thoại thật trước phát hành chính thức; APK/QR hiện là bản test 1.1.5+11.
 - Kiểm thử trong repo: `npm test` chạy SQLite + ranh giới gửi email giả; `npm run test:postgres` chạy các luồng API trên PostgreSQL engine PGlite. Đây không phải kiểm chứng kết nối Neon/TLS hay gửi email thật.
 
 ### Tùy chọn khác — triển khai backend công khai trên VPS
@@ -420,7 +324,7 @@ Chọn thời gian xác nhận phù hợp (ví dụ 30 giây), độ nhạy và 
 
 Từ **Theo dõi**, mở **Bắt đầu giám sát**, kiểm tra các mục thiết lập và nhấn bắt đầu. Cho phép các quyền cần thiết; các quyền mở màn hình cảnh báo và cài đặt pin cần làm theo hướng dẫn riêng trên thiết bị.
 
-Sau khi bật cả Phát hiện té ngã và Giám sát khi rời app, có thể về Home hoặc khóa màn hình. Kiểm tra thông báo giám sát còn hiện. Không force-stop app. Sau khi khởi động lại máy, mở Motion và bắt đầu lại. Muốn ngừng phát hiện khi rời giao diện, tắt **Giám sát khi rời app**; khi mở app, phát hiện vẫn hoạt động nếu **Phát hiện té ngã** đang bật. Muốn dừng toàn bộ phát hiện tự động, tắt **Phát hiện té ngã**. Cảnh báo đang đếm ngược vẫn cần xử lý bằng TÔI ỔN hoặc gửi trợ giúp.
+Sau khi bật cả Phát hiện té ngã và Giám sát khi rời app, có thể về Home hoặc khóa màn hình. Kiểm tra thông báo giám sát còn hiện. Không force-stop app. Sau khi khởi động lại máy, giám sát nền tự bật lại nếu trước đó đã bật SOS thật và giám sát nền; vẫn nên kiểm tra thông báo giám sát còn hiện. Muốn ngừng phát hiện khi rời giao diện, tắt **Giám sát khi rời app**; khi mở app, phát hiện vẫn hoạt động nếu **Phát hiện té ngã** đang bật. Muốn dừng toàn bộ phát hiện tự động, tắt **Phát hiện té ngã**. Cảnh báo đang đếm ngược vẫn cần xử lý bằng TÔI ỔN hoặc gửi trợ giúp.
 
 ### Bước 5 — Xử lý khi có cảnh báo
 
@@ -437,7 +341,7 @@ Vào **Lịch sử**, chọn sự kiện để xem thời gian, lý do kích ho�
 
 1. Kiểm tra mở app, đổi sáng/tối, bốn tab, thêm/sửa liên hệ và nghe thử âm thanh.
 2. Kiểm tra thiết lập quyền, bắt đầu giám sát, về Home, khóa/mở máy rồi quay lại app và dừng giám sát.
-3. Chỉ thử SOS thật sau khi đã thống nhất với người nhận. Không dùng số cơ quan khẩn cấp để thử. Không cố ngã hay thả rơi điện thoại để kích hoạt cảm biến. Bản release không có nút mô phỏng.
+3. Chỉ thử SOS thật sau khi đã thống nhất với người nhận. Không dùng số cơ quan khẩn cấp để thử. Không cố ngã hay thả rơi điện thoại để kích hoạt cảm biến. Bản release không có nút mô phỏng. Nếu thử Lắc mạnh gọi SOS, báo trước cho người nhận.
 4. Khi thử SOS thủ công, kiểm tra người nhận có SMS/vị trí và cuộc gọi tùy chọn hay không; kết thúc cuộc gọi và dừng âm sau phép thử. SOS thủ công không chứng minh độ chính xác phát hiện té ngã.
 5. Gửi phản hồi tại **[GitHub Issues](https://github.com/Vinh-205/Motion/issues)** nếu có tài khoản, hoặc gửi trực tiếp người tổ chức qua kênh đã thống nhất. Ghi mẫu máy, phiên bản Android, phiên bản Motion, bước thao tác, kết quả mong đợi/thực tế và ảnh lỗi. Không công khai số điện thoại, vị trí GPS hay tin nhắn riêng tư; che chúng trước khi đăng ảnh.
 
@@ -800,7 +704,7 @@ Không phân loại bằng tốc độ con quay hoặc một trục riêng. Gia 
 | Tình huống | Cách xử lý |
 | --- | --- |
 | Đi bộ/chạy có dao động lặp lại | Cập nhật nền dao động, không coi rung đơn lẻ là ngã |
-| Va chạm lặp lại sau khoảng ổn định ban đầu 300 ms | Bỏ ứng viên ngã cũ và giữ nền dao động, không tích lũy nhiều bước chân thành một cú ngã |
+| Va chạm lặp lại sau khoảng ổn định ban đầu 300 ms | Va chạm yếu hơn rõ rệt (dưới 85% cú đầu, tối đa 3 lần, trong 1,5 giây) coi là nảy của cùng cú ngã. Va chạm không nổi bật, khi 2 giây trước đã có từ 2 đỉnh mạnh tương đương, bị loại để không cộng dồn bước chân hay rung lắc |
 | Có chuỗi ngã nhưng vẫn tiếp tục cử động | Chưa đủ bước ít chuyển động, không tự khẳng định ngã |
 | Chuỗi đủ pha giảm gia tốc/va chạm/xoay nếu có, rồi yên 0,6–1,5 giây | Mở cảnh báo xác nhận; SMS chỉ sau thời gian chờ nếu không hủy |
 | Mất dữ liệu/gyro quá cũ trên máy có gyro | Bỏ chuỗi, báo tình trạng dữ liệu thay vì giả định đã giám sát |
@@ -820,7 +724,7 @@ $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 python tool/test_background_sos.py --device emulator-5554
 ```
 
-Integration test chỉ chạy khi SOS thật đang tắt. Runner Python mở lại Activity bằng adb sau khi kiểm tra chuyến đi về Home; app không vượt hạn chế mở Activity nền của Android. Nếu Flutter chưa có trên PATH, truyền `--flutter` kèm đường dẫn đầy đủ tới flutter.bat. Phép thử xác nhận tắt/bật thu cảm biến trong nền không hủy countdown. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả kiểm chứng gần nhất: 101 Flutter tests, 22 Kotlin tests, 27 backend tests và 23 PostgreSQL-compatible tests đạt trên source 1.1.4; integration emulator khóa màn hình đã đạt (không SMS/cuộc gọi thật); không đại diện mọi điện thoại.
+Integration test chỉ chạy khi SOS thật đang tắt. Runner Python mở lại Activity bằng adb sau khi kiểm tra chuyến đi về Home; app không vượt hạn chế mở Activity nền của Android. Nếu Flutter chưa có trên PATH, truyền `--flutter` kèm đường dẫn đầy đủ tới flutter.bat. Phép thử xác nhận tắt/bật thu cảm biến trong nền không hủy countdown. Dry-run chặn cả API SMS và Telecom, không xin quyền gửi/gọi; tạm cấu hình số thử, kiểm tra danh sách chốt và khôi phục cấu hình trong `finally`. Các điểm vào dry-run chỉ có ở debug. Kết quả gần nhất trên source sau các thay đổi 31/10: `flutter analyze` không có vấn đề, `flutter test` đạt 109 test. Lần chạy đầy đủ gần nhất của phần còn lại (trước 30–31/10): 22 Kotlin tests, 27 backend tests, 23 PostgreSQL-compatible tests; xem [CHANGELOG](CHANGELOG.md); integration emulator khóa màn hình đã đạt (không SMS/cuộc gọi thật); không đại diện mọi điện thoại.
 
 ### Icon và animation morphicons trong Flutter
 
