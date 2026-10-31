@@ -78,6 +78,7 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
     private var timeoutSince = 0L
     private var tickCount = 0
     private var callAudioPaused = false
+    private var foregroundLocation = false
     private val p get() = SafetyStore.prefs(this)
     private val notifications get() = getSystemService(NotificationManager::class.java)
     private val ticker = object : Runnable {
@@ -132,15 +133,12 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
         dryRun = intent?.getBooleanExtra("dryRun", false) == true && applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
         if (!p.getBoolean("enabled", false) && !dryRun) { stopSelf(); return START_NOT_STICKY }
         try {
-            val locationAllowed = hasLocationPermission() && (locations.isProviderEnabled(LocationManager.GPS_PROVIDER) || locations.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+            val locationAllowed = locationReady()
             val notification = buildNotification(false)
-            if (Build.VERSION.SDK_INT >= 34) {
-                var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
-                if (locationAllowed) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-                startForeground(NOTIFICATION_ID, notification, type)
-            } else if (Build.VERSION.SDK_INT >= 29) {
-                startForeground(NOTIFICATION_ID, notification, if (locationAllowed) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
-            } else startForeground(NOTIFICATION_ID, notification)
+            // Android 14+ chỉ cho xin loại "location" khi app đang hiển thị. Khi hệ thống tự
+            // khởi động lại dịch vụ (app bị giết ở nền, khởi động máy) phải chạy bằng "health",
+            // nếu không startForeground ném SecurityException và SOS bị tắt luôn.
+            enterForeground(notification, locationAllowed && (appVisible || Build.VERSION.SDK_INT < 34))
             running = true
             p.edit().putString("startupError", "").apply()
             wakeLock = getSystemService(PowerManager::class.java).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "motion:fall-monitor").apply { setReferenceCounted(false); acquire(10 * 60 * 1000L) }
@@ -204,6 +202,10 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
         p.getBoolean("monitoring", true), p.getBoolean("backgroundEnabled", true), appVisible)
     fun visibilityChanged(visible: Boolean) {
         appVisible = visible
+        // Đã khởi động ở nền chỉ với "health": khi người dùng mở app thì bổ sung "location".
+        if (running && visible && !foregroundLocation && Build.VERSION.SDK_INT >= 34 && locationReady()) {
+            try { enterForeground(buildNotification(false), true); if (foregroundLocation) startLocation() } catch (_: Exception) { }
+        }
         if (running && !p.getBoolean("backgroundEnabled", true)) configure()
     }
     private fun syncWakeLock() {
@@ -349,6 +351,28 @@ class SafetyService : Service(), SensorEventListener, LocationListener {
             .putString("eventCallPhone", recipients.firstOrNull()?.get("phone") as? String ?: "")
             .putString("callStatus", if (p.getBoolean("autoCallEnabled", false)) "pending" else "off").putString("callDetail", "").apply()
     }
+    private fun enterForeground(notification: Notification, withLocation: Boolean) {
+        if (Build.VERSION.SDK_INT >= 34) {
+            val health = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+            if (withLocation) {
+                try {
+                    startForeground(NOTIFICATION_ID, notification, health or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+                    foregroundLocation = true
+                    return
+                } catch (_: SecurityException) { /* Không đủ điều kiện vị trí lúc này: vẫn giám sát cảm biến. */ }
+            }
+            startForeground(NOTIFICATION_ID, notification, health)
+            foregroundLocation = false
+        } else if (Build.VERSION.SDK_INT >= 29) {
+            startForeground(NOTIFICATION_ID, notification, if (withLocation) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0)
+            foregroundLocation = withLocation
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+            foregroundLocation = withLocation
+        }
+    }
+    private fun locationReady() = hasLocationPermission() &&
+        (locations.isProviderEnabled(LocationManager.GPS_PROVIDER) || locations.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
     private fun hasLocationPermission() = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     private fun startLocation() {
         if (!hasLocationPermission()) return

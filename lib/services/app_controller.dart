@@ -375,6 +375,8 @@ class AppController extends ChangeNotifier {
   Future<void> openFullScreenSettings() =>
       _nativeCommand('openFullScreenSettings');
   Future<void> openAppSettings() => _nativeCommand('openAppSettings');
+  Future<void> requestBatteryExemption() =>
+      _nativeCommand('requestBatteryExemption');
   Future<void> leaveToHome() async {
     if (backgroundReady) await _nativeCommand('leaveToHome');
   }

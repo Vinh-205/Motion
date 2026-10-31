@@ -45,6 +45,20 @@ Thay đổi nằm ở [FallDetector](lib/services/fall_detector.dart), [Detectio
 
 **APK build ngày 30/10/2026 (`build/app/outputs/flutter-apk/app-release.apk`):** 57.569.961 byte, SHA-256 `c7cfc3cf776718b22226909545535cadc664b020f89c3bcd59cb4471627f114a`, vẫn mang phiên bản 1.1.4 (`versionCode=10`). Tệp này được build trên máy không có `android/key.properties`, nên nhiều khả năng đã ký bằng khoá debug: không cài đè được lên bản release chính thức (sẽ báo xung đột chữ ký) và chưa được đưa lên GitHub Releases. Liên kết và mã SHA-256 ở đầu tài liệu vẫn là của bản 1.1.4-test.10 cũ. Để phát hành bản có cảm biến mới, người giữ khoá ký cần build lại với `key.properties`, tăng phiên bản (ví dụ 1.1.5+11), tải APK lên Releases rồi cập nhật liên kết, kích thước và SHA-256 ở đầu README.
 
+### Sửa chế độ giám sát nền (31/10/2026)
+
+Chế độ nền có thể tự tắt mà người dùng không hay biết. Khi điện thoại (nhất là Xiaomi, Oppo, Samsung) giết app đang chạy nền hoặc người dùng vuốt app khỏi danh sách đa nhiệm, Android tự khởi động lại dịch vụ giám sát. Lúc đó app không hiển thị, nhưng code vẫn xin chạy nền với loại "vị trí". Từ Android 14 (app đang build cho Android 16), hệ thống từ chối yêu cầu này. Code bắt lỗi rồi tắt hẳn SOS, nên thông báo biến mất và cảm biến ngừng chạy.
+
+Đã sửa trong [SafetyService](android/app/src/main/kotlin/com/example/cam_bien_te_nga/SafetyService.kt):
+
+- Khi dịch vụ được khởi động lúc app ở nền, nó chạy với loại "health" để cảm biến tiếp tục giám sát. Khi người dùng mở lại app thì mới bổ sung loại "vị trí". Nếu không xin được vị trí, dịch vụ vẫn chạy thay vì tắt SOS.
+- Thêm [BootReceiver](android/app/src/main/kotlin/com/example/cam_bien_te_nga/BootReceiver.kt): sau khi khởi động lại điện thoại hoặc cài bản cập nhật, giám sát nền tự bật lại. Điều này chỉ xảy ra khi trước đó người dùng đã bật SOS thật và giám sát nền ([MonitoringPolicy](android/app/src/main/kotlin/com/example/cam_bien_te_nga/MonitoringPolicy.kt)).
+- Màn **Bắt đầu giám sát** có thêm nút **CHO PHÉP CHẠY NỀN KHÔNG GIỚI HẠN PIN**. Nút này mở thẳng hộp thoại của Android; máy nào không có hộp thoại đó thì mở trang cài đặt pin.
+
+Vị trí trong SMS vẫn lấy từ lần đọc gần nhất. Nếu dịch vụ khởi động lại khi app ở nền, phải mở app một lần thì vị trí mới được cập nhật liên tục trở lại. Một số hãng còn có cài đặt "tự khởi chạy" hoặc "khoá app trong đa nhiệm" riêng, cần bật tay.
+
+**Kiểm thử:** 18 test JUnit thuần Kotlin đạt, gồm test mới cho điều kiện tự bật lại sau khi khởi động máy. Phần mã dùng API Android (`SafetyService`, `BootReceiver`, `MainActivity`) và giao diện Dart chưa được biên dịch trong môi trường sửa. Cần build lại APK, rồi thử trên máy thật: bật giám sát nền, vuốt app khỏi đa nhiệm, khoá màn hình vài phút, khởi động lại máy, và xem thông báo Motion còn hiện hay không.
+
 ### Tổng hợp thay đổi đã có trong source và APK 1.1.4+10
 
 | Nhóm | Nội dung đã thực hiện | Mã nguồn / hướng dẫn |

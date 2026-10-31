@@ -244,6 +244,15 @@ class _StartMonitoringScreenState extends State<StartMonitoringScreen> {
                             : 'Mở cài đặt ứng dụng → Pin, cho phép chạy nền / Không hạn chế nếu có.',
                         ready: c.batteryUnrestricted,
                       ),
+                      if (!c.batteryUnrestricted) ...[
+                        ActionButton(
+                          key: const Key('batteryExemption'),
+                          label: 'CHO PHÉP CHẠY NỀN KHÔNG GIỚI HẠN PIN',
+                          icon: AppGlyph.settings,
+                          onPressed: c.requestBatteryExemption,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                       ActionButton(
                         key: const Key('monitoringAppSettings'),
                         label: 'CÀI ĐẶT THÔNG BÁO VÀ PIN',

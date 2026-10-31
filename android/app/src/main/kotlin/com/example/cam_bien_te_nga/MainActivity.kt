@@ -124,6 +124,7 @@ class MainActivity : FlutterActivity() {
                         result.success(state())
                     }
                     "openAppSettings" -> { openAppSettings(); result.success(state()) }
+                    "requestBatteryExemption" -> { requestBatteryExemption(); result.success(state()) }
                     "leaveToHome" -> {
                         check(SafetyService.instance?.running == true && prefs.getBoolean("enabled", false) && prefs.getBoolean("monitoring", true) && prefs.getBoolean("backgroundEnabled", true)) { "Hãy bật giám sát nền trước khi về Home." }
                         moveTaskToBack(true)
@@ -188,6 +189,15 @@ class MainActivity : FlutterActivity() {
     private fun requireService() = SafetyService.instance?.takeIf { it.running } ?: throw IllegalStateException("Dịch vụ SOS chưa chạy. Hãy bật lại SOS thật trong Cài đặt.")
     private fun requireDebug() { check(applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) { "Chỉ dùng trong bản kiểm thử." } }
     private fun openAppSettings() = startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+    /** Hộp thoại hệ thống "Cho phép chạy nền không giới hạn pin"; nếu máy không hỗ trợ thì mở trang cài đặt. */
+    private fun requestBatteryExemption() {
+        if (getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)) { openAppSettings(); return }
+        try {
+            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+        } catch (_: ActivityNotFoundException) {
+            try { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) } catch (_: ActivityNotFoundException) { openAppSettings() }
+        }
+    }
     private fun state(): Map<String, Any?> {
         updateAlertWindow()
         val notifications = getSystemService(NotificationManager::class.java)

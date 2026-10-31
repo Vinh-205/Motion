@@ -14,4 +14,10 @@ class MonitoringPolicyTest {
             assertFalse(MonitoringPolicy.collectSensors(false, background, visible))
         }
     }
+    @Test fun bootRestartOnlyWhenRealSosAndBackgroundWereOn() {
+        assertTrue(MonitoringPolicy.restartAfterBoot(true, true, true))
+        assertFalse(MonitoringPolicy.restartAfterBoot(false, true, true))
+        assertFalse(MonitoringPolicy.restartAfterBoot(true, false, true))
+        assertFalse(MonitoringPolicy.restartAfterBoot(true, true, false))
+    }
 }
