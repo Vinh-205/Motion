@@ -24,8 +24,9 @@ class HistoryScreen extends StatelessWidget {
       ),
       children: [
         const PageHeading(
-          title: 'Lịch sử sự kiện',
-          description: 'Các lần cảnh báo, xác nhận an toàn và SOS đã gửi.',
+          index: '02 / NHẬT KÝ CHUYỂN ĐỘNG',
+          title: 'Mỗi khoảnh khắc.\nMột dấu vết.',
+          description: 'Nhìn lại những lần bạn đã được nhắc nhở.',
         ),
         SurfacePanel(
           child: Row(

@@ -45,17 +45,13 @@ Thay đổi nằm ở [FallDetector](lib/services/fall_detector.dart), [Detectio
 
 **APK build ngày 30/10/2026 (`build/app/outputs/flutter-apk/app-release.apk`):** 57.569.961 byte, SHA-256 `c7cfc3cf776718b22226909545535cadc664b020f89c3bcd59cb4471627f114a`, vẫn mang phiên bản 1.1.4 (`versionCode=10`). Tệp này được build trên máy không có `android/key.properties`, nên nhiều khả năng đã ký bằng khoá debug: không cài đè được lên bản release chính thức (sẽ báo xung đột chữ ký) và chưa được đưa lên GitHub Releases. Liên kết và mã SHA-256 ở đầu tài liệu vẫn là của bản 1.1.4-test.10 cũ. Để phát hành bản có cảm biến mới, người giữ khoá ký cần build lại với `key.properties`, tăng phiên bản (ví dụ 1.1.5+11), tải APK lên Releases rồi cập nhật liên kết, kích thước và SHA-256 ở đầu README.
 
-### Lắc mạnh để gọi SOS và bố cục gọn hơn (31/10/2026)
+### Lắc mạnh để gọi SOS (31/10/2026)
 
-**Lắc mạnh để gọi SOS.** Đây là công tắc mới trong **Cài đặt → Giám sát**, mặc định tắt. Khi bật, lắc điện thoại thật mạnh qua lại khoảng 2 giây sẽ mở màn hình **ĐÃ NHẬN LẮC SOS** với chuông và đếm ngược giống khi phát hiện ngã. Không bấm TÔI ỔN thì SOS được gửi. Tin nhắn ghi rõ người dùng đã lắc điện thoại để gọi SOS, còn lịch sử ghi nguồn "Lắc mạnh gọi SOS". Tính năng chỉ hoạt động khi công tắc Phát hiện té ngã đang bật, vì cần cảm biến đang chạy.
+**Lắc mạnh để gọi SOS.** Đây là công tắc mới trong **Cài đặt**, mặc định tắt. Khi bật, lắc điện thoại thật mạnh qua lại khoảng 2 giây sẽ mở màn hình **ĐÃ NHẬN LẮC SOS** với chuông và đếm ngược giống khi phát hiện ngã. Không bấm TÔI ỔN thì SOS được gửi. Tin nhắn ghi rõ người dùng đã lắc điện thoại để gọi SOS, còn lịch sử ghi nguồn "Lắc mạnh gọi SOS". Tính năng chỉ hoạt động khi công tắc Phát hiện té ngã đang bật, vì cần cảm biến đang chạy.
 
 Để tránh gửi nhầm khi chạy bộ hay nhảy, [ShakeDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/ShakeDetector.kt) trừ trọng lực rồi chỉ đếm các cú gia tốc mạnh (từ khoảng 1,8 g) **đổi chiều qua lại trên cùng một trục**. Cần 6 cú như vậy trong 2 giây. Chạy bộ, nhảy hay té ngã chỉ tạo đỉnh mạnh một chiều nên không kích hoạt. Sau mỗi lần kích hoạt có 10 giây nghỉ. Bản Dart [shake_detector.dart](lib/services/shake_detector.dart) dùng cho chế độ mô phỏng.
 
-**Bố cục theo kiểu màn Quản trị Motion.**
-
-- Mỗi màn có tiêu đề ngắn (Giám sát, Lịch sử sự kiện, Người liên hệ khẩn cấp, Cài đặt & quyền…), thay cho tiêu đề kiểu thơ. Nhãn nhóm chuyển từ chữ in hoa nhỏ sang dạng câu dễ đọc.
-- Màn **Giám sát** chỉ còn thẻ trạng thái kèm công tắc, nút SOS đỏ, nút giám sát nền và nút mô phỏng. Số liệu cảm biến được gom vào mục **Nâng cao → Chi tiết cảm biến**, mặc định thu gọn.
-- Màn **Cài đặt** chia 4 nhóm: Giám sát (té ngã, chạy nền, lắc SOS), Cảnh báo (thời gian xác nhận, độ nhạy, âm thanh), SOS & tài khoản, Về Motion.
+**Giao diện:** bố cục gọn kiểu màn Quản trị Motion đã được thử rồi khôi phục về giao diện cũ theo yêu cầu. Công tắc **Lắc mạnh để gọi SOS** nằm trong Cài đặt, ngay dưới **Giám sát khi rời app**.
 
 **Kiểm thử:** 7 test JUnit mới cho ShakeDetector đạt. Lắc mạnh thì kích hoạt trong vòng 2 giây và tôn trọng 10 giây nghỉ. Lắc nhẹ, chạy, nhảy dây, đi bộ hay rơi rồi nảy thì không kích hoạt. Test Dart tương ứng nằm ở `test/shake_detector_test.dart`. `test/widget_test.dart` đã được cập nhật theo ngưỡng mức Cao mới (15 m/s²). Phần giao diện và Dart chưa được biên dịch ở môi trường sửa; hãy chạy `flutter analyze` và `flutter test` trước khi build.
 

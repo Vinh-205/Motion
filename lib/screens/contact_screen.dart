@@ -147,7 +147,8 @@ class _ContactScreenState extends State<ContactScreen> {
       ),
       children: [
         const PageHeading(
-          title: 'Người liên hệ khẩn cấp',
+          index: '03 / VÒNG TRÒN TIN CẬY',
+          title: 'Những người thân.\nLuôn bên bạn.',
           description: 'SOS gửi đến tất cả liên hệ đã lưu, tối đa 10 người.',
         ),
         SurfacePanel(

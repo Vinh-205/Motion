@@ -73,7 +73,8 @@ class _StartMonitoringScreenState extends State<StartMonitoringScreen> {
                 padding: const EdgeInsets.all(24),
                 children: [
                   const PageHeading(
-                    title: 'Giám sát nền',
+                    index: 'MOTION / BẢO VỆ TRONG NỀN',
+                    title: 'Bạn tiếp tục.\nMotion lắng nghe.',
                     description: 'Bật giám sát rồi về Home hoặc khóa màn hình.',
                   ),
                   SurfacePanel(

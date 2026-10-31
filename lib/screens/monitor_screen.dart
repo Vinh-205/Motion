@@ -1,10 +1,12 @@
+import '../widgets/morph_icon.dart';
+
 import 'package:flutter/material.dart';
 
 import '../models/detection_config.dart';
 import '../services/app_controller.dart';
 import '../services/fall_detector.dart';
 import '../widgets/app_design.dart';
-import '../widgets/morph_icon.dart';
+import '../widgets/motion_orbit.dart';
 import '../widgets/sensor_card.dart';
 import 'start_monitoring_screen.dart';
 
@@ -71,82 +73,113 @@ class MonitorScreen extends StatelessWidget {
       ),
       children: [
         const PageHeading(
-          title: 'Giám sát',
-          description: 'Trạng thái bảo vệ và nút SOS khẩn cấp.',
+          index: '01 / CHUYỂN ĐỘNG & AN TOÀN',
+          title: 'Vững vàng.\nMỗi chuyển động.',
+          description: 'Lắng nghe chuyển động. Chủ động an tâm.',
         ),
+        ActionButton(
+          key: const Key('openStartMonitoring'),
+          label: c.backgroundMonitoring
+              ? 'QUẢN LÝ GIÁM SÁT NỀN'
+              : 'BẮT ĐẦU GIÁM SÁT NỀN',
+          icon: AppGlyph.shieldCheck,
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (_) => StartMonitoringScreen(controller: c),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
         if (c.nativeConfigured && !c.realSmsEnabled)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.only(bottom: 16),
             child: SurfacePanel(
-              padding: const EdgeInsets.all(16),
               child: Text(
                 'SOS thật chưa chạy. Vào Cài đặt để bật lại SOS qua SIM; hiện chưa gửi SMS tự động.',
                 style: TextStyle(color: context.colors.orange),
               ),
             ),
           ),
-        // Thẻ trạng thái: một dòng trạng thái, một dòng giải thích, một công tắc.
         SurfacePanel(
-          padding: const EdgeInsets.fromLTRB(18, 16, 12, 6),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 9,
-                    height: 9,
+                    width: 7,
+                    height: 7,
                     decoration: BoxDecoration(
                       color: color,
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       status,
                       style: TextStyle(
                         color: color,
-                        fontSize: 13,
-                        letterSpacing: .6,
+                        fontSize: 10,
+                        letterSpacing: 1.1,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
+                  MorphIcon(AppGlyph.arrowUpRight, size: 17, color: color),
                 ],
               ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Text(
-                  ready
-                      ? c.detector.state.label
-                      : (c.nativeSensorError.isNotEmpty
-                                ? c.nativeSensorError
-                                : c.sensors.error) ??
-                            'Thiết lập SOS qua SIM để giám sát nền và gửi cảnh báo.',
-                  style: TextStyle(
-                    color: context.colors.muted,
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
+              MotionOrbit(active: ready, color: color),
+              const SizedBox(height: 12),
+              Text(
+                !c.realSmsEnabled && !c.canSimulate
+                    ? 'Bắt đầu bảo vệ.'
+                    : !c.monitoring
+                    ? 'Một nhịp nghỉ.'
+                    : ready
+                    ? checking
+                          ? 'Đang lắng nghe.'
+                          : 'Nhịp sống ổn định.'
+                    : 'Đang kết nối.',
+                style: const TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.6,
                 ),
               ),
               const SizedBox(height: 6),
-              const Divider(height: 1),
-              Material(
-                type: MaterialType.transparency,
-                child: SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Giám sát chuyển động'),
-                  subtitle: c.shakeSosEnabled
-                      ? const Text('Kèm lắc mạnh để gọi SOS')
-                      : null,
-                  value: (c.realSmsEnabled || c.canSimulate) && c.monitoring,
-                  onChanged: (value) => c.realSmsEnabled || c.canSimulate
-                      ? c.setMonitoring(value)
-                      : setup(),
+              Text(
+                ready
+                    ? c.detector.state.label
+                    : (c.nativeSensorError.isNotEmpty
+                              ? c.nativeSensorError
+                              : c.sensors.error) ??
+                          'Thiết lập SOS qua SIM để giám sát nền và gửi cảnh báo.',
+                style: TextStyle(
+                  color: context.colors.muted,
+                  fontSize: 12,
+                  height: 1.6,
                 ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Giám sát chuyển động',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  ),
+                  Switch(
+                    value: (c.realSmsEnabled || c.canSimulate) && c.monitoring,
+                    onChanged: (value) => c.realSmsEnabled || c.canSimulate
+                        ? c.setMonitoring(value)
+                        : setup(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -164,17 +197,7 @@ class MonitorScreen extends StatelessWidget {
           onPressed: c.realSmsEnabled || c.canSimulate ? c.requestHelp : setup,
         ),
         const SizedBox(height: 10),
-        ActionButton(
-          key: const Key('openStartMonitoring'),
-          label: c.backgroundMonitoring
-              ? 'QUẢN LÝ GIÁM SÁT NỀN'
-              : 'BẮT ĐẦU GIÁM SÁT NỀN',
-          icon: AppGlyph.shieldCheck,
-          outlined: true,
-          onPressed: setup,
-        ),
-        if (c.canSimulate) ...[
-          const SizedBox(height: 10),
+        if (c.canSimulate)
           ActionButton(
             key: const Key('simulateFall'),
             label: 'MÔ PHỎNG TÉ NGÃ',
@@ -182,66 +205,96 @@ class MonitorScreen extends StatelessWidget {
             outlined: true,
             onPressed: c.simulate,
           ),
-        ],
-        const SectionLabel('Nâng cao'),
-        // Số liệu kỹ thuật: thu gọn mặc định để màn chính gọn gàng.
-        Material(
-          type: MaterialType.transparency,
-          child: ExpansionTile(
-            key: const PageStorageKey('sensorDetails'),
-            tilePadding: EdgeInsets.zero,
-            title: const Text('Chi tiết cảm biến'),
-            subtitle: Text(
-              magnitude == null
-                  ? movement
-                  : '${magnitude.toStringAsFixed(2)} m/s² · $movement',
-              style: TextStyle(color: context.colors.muted, fontSize: 12),
-            ),
+        const SectionLabel('DÒNG CHUYỂN ĐỘNG', trailing: 'm/s²'),
+        SurfacePanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      magnitude?.toStringAsFixed(2) ?? '—',
+                      style: const TextStyle(
+                        fontSize: 49,
+                        height: 1.1,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -2,
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: Text(
+                      movement,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        color: context.colors.lime,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 7),
+              Text(
+                'Tổng gia tốc',
+                style: TextStyle(color: context.colors.muted, fontSize: 12),
+              ),
+              const SizedBox(height: 20),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: signalAvailable
-                      ? (deviation / 20).clamp(0.0, 1.0)
-                      : 0,
-                  minHeight: 5,
-                  color: context.colors.lime,
-                  backgroundColor: context.colors.line,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(
+                    end: signalAvailable ? (deviation / 20).clamp(0.0, 1.0) : 0,
+                  ),
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 180),
+                  builder: (context, value, _) => LinearProgressIndicator(
+                    value: value,
+                    minHeight: 5,
+                    color: context.colors.lime,
+                    backgroundColor: context.colors.line,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              const NoteLine('Đứng yên thường gần 9,81 m/s² vì có trọng lực.'),
-              if (c.realSmsEnabled && c.monitoring) ...[
-                const SizedBox(height: 8),
-                NoteLine(
-                  '${c.sensorMode == 'accelerometer' ? 'Chế độ gia tốc · không có gyroscope' : 'Gia tốc + con quay'} · ${c.sensorSampleHz.toStringAsFixed(0)} Hz thực tế (yêu cầu 100 Hz). Ngưỡng va chạm hiện tại ${c.impactThreshold.toStringAsFixed(1)} m/s².',
-                ),
-              ],
               const SizedBox(height: 12),
-              SensorCard(
-                title: 'Accelerometer',
-                unit: 'm/s²',
-                value: c.sensors.acceleration,
+              Text(
+                'Đứng yên thường gần 9,81 m/s² vì có trọng lực.',
+                style: TextStyle(color: context.colors.muted, fontSize: 11),
               ),
-              SensorCard(
-                title: 'Gyroscope',
-                unit: 'rad/s',
-                value: c.sensors.rotation,
-              ),
-              if (!c.hasGyroscope || c.sensors.rotationWarning != null)
-                const NoteLine(
-                  'Không có dữ liệu con quay khả dụng. Dấu — không phải 0 rad/s. Máy dùng chế độ gia tốc nếu được hỗ trợ.',
-                ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
+        const SectionLabel('TÍN HIỆU CẢM BIẾN', trailing: 'XYZ'),
+        if (c.realSmsEnabled && c.monitoring)
+          NoteLine(
+            '${c.sensorMode == 'accelerometer' ? 'Chế độ gia tốc · không có gyroscope' : 'Gia tốc + con quay'} · ${c.sensorSampleHz.toStringAsFixed(0)} Hz thực tế (yêu cầu 100 Hz). ${c.detector.state.label}',
+          ),
+        SensorCard(
+          title: 'Accelerometer',
+          unit: 'm/s²',
+          value: c.sensors.acceleration,
+        ),
+        if (c.realSmsEnabled && c.monitoring)
+          NoteLine(
+            'Ngưỡng va chạm hiện tại: ${c.impactThreshold.toStringAsFixed(1)} m/s² · điều chỉnh theo nền dao động 2 giây, vẫn cần đủ chuỗi và nằm yên khoảng 1 giây.',
+          ),
+        SensorCard(
+          title: 'Gyroscope',
+          unit: 'rad/s',
+          value: c.sensors.rotation,
+        ),
+        if (!c.hasGyroscope || c.sensors.rotationWarning != null)
+          const NoteLine(
+            'Không có dữ liệu con quay khả dụng. Dấu — không phải 0 rad/s. Máy dùng chế độ gia tốc nếu được hỗ trợ.',
+          ),
         if (c.realSmsEnabled && c.monitoring)
           Material(
             type: MaterialType.transparency,
             child: ExpansionTile(
               key: const PageStorageKey('detectionDiagnostics'),
-              tilePadding: EdgeInsets.zero,
               title: const Text('Tình trạng phát hiện'),
               trailing: const MorphIcon(AppGlyph.info, size: 20),
               children: [
@@ -263,13 +316,13 @@ class MonitorScreen extends StatelessWidget {
               ],
             ),
           ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         NoteLine(
           c.realSmsEnabled
               ? c.backgroundEnabled
-                    ? 'SOS qua SIM đang bật và giám sát cả khi khóa màn hình. Đây không phải đánh giá sức khỏe.'
-                    : 'Giám sát nền đã tắt: chỉ phát hiện khi app đang mở. SOS đang xử lý không bị hủy.'
-              : 'Chưa bật SOS qua SIM. Số liệu cảm biến không có nghĩa là SOS đã hoạt động.',
+                    ? 'SOS qua SIM đang bật. Giám sát khi khóa màn hình nếu phát hiện tự động đang bật. Trạng thái không phải đánh giá sức khỏe.'
+                    : 'Giám sát nền đã tắt. Vẫn phát hiện khi app mở nếu công tắc Phát hiện té ngã đang bật; SOS đang xử lý không bị hủy.'
+              : 'Chưa bật SOS qua SIM. Các chỉ số cảm biến hiện tại không có nghĩa là giám sát SOS đã hoạt động.',
         ),
       ],
     );
