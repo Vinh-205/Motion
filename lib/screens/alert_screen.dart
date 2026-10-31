@@ -12,8 +12,14 @@ import '../widgets/emergency_services.dart';
 class AlertScreen extends StatelessWidget {
   const AlertScreen({super.key, required this.controller});
   final AppController controller;
+  // SessionGate dựng màn này mà không lắng nghe controller; tự lắng nghe để đồng hồ đếm ngược cập nhật.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: controller,
+    builder: (context, _) => _buildContent(context),
+  );
+
+  Widget _buildContent(BuildContext context) {
     final c = controller;
     final sos = c.sosActive;
     final color = sos ? context.colors.red : context.colors.orange;

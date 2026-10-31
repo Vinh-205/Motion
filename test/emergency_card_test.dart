@@ -41,6 +41,41 @@ void main() {
       c.dispose();
     },
   );
+  testWidgets('saved card previews inside the app without a native Activity', (
+    tester,
+  ) async {
+    final calls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(DeviceSafetyBridge.channel, (call) async {
+          calls.add(call.method);
+          if (call.method == 'getEmergencyCard') {
+            return {
+              'name': 'Nguyễn Văn A',
+              'bloodGroup': 'O+',
+              'heightCm': '170',
+              'allergies': 'Penicillin',
+            };
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(DeviceSafetyBridge.channel, null),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: const EmergencyCardPreviewScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Nguyễn Văn A'), findsOneWidget);
+    expect(find.text('O+'), findsOneWidget);
+    expect(find.text('170 cm'), findsOneWidget);
+    expect(find.text('Penicillin'), findsOneWidget);
+    expect(find.text('Chưa cung cấp'), findsWidgets);
+    expect(calls, isNot(contains('openEmergencyCard')));
+  });
   for (final status in [200, 401, 503]) {
     test('restore cached session before server validation: $status', () async {
       final payload = base64UrlEncode(

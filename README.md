@@ -2,15 +2,15 @@
 
 Ứng dụng Flutter giám sát dấu hiệu té ngã, cảnh báo xác nhận và hỗ trợ SOS trên Android. Nhóm dự kiến **50–100 người test**.
 
-**Phiên bản: 1.1.5+11** (source và APK khớp nhau) · [Nhật ký thay đổi](CHANGELOG.md) · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
+**Phiên bản: 1.1.6+12** (source và APK khớp nhau) · [Nhật ký thay đổi](CHANGELOG.md) · [API / Swagger công khai](https://motion-api.vihx.online/docs) · [Source GitHub](https://github.com/Vinh-205/Motion).
 
 ## Tải APK để tham gia test (không cần máy tính)
 
-Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.1.5 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.1.5-test.11/Motion-1.1.5-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
+Quét QR bằng điện thoại **Android** hoặc bấm **[Tải Motion 1.1.6 — APK](https://github.com/Vinh-205/Motion/releases/download/v1.1.6-test.12/Motion-1.1.6-android.apk)**. Mã QR trỏ trực tiếp đến cùng tệp APK trên GitHub Releases, không cần đăng nhập GitHub.
 
-[<img src="docs/images/motion-apk-qr.png" alt="QR tải APK Motion 1.1.5" width="300">](https://github.com/Vinh-205/Motion/releases/download/v1.1.5-test.11/Motion-1.1.5-android.apk)
+[<img src="docs/images/motion-apk-qr.png" alt="QR tải APK Motion 1.1.6" width="300">](https://github.com/Vinh-205/Motion/releases/download/v1.1.6-test.12/Motion-1.1.6-android.apk)
 
-1. Tải tệp `Motion-1.1.5-android.apk` (khoảng 55 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.
+1. Tải tệp `Motion-1.1.6-android.apk` (khoảng 55 MB). Đây là bản test Android 7.0 trở lên, không dùng cho iPhone.
 2. Mở tệp đã tải → nếu Android yêu cầu, cho phép **Cài ứng dụng không rõ nguồn gốc / Cho phép từ nguồn này** cho trình duyệt hoặc ứng dụng quản lý tệp đang mở APK → nhấn **Cài đặt**. Có thể tắt lại quyền cài từ nguồn này sau khi cài xong.
 3. Mở Motion và làm theo **[Hướng dẫn sử dụng bên dưới](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt)**. Người test không cần cài Flutter, Android Studio hay bật USB debugging.
 
@@ -18,14 +18,14 @@ Nếu đã có Motion, hãy thử cài cập nhật. Nếu báo xung đột ch�
 
 Đây là bản phát hành thử dành cho nhóm dự kiến 50–100 người. Mỗi người đăng ký/đăng nhập bằng tài khoản riêng; mỗi máy tự cấu hình liên hệ, SIM và thẻ khẩn cấp. Chưa có hệ thống thu thập phản hồi tự động. Không tự dùng số của người tổ chức làm người nhận SOS cho cả nhóm. Thống nhất trước với người nhận khi thử SMS hoặc cuộc gọi thật vì có thể phát sinh cước.
 
-[Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.1.5-test.11). QR đã cập nhật để tải đúng bản **1.1.5+11**. File cũ trong Downloads không tự đổi; hãy tải lại và kiểm tra phiên bản sau khi cài.
+[Trang bản test, thông tin tệp và ghi chú phát hành](https://github.com/Vinh-205/Motion/releases/tag/v1.1.6-test.12). QR đã cập nhật để tải đúng bản **1.1.6+12**. File cũ trong Downloads không tự đổi; hãy tải lại và kiểm tra phiên bản sau khi cài.
 
-**Kiểm tra đúng bản:** tên tệp `Motion-1.1.5-android.apk`, dung lượng **57.586.481 byte**, Android App info hiển thị **1.1.5** (`versionCode=11`). Cài đè bản release cùng chữ ký để giữ dữ liệu; không cần gỡ app trước. Push source lên GitHub không tự cập nhật ứng dụng đã cài trên điện thoại.
+**Kiểm tra đúng bản:** tên tệp `Motion-1.1.6-android.apk`, dung lượng **57.652.017 byte**, Android App info hiển thị **1.1.6** (`versionCode=12`). Cài đè bản release cùng chữ ký để giữ dữ liệu; không cần gỡ app trước. Push source lên GitHub không tự cập nhật ứng dụng đã cài trên điện thoại.
 
-[Tệp SHA-256](https://github.com/Vinh-205/Motion/releases/download/v1.1.5-test.11/Motion-1.1.5-android.apk.sha256):
+[Tệp SHA-256](https://github.com/Vinh-205/Motion/releases/download/v1.1.6-test.12/Motion-1.1.6-android.apk.sha256):
 
 ```text
-2738ecc53515baed164bf430c368d4689e5eefa03ba33bbb7638e883666185bd
+e44cf743944eba6a4211ba2adb411658a31795e7059a77a6ec814b1bfdaa1c4f
 ```
 
 **Xem nhanh:** [Bố cục](#bố-cục-và-sử-dụng-bản-mới) · [Đồ án cuối kỳ / backend](#đồ-án-cuối-kỳ--tài-khoản-backend-và-thẻ-khẩn-cấp) · [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng-sau-khi-cài-đặt) · [Luồng hoạt động](#luồng-hoạt-động-của-hệ-thống) · [Chạy từ source](#cài-môi-trường-phát-triển-và-chạy-source) · [Ghi chú kỹ thuật](#ghi-chú-kỹ-thuật).
@@ -85,7 +85,7 @@ Tất cả hướng dẫn cài đặt, sử dụng và phát triển nằm ngay 
 
 ## Đồ án cuối kỳ — tài khoản, backend và thẻ khẩn cấp
 
-**Trạng thái:** source **1.1.5+11** có đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.1.5+11 trong link tải/QR ở đầu README được build từ source hiện tại; API đã cập nhật thời hạn phiên mới 30 ngày. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
+**Trạng thái:** source **1.1.6+12** có đăng nhập Google OAuth2/OIDC. API tại **https://motion-api.vihx.online** đã hoạt động qua HTTPS; chủ dự án đã xác nhận nhận Email OTP thật và đăng nhập admin qua Swagger. **Google cần cấu hình OAuth Client trên Google Cloud/Render và chưa được xác nhận đăng nhập thật.** APK 1.1.6+12 trong link tải/QR ở đầu README được build từ source hiện tại; API đã cập nhật thời hạn phiên mới 30 ngày. Kiểm thử với Google provider giả không thay thế kiểm chứng với Google thật.
 
 Domain riêng đang dùng cho đồ án: **`motion-api.vihx.online`**. **`api.vihx.online` dành cho bài kiểm tra trên lớp, không thay đổi hay sử dụng cho Motion.** Phương án miễn phí: **Render chạy Node.js + Neon lưu PostgreSQL + Resend gửi Email OTP qua HTTPS**; Cloudflare quản lý DNS. Không cần thuê VPS khi dùng phương án này. Source này không phải Cloudflare Worker và không chạy trực tiếp trên Workers/D1.
 
@@ -219,7 +219,7 @@ Không đặt SQLite lên Render Free: file cục bộ có thể bị mất khi 
 - Render Free có thể ngủ khi không hoạt động; lần gọi đầu có thể chậm. Flutter đợi kết nối tối đa 90 giây, không tự lặp yêu cầu gửi OTP. Mở `/health` trước buổi báo cáo để kiểm tra API đang chạy; không dùng bot ping nhằm né giới hạn dịch vụ.
 - Theo [Resend Free](https://resend.com/blog/new-free-tier), hạn mức được công bố là 3.000 email/tháng, 100 email/ngày; kiểm tra lại Usage/Pricing khi triển khai. Mỗi người đăng ký + đăng nhập lần đầu cần ít nhất **2 email**, nên **50 người mới/ngày đã dùng hết 100 email**, chưa tính quên mật khẩu/gửi lại. Muốn 100 người test cùng ngày cần đổi lịch hoặc tự chọn gói phù hợp; source không tự nâng gói hay trả phí.
 - Neon Free cũng có hạn mức; kiểm tra [gói Neon hiện tại](https://neon.com/pricing). Giữ Free, theo dõi compute/storage; không coi gói miễn phí là hệ thống khẩn cấp có cam kết hoạt động liên tục.
-- Thử đăng ký/OTP thật trên email ngoài email chủ Resend, login cả ba vai trò, CRUD bằng hai điện thoại và restart/redeploy Render để xác nhận dữ liệu còn. Đây là bước nghiệm thu trên điện thoại thật trước phát hành chính thức; APK/QR hiện là bản test 1.1.5+11.
+- Thử đăng ký/OTP thật trên email ngoài email chủ Resend, login cả ba vai trò, CRUD bằng hai điện thoại và restart/redeploy Render để xác nhận dữ liệu còn. Đây là bước nghiệm thu trên điện thoại thật trước phát hành chính thức; APK/QR hiện là bản test 1.1.6+12.
 - Kiểm thử trong repo: `npm test` chạy SQLite + ranh giới gửi email giả; `npm run test:postgres` chạy các luồng API trên PostgreSQL engine PGlite. Đây không phải kiểm chứng kết nối Neon/TLS hay gửi email thật.
 
 ### Tùy chọn khác — triển khai backend công khai trên VPS

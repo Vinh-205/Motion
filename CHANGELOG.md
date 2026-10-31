@@ -1,5 +1,15 @@
 # Nhật ký thay đổi Motion
 
+## 1.1.6+12 (31/10/2026)
+
+Sửa hai lỗi người test báo trên điện thoại thật (OPPO/OnePlus CPH2737, Android 16) ở 1.1.5.
+
+- **Đồng hồ đếm ngược đứng yên:** `SessionGate` dựng `AlertScreen` (widget không tự cập nhật) mà không lắng nghe controller, nên số giây chỉ vẽ một lần. Native vẫn đếm đúng (đo trên máy ảo: còn 29,9 → 20,9 giây sau 9 giây). `AlertScreen` nay tự lắng nghe controller. Test mới `test/alert_screen_ticks_test.dart` trượt trên code cũ và đạt trên code mới.
+- **Xem thẻ đã lưu tự đóng về trang chính:** chưa tái hiện được trên máy ảo (Activity thẻ mở và giữ ổn định cả khi có đủ dữ liệu), nên **nguyên nhân gốc chưa được xác định**; chưa lấy được log của máy lỗi. Cách xử lý: nút **XEM THẺ ĐÃ LƯU** trong Cài đặt giờ mở màn xem ngay trong app (`EmergencyCardPreviewScreen`), không còn phụ thuộc Activity native. Activity native vẫn dùng cho thẻ trên màn khóa sau SOS và nút thẻ ở màn cảnh báo; phần đó chưa được kiểm chứng lại trên máy lỗi.
+- `MainActivity.state()` (gọi khoảng 2 lần/giây) không còn gọi lại `setShowWhenLocked`/`setTurnScreenOn` khi giá trị không đổi. Log máy thật cho thấy hệ thống ghi nhận các lệnh gọi lặp này; chưa chứng minh chúng gây lỗi.
+
+Kiểm tra: `flutter analyze` sạch, `flutter test` đạt 111 test, Kotlin unit test đạt, APK release ký cùng chứng chỉ với bản trước, cài và mở được trên máy ảo. Chưa thử lại trên điện thoại thật; cần bạn xác nhận hai lỗi đã hết.
+
 ## 1.1.5+11 (31/10/2026)
 
 Gồm toàn bộ các mục bên dưới từ 30–31/10/2026. APK `Motion-1.1.5-android.apk`: 57.586.481 byte, SHA-256 `2738ecc53515baed164bf430c368d4689e5eefa03ba33bbb7638e883666185bd`, ký cùng chứng chỉ release với 1.1.4-test.10 (SHA-256 chứng chỉ `3674ac7a…0ed0be2`) nên cài đè giữ dữ liệu. Đã kiểm tra: `flutter analyze` sạch, `flutter test` đạt, Kotlin unit test và 27 backend test đạt, cài và mở được trên máy ảo Pixel 7, kịch bản integration giám sát nền (kể cả khóa màn hình) đạt ở lần chạy lại (lần đầu trượt do không thấy thông báo SOS trên màn khóa). Chưa thử trên điện thoại thật: SMS/gọi, lắc SOS, độ nhạy cảm biến, tự bật lại sau reboot.

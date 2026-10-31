@@ -53,8 +53,13 @@ class MainActivity : FlutterActivity() {
         setIntent(intent)
         updateAlertWindow()
     }
+    private var alertWindow: Boolean? = null
     private fun updateAlertWindow() {
         val alert = intent?.getBooleanExtra("motionAlert", false) == true && prefs.getLong("deadline", 0) > 0
+        // state() chạy khoảng 2 lần/giây: chỉ đổi cờ cửa sổ khi giá trị thật sự thay đổi, tránh làm
+        // hệ thống (nhất là ColorOS) tính lại hiển thị cửa sổ liên tục.
+        if (alertWindow == alert) return
+        alertWindow = alert
         if (Build.VERSION.SDK_INT >= 27) {
             setShowWhenLocked(alert)
             setTurnScreenOn(alert)

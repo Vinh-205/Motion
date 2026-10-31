@@ -257,19 +257,11 @@ class _EmergencyCardScreenState extends State<EmergencyCardScreen> {
                 OutlinedButton(
                   onPressed: saving
                       ? null
-                      : () async {
-                          try {
-                            await DeviceSafetyBridge.channel.invokeMethod<void>(
-                              'openEmergencyCard',
-                            );
-                          } catch (_) {
-                            if (mounted) {
-                              setState(
-                                () => error = 'Không mở được bản xem trước.',
-                              );
-                            }
-                          }
-                        },
+                      : () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const EmergencyCardPreviewScreen(),
+                          ),
+                        ),
                   child: const Text('XEM THẺ ĐÃ LƯU'),
                 ),
                 TextButton(
@@ -280,4 +272,172 @@ class _EmergencyCardScreenState extends State<EmergencyCardScreen> {
             ),
           ),
   );
+}
+
+/// Xem thẻ đã lưu ngay trong ứng dụng. Màn khóa sau SOS vẫn dùng Activity native riêng;
+/// xem từ trong app không phụ thuộc cách từng hãng máy xử lý Activity phụ.
+class EmergencyCardPreviewScreen extends StatefulWidget {
+  const EmergencyCardPreviewScreen({super.key});
+  @override
+  State<EmergencyCardPreviewScreen> createState() =>
+      _EmergencyCardPreviewScreenState();
+}
+
+class _EmergencyCardPreviewScreenState
+    extends State<EmergencyCardPreviewScreen> {
+  Map<String, dynamic>? card;
+  bool failed = false;
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final data = await DeviceSafetyBridge.channel
+          .invokeMapMethod<String, dynamic>('getEmergencyCard');
+      if (mounted) setState(() => card = data ?? {});
+    } catch (_) {
+      if (mounted) setState(() => failed = true);
+    }
+  }
+
+  String _field(String key) => (card?[key] as String? ?? '').trim();
+
+  Widget _tile(BuildContext context, String title, String raw, String unit,
+      {bool accent = false}) {
+    final c = context.colors;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: accent ? c.red.withValues(alpha: 0.14) : c.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: accent ? null : Border.all(color: c.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    color: accent ? c.red : c.muted)),
+            const SizedBox(height: 4),
+            Text(raw.isEmpty ? '—' : '$raw$unit',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: accent ? c.red : c.ink)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _section(BuildContext context, List<(String, String)> rows) {
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: c.line),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) Divider(height: 1, color: c.line),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(rows[i].$1,
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                            color: c.muted)),
+                    const SizedBox(height: 3),
+                    rows[i].$2.isEmpty
+                        ? Text('Chưa cung cấp',
+                            style: TextStyle(
+                                fontSize: 17,
+                                fontStyle: FontStyle.italic,
+                                color: c.muted))
+                        : SelectableText(rows[i].$2,
+                            style: TextStyle(fontSize: 17, color: c.ink)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Scaffold(
+      appBar: AppBar(title: const Text('THẺ KHẨN CẤP')),
+      body: SafeArea(
+        child: failed
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('Không đọc được thẻ. Dữ liệu chưa bị xóa.'),
+                ),
+              )
+            : card == null
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                key: const Key('emergencyCardPreview'),
+                padding: const EdgeInsets.all(20),
+                children: [
+                  Text(_field('name').isEmpty ? 'Chưa có tên' : _field('name'),
+                      style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: c.ink)),
+                  const SizedBox(height: 4),
+                  Text('Thông tin do người dùng tự khai, chưa được xác minh y tế.',
+                      style: TextStyle(fontSize: 13, color: c.muted)),
+                  const SizedBox(height: 18),
+                  Row(
+                    spacing: 8,
+                    children: [
+                      _tile(context, 'NHÓM MÁU', _field('bloodGroup'), '',
+                          accent: true),
+                      _tile(context, 'CHIỀU CAO', _field('heightCm'), ' cm'),
+                      _tile(context, 'CÂN NẶNG', _field('weightKg'), ' kg'),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _section(context, [
+                    ('BỆNH NỀN', _field('conditions')),
+                    ('DỊ ỨNG', _field('allergies')),
+                    ('THUỐC ĐANG DÙNG', _field('medications')),
+                  ]),
+                  const SizedBox(height: 12),
+                  _section(context, [
+                    ('NGƯỜI LIÊN HỆ', _field('contactName')),
+                    ('SỐ LIÊN HỆ', _field('contactPhone')),
+                  ]),
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('ĐÓNG THẺ'),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
 }
