@@ -44,6 +44,58 @@ void main() {
         .setMockMethodCallHandler(DeviceSafetyBridge.channel, null),
   );
 
+  test('logout sends no empty JSON body and clears the session', () async {
+    final seen = <String, String?>{};
+    final api = MotionApi(
+      client: MockClient((r) async {
+        seen[r.url.path] = r.headers['content-type'];
+        if (r.url.path == '/auth/login/verify') {
+          return jsonResponse({
+            'accessToken': 'test-token',
+            'user': sampleUser('member'),
+          });
+        }
+        if (r.url.path == '/auth/logout') {
+          // Giống Fastify: JSON khai báo nhưng thân rỗng thì trả 400.
+          if ((r.headers['content-type'] ?? '').contains('json') &&
+              r.body.isEmpty) {
+            return jsonResponse({'message': 'Body cannot be empty'}, 400);
+          }
+          return jsonResponse({'message': 'Đã đăng xuất.'});
+        }
+        return jsonResponse({'items': []});
+      }),
+    );
+    addTearDown(api.dispose);
+    await api.restore();
+    await api.completeLogin('id', '123456');
+    expect(api.signedIn, isTrue);
+    expect(seen['/auth/login/verify'], contains('application/json'));
+    await api.logout();
+    expect(seen['/auth/logout'], isNull);
+    expect(api.signedIn, isFalse);
+  });
+  test('logout still signs out locally when the server session expired', () async {
+    final api = MotionApi(
+      client: MockClient((r) async {
+        if (r.url.path == '/auth/login/verify') {
+          return jsonResponse({
+            'accessToken': 'test-token',
+            'user': sampleUser('member'),
+          });
+        }
+        if (r.url.path == '/auth/logout') {
+          return jsonResponse({'message': 'Phiên đã hết hạn.'}, 401);
+        }
+        return jsonResponse({'items': []});
+      }),
+    );
+    addTearDown(api.dispose);
+    await api.restore();
+    await api.completeLogin('id', '123456');
+    await api.logout();
+    expect(api.signedIn, isFalse);
+  });
   test('API refuses localhost and cleartext endpoints', () {
     for (final url in [
       'http://motion-api.vihx.online',
@@ -154,11 +206,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Người dùng'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('THẺ THÔNG TIN KHẨN CẤP'),
+        find.text('ĐĂNG XUẤT'),
         150,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('THẺ THÔNG TIN KHẨN CẤP'), findsOneWidget);
+      expect(find.text('ĐĂNG XUẤT'), findsOneWidget);
+      // Thẻ khẩn cấp chỉ còn ở Cài đặt, không lặp lại trong màn tài khoản.
+      expect(find.text('THẺ THÔNG TIN KHẨN CẤP'), findsNothing);
       expect(find.text('TẠO TÀI KHOẢN'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -214,14 +268,12 @@ void main() {
         expect(find.text(roleLabel(role)), findsWidgets);
         expect(tester.takeException(), isNull);
         await tester.scrollUntilVisible(
-          find.text('THẺ THÔNG TIN KHẨN CẤP'),
+          find.text('ĐĂNG XUẤT'),
           150,
           scrollable: find.byType(Scrollable).first,
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.text('THẺ THÔNG TIN KHẨN CẤP'));
-        await tester.pumpAndSettle();
-        expect(find.text('Thẻ thông tin khẩn cấp'), findsOneWidget);
+        expect(find.text('THẺ THÔNG TIN KHẨN CẤP'), findsNothing);
         expect(find.text('Vòng an toàn'), findsNothing);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());

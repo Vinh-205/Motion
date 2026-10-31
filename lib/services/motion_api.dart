@@ -117,17 +117,20 @@ class MotionApi extends ChangeNotifier {
   ]) async {
     try {
       final uri = baseUrl.resolve(path);
+      final outgoing = http.Request(method, uri)
+        ..followRedirects = false
+        ..headers.addAll({
+          'Accept': 'application/json',
+          if (_token != null) 'Authorization': 'Bearer $_token',
+        });
+      // Chỉ khai báo JSON khi thật sự có thân. Máy chủ (Fastify) trả 400 cho
+      // JSON rỗng, khiến Đăng xuất và Xóa trước đây luôn thất bại.
+      if (data != null) {
+        outgoing.headers['Content-Type'] = 'application/json';
+        outgoing.body = jsonEncode(data);
+      }
       final response = await _client
-          .send(
-            http.Request(method, uri)
-              ..followRedirects = false
-              ..headers.addAll({
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                if (_token != null) 'Authorization': 'Bearer $_token',
-              })
-              ..body = data == null ? '' : jsonEncode(data),
-          )
+          .send(outgoing)
           .timeout(const Duration(seconds: 90));
       final text = await response.stream.bytesToString().timeout(
         const Duration(seconds: 20),
@@ -271,7 +274,12 @@ class MotionApi extends ChangeNotifier {
 
   Future<void> logout() async {
     // Keep the token if server revocation fails, so the user can retry explicitly.
-    await request('POST', '/auth/logout');
+    try {
+      await request('POST', '/auth/logout');
+    } on ApiFailure catch (e) {
+      // Phiên đã hết hạn hoặc bị thu hồi trên máy chủ: vẫn đăng xuất trên máy.
+      if (e.status != 401) rethrow;
+    }
     await clearSession();
   }
 

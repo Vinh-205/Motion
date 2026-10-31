@@ -1,5 +1,3 @@
-import 'emergency_card_screen.dart';
-
 import 'package:flutter/material.dart';
 
 import '../services/app_controller.dart';
@@ -432,19 +430,7 @@ class _CloudDashboardScreenState extends State<CloudDashboardScreen> {
                     ),
                   const SizedBox(height: 20),
                 ],
-                OutlinedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => const EmergencyCardScreen(),
-                    ),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Text('THẺ THÔNG TIN KHẨN CẤP'),
-                  ),
-                ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 8),
                 Text(
                   'Hồ sơ & bảo mật',
                   style: Theme.of(context).textTheme.titleLarge,

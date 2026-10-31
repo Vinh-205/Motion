@@ -45,6 +45,17 @@ Thay đổi nằm ở [FallDetector](lib/services/fall_detector.dart), [Detectio
 
 **APK build ngày 30/10/2026 (`build/app/outputs/flutter-apk/app-release.apk`):** 57.569.961 byte, SHA-256 `c7cfc3cf776718b22226909545535cadc664b020f89c3bcd59cb4471627f114a`, vẫn mang phiên bản 1.1.4 (`versionCode=10`). Tệp này được build trên máy không có `android/key.properties`, nên nhiều khả năng đã ký bằng khoá debug: không cài đè được lên bản release chính thức (sẽ báo xung đột chữ ký) và chưa được đưa lên GitHub Releases. Liên kết và mã SHA-256 ở đầu tài liệu vẫn là của bản 1.1.4-test.10 cũ. Để phát hành bản có cảm biến mới, người giữ khoá ký cần build lại với `key.properties`, tăng phiên bản (ví dụ 1.1.5+11), tải APK lên Releases rồi cập nhật liên kết, kích thước và SHA-256 ở đầu README.
 
+### Sửa Đăng xuất, gộp thẻ khẩn cấp, làm mới màn xem thẻ (31/10/2026)
+
+- **Đăng xuất không hoạt động:** app gửi `POST /auth/logout` kèm `Content-Type: application/json` nhưng thân rỗng. Fastify trả 400 "Body cannot be empty…", app giữ phiên nên bấm không có tác dụng. Nút Xóa tài khoản cũng gặp đúng lỗi này. [MotionApi](lib/services/motion_api.dart) giờ chỉ khai báo JSON khi có dữ liệu gửi đi. Nếu máy chủ báo phiên đã hết hạn (401), app vẫn đăng xuất trên máy. Có 2 test mới trong `test/cloud_account_test.dart`.
+- **Thẻ thông tin khẩn cấp** chỉ còn một lối vào trong **Cài đặt**; đã bỏ nút trùng trong màn tài khoản/Quản trị. Nút trên màn cảnh báo SOS vẫn giữ để người hỗ trợ mở thẻ khi khẩn cấp.
+- **Màn xem thẻ** ([EmergencyCardActivity](android/app/src/main/kotlin/com/example/cam_bien_te_nga/EmergencyCardActivity.kt)) được thiết kế lại:
+  - Chừa chỗ cho thanh trạng thái và lỗ camera trên Android 15+, nên tiêu đề không còn bị che.
+  - Có nhãn "THẺ KHẨN CẤP", tên lớn, 3 ô Nhóm máu / Chiều cao / Cân nặng.
+  - Thông tin chia thành thẻ y tế và thẻ liên hệ; mục bỏ trống ghi "Chưa cung cấp".
+  - Màu theo chế độ sáng/tối của máy.
+  - Vẫn chỉ đọc, chặn chụp màn hình, không có nút gọi.
+
 ### Lắc mạnh để gọi SOS (31/10/2026)
 
 **Lắc mạnh để gọi SOS.** Đây là công tắc mới trong **Cài đặt**, mặc định tắt. Khi bật, lắc điện thoại thật mạnh qua lại khoảng 2 giây sẽ mở màn hình **ĐÃ NHẬN LẮC SOS** với chuông và đếm ngược giống khi phát hiện ngã. Không bấm TÔI ỔN thì SOS được gửi. Tin nhắn ghi rõ người dùng đã lắc điện thoại để gọi SOS, còn lịch sử ghi nguồn "Lắc mạnh gọi SOS". Tính năng chỉ hoạt động khi công tắc Phát hiện té ngã đang bật, vì cần cảm biến đang chạy.
