@@ -8,6 +8,7 @@ import kotlin.math.sqrt
 
 /** Experimental, mirrored in lib/services/fall_detector.dart. Not a medical classifier. */
 class NativeFallDetector {
+    companion object { const val BOUNCE_WINDOW_MS = 1500L }
     var sensitivity = "medium"
     var rotationAvailable = true
     var state = 0
@@ -30,8 +31,12 @@ class NativeFallDetector {
     private var mildSince: Long? = null
     private var wasQuiet = false
     private var path = ""
+    private var impactPeak = 0.0
+    private var bounceCount = 0
+    private var lastBounceAt = 0L
     private val impacts = ArrayDeque<Pair<Long, Double>>()
     private val baseline = ArrayDeque<Pair<Long, Double>>()
+    private val peaks = ArrayDeque<Pair<Long, Double>>()
 
     private fun number(value: Double) = String.format(Locale.US, "%.2f", value)
     val diagnostic: String get() =
@@ -42,8 +47,9 @@ class NativeFallDetector {
     fun reset(clearBaseline: Boolean = true) {
         state = 0; last = null; started = null; impactAt = null; lowSince = null
         maxLowMs = 0; rotationSum = 0.0; peakAcceleration = 0.0; path = ""; triggerReason = ""
+        impactPeak = 0.0; bounceCount = 0; lastBounceAt = 0L
         resetQuiet()
-        if (clearBaseline) { baseline.clear(); impacts.clear() }
+        if (clearBaseline) { baseline.clear(); impacts.clear(); peaks.clear() }
     }
     private fun resetQuiet() { quietSince = null; quietGoodMs = 0; mildSince = null; wasQuiet = false }
     private fun reject(reason: String, clearBaseline: Boolean = false) {
@@ -67,11 +73,23 @@ class NativeFallDetector {
         val stillnessMs = when (sensitivity) { "low" -> 1500L; "high" -> 600L; else -> 1000L }
         val ceiling = when (sensitivity) { "low" -> 1.5; "high" -> 1.15; else -> 1.3 }
         while (baseline.isNotEmpty() && at - baseline.first.first > 2000) baseline.removeFirst()
+        // Các đỉnh mạnh trong 2 giây trước: lắc/nhảy tạo nhiều đỉnh đều nhau, cú ngã thì nổi bật hẳn.
+        while (peaks.isNotEmpty() && at - peaks.first.first > 2000) peaks.removeFirst()
+        val priorPeakCount = peaks.size
+        val priorPeakMax = peaks.maxOfOrNull { it.second } ?: 0.0
+        if (magnitude >= impact && (peaks.isEmpty() || at - peaks.last.first >= 150)) peaks.addLast(at to magnitude)
         // Learn only before a candidate, then freeze its threshold. Shaking cannot
         // continuously raise the bar for the very fall currently being evaluated.
-        if (state >= 2 && impactAt != null && at - impactAt!! > 300 && magnitude >= impact) {
-            reject("Có va chạm tiếp tục lặp lại sau va chạm đầu; chưa coi là ngã rồi nằm yên.")
-            last = at
+        // Sau va chạm, điện thoại thường nảy/lăn vài lần với lực yếu dần: không được huỷ cú ngã.
+        // Chỉ coi là hoạt động lặp (lắc, nhảy, đi) khi va chạm mạnh gần bằng lần đầu, quá nhiều lần
+        // hoặc còn tiếp diễn sau cửa sổ nảy.
+        if (state >= 2 && impactAt != null && magnitude >= impact && at - impactAt!! > 150) {
+            val since = at - impactAt!!
+            if (at - lastBounceAt >= 100) { bounceCount++; lastBounceAt = at }
+            if (since > BOUNCE_WINDOW_MS || magnitude >= impactPeak * 0.85 || bounceCount > 3) {
+                reject("Có va chạm tiếp tục lặp lại sau va chạm đầu; chưa coi là ngã rồi nằm yên.")
+                last = at
+            }
         }
         if (state == 0) {
             impactThreshold = impact
@@ -106,13 +124,15 @@ class NativeFallDetector {
                     while (impacts.isNotEmpty() && at - impacts.first.first > 2000) impacts.removeFirst()
                     val repeated = impacts.size >= 2 && magnitude <= impacts.maxOf { it.second } * 1.2
                     if (impacts.isEmpty() || at - impacts.last.first >= 200) impacts.addLast(at to magnitude)
-                    if (repeated) { reject("Va chạm lặp lại; chờ sự kiện mới mạnh hơn."); return false }
+                    val rhythmic = priorPeakCount >= 2 && magnitude <= priorPeakMax * 1.3
+                    if (repeated || rhythmic) { reject("Va chạm lặp lại; chờ sự kiện mới mạnh hơn."); return false }
                     val lowEnough = maxLowMs >= if (rotationAvailable) 40 else 80
                     val margin = when (sensitivity) { "low" -> 6.0; "high" -> 2.0; else -> 4.0 }
                     if (!lowEnough && !(rotationAvailable && (magnitude >= impactThreshold + 6 || (magnitude >= impactThreshold + margin && rotation >= 2.5)))) {
                         reject("Va chạm thiếu pha giảm gia tốc đủ lâu hoặc chưa đủ mạnh.")
                     } else {
                         impactAt = at
+                        impactPeak = magnitude
                         val ballistic = maxLowMs >= 120 && magnitude >= impactThreshold + 6
                         state = if (!rotationAvailable || ballistic) 3 else 2
                         path = if (ballistic) "giảm gia tốc ít nhất 120 ms + va chạm mạnh (không bắt buộc xoay)" else if (!rotationAvailable) "gia tốc, không có con quay" else "gia tốc + va chạm + xoay"

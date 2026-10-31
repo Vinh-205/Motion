@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cam_bien_te_nga/services/fall_detector.dart';
 import 'package:cam_bien_te_nga/models/detection_config.dart';
@@ -117,5 +119,72 @@ void main() {
       DetectionConfig.forSensitivity(Sensitivity.high).impact,
       lessThan(DetectionConfig.forSensitivity(Sensitivity.low).impact),
     );
+  });
+
+  test('Bounces after the first impact do not cancel a fall', () {
+    for (final level in Sensitivity.values) {
+      final d = FallDetector(config: DetectionConfig.forSensitivity(level));
+      FallState s(int ms, double a, double g) => d.update(
+        at: Duration(milliseconds: ms),
+        magnitude: a,
+        rotation: g,
+        gyroFresh: true,
+      );
+      var t = 0;
+      for (; t < 1000; t += 10) {
+        s(t, 9.81, 0.3);
+      }
+      for (; t < 1450; t += 10) {
+        s(t, 1.0, 4.0);
+      }
+      s(t, 62, 12);
+      final impact = t;
+      t += 10;
+      int? fired;
+      for (; t < impact + 6000; t += 10) {
+        final since = t - impact;
+        final a = since == 350
+            ? 28.0
+            : since == 700
+            ? 21.0
+            : since < 1100
+            ? 9.81 + 3 * sin(t / 15)
+            : 9.81;
+        final g = since < 1100 ? 4.0 : 0.02;
+        if (s(t, a, g) == FallState.fallSuspected) {
+          fired = t;
+          break;
+        }
+      }
+      expect(fired, isNotNull, reason: '$level');
+      expect(fired! - impact, lessThan(3000), reason: '$level');
+    }
+  });
+  test('Strong shaking then putting the phone down is not a fall', () {
+    for (final level in Sensitivity.values) {
+      final d = FallDetector(config: DetectionConfig.forSensitivity(level));
+      for (var t = 0; t <= 15000; t += 10) {
+        final double a = t < 3000
+            ? (9.81 + 22 * sin(2 * pi * 4 * t / 1000)).abs() + 0.5
+            : t < 3400
+            ? 9.81 + 3 * sin(t / 20)
+            : 9.81;
+        final double g = t < 3000
+            ? 5 + 3 * sin(t / 30)
+            : t < 3400
+            ? 1.0
+            : 0.02;
+        expect(
+          d.update(
+            at: Duration(milliseconds: t),
+            magnitude: a,
+            rotation: g,
+            gyroFresh: true,
+          ),
+          isNot(FallState.fallSuspected),
+          reason: '$level $t',
+        );
+      }
+    }
   });
 }

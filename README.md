@@ -45,6 +45,27 @@ Thay đổi nằm ở [FallDetector](lib/services/fall_detector.dart), [Detectio
 
 **APK build ngày 30/10/2026 (`build/app/outputs/flutter-apk/app-release.apk`):** 57.569.961 byte, SHA-256 `c7cfc3cf776718b22226909545535cadc664b020f89c3bcd59cb4471627f114a`, vẫn mang phiên bản 1.1.4 (`versionCode=10`). Tệp này được build trên máy không có `android/key.properties`, nên nhiều khả năng đã ký bằng khoá debug: không cài đè được lên bản release chính thức (sẽ báo xung đột chữ ký) và chưa được đưa lên GitHub Releases. Liên kết và mã SHA-256 ở đầu tài liệu vẫn là của bản 1.1.4-test.10 cũ. Để phát hành bản có cảm biến mới, người giữ khoá ký cần build lại với `key.properties`, tăng phiên bản (ví dụ 1.1.5+11), tải APK lên Releases rồi cập nhật liên kết, kích thước và SHA-256 ở đầu README.
 
+### Sửa lỗi thả rơi báo chậm hoặc không báo (31/10/2026)
+
+Khi thử thật, thả điện thoại rơi thì 5–10 giây sau mới có cảnh báo, có lúc không báo. Nguyên nhân là **cú nảy sau khi chạm sàn**. Điện thoại thường nảy lên 1–3 lần. Detector cũ coi mọi va chạm mạnh xảy ra hơn 300 ms sau cú chạm đầu là "va chạm lặp lại", giống khi đang đi hay nhảy, nên huỷ luôn cú ngã thật. Các cú nảy sau đó lại bị loại vì không có pha rơi. Kết quả là phải chờ một chuỗi tình cờ khác, hoặc không bao giờ báo.
+
+Đã sửa ở cả [NativeFallDetector](android/app/src/main/kotlin/com/example/cam_bien_te_nga/NativeFallDetector.kt) và [FallDetector](lib/services/fall_detector.dart):
+
+- Trong 1,5 giây sau cú chạm đầu, các va chạm **yếu hơn rõ rệt** (dưới 85% cú đầu, tối đa 3 lần) được coi là nảy hoặc lăn của cùng một cú ngã, không huỷ chuỗi.
+- Để rung lắc mạnh hay nhảy dây không bị coi là "nảy", một va chạm chỉ được tính là cú ngã khi nó **nổi bật hẳn**. Nếu 2 giây trước đó đã có từ 2 đỉnh mạnh tương đương trở lên (đang lắc, nhảy, chạy), nó bị loại. Cú ngã khi đang chạy vẫn được tính vì va chạm mạnh hơn hẳn các bước chạy.
+
+| Mô phỏng 100 Hz | Trước (Thấp / TB / Cao) | Sau (Thấp / TB / Cao) |
+| --- | --- | --- |
+| Rơi lên nệm, 1 lần chạm | 1,9 / 1,4 / 1,0 s | 1,9 / 1,4 / 1,0 s |
+| Rơi sàn, nảy 1 lần | không báo / không báo / 1,4 s | 2,3 / 1,8 / 1,4 s |
+| Rơi sàn, nảy 2 lần | không báo cả 3 mức | 2,6 / 2,1 / 1,7 s |
+| Rơi sàn, nảy 3 lần | không báo / không báo / 2,0 s | 2,9 / 2,4 / 2,0 s |
+| Đang chạy thì ngã | — | 2,3 / 1,8 / 1,4 s |
+
+Các trường hợp không phải ngã đều không báo ở cả ba mức: đi bộ rồi chạy rồi đứng yên, nhảy dây 20 giây, lắc mạnh 3 giây rồi đặt lên bàn hoặc cầm trên tay, ngồi phịch xuống ghế, đặt mạnh điện thoại xuống bàn. **Rung lắc mạnh được cố ý không coi là té ngã.** Muốn gửi SOS khi gặp nguy mà không ngã, dùng nút SOS thủ công.
+
+**Kiểm thử:** 20 test JUnit Kotlin đạt, gồm 2 test mới cho "rơi rồi nảy vẫn báo" và "lắc mạnh rồi đặt xuống không báo". Hai test này đều trượt trên code cũ. Test Dart tương ứng đã được thêm vào `test/fall_detector_test.dart` nhưng chưa chạy được ở môi trường sửa; hãy chạy `flutter test`. Số liệu trên là mô phỏng, cần thử lại trên điện thoại thật.
+
 ### Sửa chế độ giám sát nền (31/10/2026)
 
 Chế độ nền có thể tự tắt mà người dùng không hay biết. Khi điện thoại (nhất là Xiaomi, Oppo, Samsung) giết app đang chạy nền hoặc người dùng vuốt app khỏi danh sách đa nhiệm, Android tự khởi động lại dịch vụ giám sát. Lúc đó app không hiển thị, nhưng code vẫn xin chạy nền với loại "vị trí". Từ Android 14 (app đang build cho Android 16), hệ thống từ chối yêu cầu này. Code bắt lỗi rồi tắt hẳn SOS, nên thông báo biến mất và cảm biến ngừng chạy.

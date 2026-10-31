@@ -35,6 +35,10 @@ class FallDetector {
   String _path = '', triggerReason = '', lastRejection = '';
   final _impacts = Queue<(Duration, double)>();
   final _baseline = Queue<(Duration, double)>();
+  final _peaks = Queue<(Duration, double)>();
+  double _impactPeak = 0;
+  int _bounceCount = 0;
+  Duration? _lastBounceAt;
   double impactThreshold = 19;
 
   void reset({bool clearBaseline = true}) {
@@ -45,10 +49,14 @@ class FallDetector {
     _peak = 0;
     _path = '';
     triggerReason = '';
+    _impactPeak = 0;
+    _bounceCount = 0;
+    _lastBounceAt = null;
     _resetQuiet();
     if (clearBaseline) {
       _baseline.clear();
       _impacts.clear();
+      _peaks.clear();
     }
   }
 
@@ -97,14 +105,40 @@ class FallDetector {
         at - _baseline.first.$1 > const Duration(seconds: 2)) {
       _baseline.removeFirst();
     }
+    // Các đỉnh mạnh trong 2 giây trước: lắc/nhảy tạo nhiều đỉnh đều nhau, cú ngã thì nổi bật hẳn.
+    while (_peaks.isNotEmpty &&
+        at - _peaks.first.$1 > const Duration(seconds: 2)) {
+      _peaks.removeFirst();
+    }
+    final priorPeakCount = _peaks.length;
+    final priorPeakMax = _peaks.isEmpty
+        ? 0.0
+        : _peaks.map((e) => e.$2).reduce(max);
+    if (magnitude >= config.impact &&
+        (_peaks.isEmpty ||
+            at - _peaks.last.$1 >= const Duration(milliseconds: 150))) {
+      _peaks.add((at, magnitude));
+    }
+    // Sau va chạm, điện thoại thường nảy/lăn vài lần với lực yếu dần: không được huỷ cú ngã.
+    // Chỉ coi là hoạt động lặp (lắc, nhảy, đi) khi va chạm mạnh gần bằng lần đầu, quá nhiều lần
+    // hoặc còn tiếp diễn sau cửa sổ nảy.
     if (state.index >= 2 &&
         _impactAt != null &&
-        at - _impactAt! > const Duration(milliseconds: 300) &&
-        magnitude >= config.impact) {
-      _reject(
-        'Có va chạm tiếp tục lặp lại sau va chạm đầu; chưa coi là ngã rồi nằm yên.',
-      );
-      _last = at;
+        magnitude >= config.impact &&
+        at - _impactAt! > const Duration(milliseconds: 150)) {
+      if (_lastBounceAt == null ||
+          at - _lastBounceAt! >= const Duration(milliseconds: 100)) {
+        _bounceCount++;
+        _lastBounceAt = at;
+      }
+      if (at - _impactAt! > DetectionConfig.bounceWindow ||
+          magnitude >= _impactPeak * 0.85 ||
+          _bounceCount > 3) {
+        _reject(
+          'Có va chạm tiếp tục lặp lại sau va chạm đầu; chưa coi là ngã rồi nằm yên.',
+        );
+        _last = at;
+      }
     }
     if (state == FallState.normal) {
       impactThreshold = config.impact;
@@ -169,7 +203,9 @@ class FallDetector {
               at - _impacts.last.$1 >= const Duration(milliseconds: 200)) {
             _impacts.add((at, magnitude));
           }
-          if (repeated) {
+          final rhythmic =
+              priorPeakCount >= 2 && magnitude <= priorPeakMax * 1.3;
+          if (repeated || rhythmic) {
             _reject('Va chạm lặp lại; chờ sự kiện mới mạnh hơn.');
             return state;
           }
@@ -182,6 +218,7 @@ class FallDetector {
             _reject('Va chạm thiếu pha giảm gia tốc đủ lâu hoặc chưa đủ mạnh.');
           } else {
             _impactAt = at;
+            _impactPeak = magnitude;
             final ballistic =
                 _maxLowMs >= 120 && magnitude >= impactThreshold + 6;
             state = !rotationAvailable || ballistic

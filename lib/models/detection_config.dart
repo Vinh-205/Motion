@@ -28,6 +28,8 @@ class DetectionConfig {
   static const quietRotation = 0.35;
   static const impactWindow = Duration(milliseconds: 1500);
   static const rotationWindow = Duration(milliseconds: 800);
+  // Cửa sổ sau va chạm đầu: các lần nảy/lăn yếu dần vẫn thuộc cùng một cú ngã.
+  static const bounceWindow = Duration(milliseconds: 1500);
   static const sequenceWindow = Duration(seconds: 8);
   static const maxGap = Duration(milliseconds: 400);
   static const cooldown = Duration(seconds: 8);
